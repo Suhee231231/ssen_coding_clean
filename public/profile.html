@@ -339,7 +339,40 @@
         // 과목별 진행상황 표시
         function displaySubjectsProgress(subjects) {
             const subjectsGrid = document.getElementById('subjectsGrid');
-            subjectsGrid.innerHTML = subjects.map(subject => `
+            
+            // 과목이 없거나 모든 과목의 진행상황이 0인 경우
+            if (!subjects || subjects.length === 0 || subjects.every(subject => subject.progress.answered === 0)) {
+                subjectsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <h3>아직 학습을 시작한 과목이 없습니다.</h3>
+                        <p>첫 번째 문제를 풀어보세요!</p>
+                        <a href="/" class="btn-primary">문제 풀기 시작하기</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 진행상황이 있는 과목만 필터링
+            const subjectsWithProgress = subjects.filter(subject => subject.progress.answered > 0);
+            
+            if (subjectsWithProgress.length === 0) {
+                subjectsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <h3>아직 학습을 시작한 과목이 없습니다.</h3>
+                        <p>첫 번째 문제를 풀어보세요!</p>
+                        <a href="/" class="btn-primary">문제 풀기 시작하기</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            subjectsGrid.innerHTML = subjectsWithProgress.map(subject => `
                 <div class="subject-progress-card">
                     <div class="subject-header">
                         <h4>${subject.name}</h4>

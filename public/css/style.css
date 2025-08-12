@@ -1877,4 +1877,48 @@ footer {
     .problem-form {
         padding: 15px;
     }
-} 
+}
+
+/* 빈 상태 스타일 */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin: 1rem 0;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #ddd;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.empty-state p {
+    color: #999;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+}
+
+.empty-state .btn-primary {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: #00d4aa;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.empty-state .btn-primary:hover {
+    background: #00b894;
+}
