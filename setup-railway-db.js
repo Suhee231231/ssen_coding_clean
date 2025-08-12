@@ -16,8 +16,8 @@ async function setupDatabase() {
 
         console.log('데이터베이스 연결 성공!');
 
-        // 테이블 생성
-        const createTables = `
+        // users 테이블 생성
+        const createUsersTable = `
             CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 username VARCHAR(255) UNIQUE NOT NULL,
@@ -30,8 +30,14 @@ async function setupDatabase() {
                 google_picture VARCHAR(500),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `;
 
+        await connection.execute(createUsersTable);
+        console.log('users 테이블 생성 완료!');
+
+        // problems 테이블 생성
+        const createProblemsTable = `
             CREATE TABLE IF NOT EXISTS problems (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 title VARCHAR(500) NOT NULL,
@@ -46,8 +52,14 @@ async function setupDatabase() {
                 category VARCHAR(100),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `;
 
+        await connection.execute(createProblemsTable);
+        console.log('problems 테이블 생성 완료!');
+
+        // user_progress 테이블 생성
+        const createUserProgressTable = `
             CREATE TABLE IF NOT EXISTS user_progress (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
@@ -58,11 +70,11 @@ async function setupDatabase() {
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 FOREIGN KEY (problem_id) REFERENCES problems(id) ON DELETE CASCADE,
                 UNIQUE KEY unique_user_problem (user_id, problem_id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `;
 
-        await connection.execute(createTables);
-        console.log('테이블 생성 완료!');
+        await connection.execute(createUserProgressTable);
+        console.log('user_progress 테이블 생성 완료!');
 
         // 기본 관리자 계정 생성 (선택사항)
         const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
