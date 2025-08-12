@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>틀린 문제 | SSEN CODING</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css?v=1.1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+    <script>
+      (function(d) {
+        var config = {
+          kitId: 'web7wnn',
+          scriptTimeout: 3000,
+          async: true
+        },
+        h=d.documentElement,t=setTimeout(function(){h.className=h.className.replace(/\bwf-loading\b/g,"")+" wf-inactive";},config.scriptTimeout),tk=d.createElement("script"),f=false,s=d.getElementsByTagName("script")[0],a;h.className+=" wf-loading";tk.src='https://use.typekit.net/'+config.kitId+'.js';tk.async=true;tk.onload=tk.onreadystatechange=function(){a=this.readyState;if(f||a&&a!="complete"&&a!="loaded")return;f=true;clearTimeout(t);try{Typekit.load(config)}catch(e){}};s.parentNode.insertBefore(tk,s)
+      })(document);
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-container">
+                <h1 class="logo"><a href="/" style="text-decoration: none; color: inherit;"><span class="logo-highlight">SSEN</span><span class="logo-underline">C</span>ODING</a></h1>
+                <div id="navLinks" class="nav-links">
+                    <!-- 동적으로 생성됨 -->
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: right; margin-bottom: 20px;">
+                <button class="btn-secondary" onclick="goBack()">돌아가기</button>
+            </div>
+
+            <div id="wrongProblemsList" class="wrong-problems-list">
+                <!-- 틀린 문제 목록이 여기에 표시됨 -->
+            </div>
+
+            <div id="problemContainer" class="problem-container" style="display: none;">
+                <div class="problem-header">
+                    <h2 id="subjectName">HTML 틀린 문제</h2>
+                    <div class="problem-info-row">
+                        <p id="problemInfo"></p>
+                    </div>
+                </div>
+                <div class="problem-question" id="question">
+                    <!-- 문제 내용이 여기에 로드됩니다 -->
+                </div>
+                <form id="problemForm">
+                    <div class="options-container" id="optionsContainer">
+                        <!-- 선택지들이 여기에 로드됩니다 -->
+                    </div>
+                    <input type="hidden" name="answer" id="selectedAnswer">
+                    <button type="submit" class="submit-btn" id="submitBtn" disabled>정답 제출</button>
+                </form>
+                <div id="result" style="display: none;">
+                    <div id="resultMessage"></div>
+                    <div id="explanation" class="explanation" style="display: none;"></div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="nav-btn" id="prevBtn" onclick="navigateProblem(-1)">이전 문제</button>
+                    <button class="nav-btn primary" id="nextBtn" onclick="navigateProblem(1)" style="display: none;">다음 문제</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentSubject = null;
+        let wrongProblems = [];
+        let currentProblemIndex = 0;
+        let currentProblem = null;
+        let newWrongProblems = []; // 이번 라운드에서 틀린 문제들
+
+        // URL에서 과목과 모드 파싱
+        function getUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return {
+                subject: urlParams.get('subject'),
+                mode: urlParams.get('mode')
+            };
+        }
+
+        // 세션 상태 확인 및 네비게이션 업데이트
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/check');
+                const data = await response.json();
+                
+                const navLinks = document.getElementById('navLinks');
+                
+                if (data.isLoggedIn) {
+                    navLinks.innerHTML = `
+                        <a href="/">홈</a>
+                        <a href="/dashboard.html">내 학습</a>
+                        <a href="#" onclick="logout()">로그아웃</a>
+                    `;
+                } else {
+                    navLinks.innerHTML = `
+                        <a href="/login.html">로그인</a>
+                        <a href="/register.html">회원가입</a>
+                    `;
+                }
+            } catch (error) {
+                console.error('인증 상태 확인 오류:', error);
+            }
+        }
+
+        // 로그아웃
+        async function logout() {
+            try {
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                console.error('로그아웃 오류:', error);
+            }
+        }
+
+        // 틀린 문제 목록 로드
+        async function loadWrongProblems() {
+            const params = getUrlParams();
+            currentSubject = params.subject;
+            const solveMode = params.mode === 'solve';
+
+            try {
+                const response = await fetch(`/api/problems/${encodeURIComponent(currentSubject)}/progress`);
+                const data = await response.json();
+
+                if (data.success) {
+                    wrongProblems = data.progress.wrongProblems;
+                    
+                    // 카드 내부의 제목만 업데이트 (문제 컨테이너가 표시될 때)
+                    const problemContainer = document.getElementById('problemContainer');
+                    const subjectNameInCard = problemContainer.querySelector('#subjectName');
+                    if (subjectNameInCard) {
+                        subjectNameInCard.textContent = `${data.subject.name} 틀린 문제`;
+                    }
+
+                    if (wrongProblems.length === 0) {
+                        document.getElementById('wrongProblemsList').innerHTML = `
+                            <div class="no-wrong-problems">
+                                <h3>틀린 문제가 없습니다!</h3>
+                                <p>모든 문제를 맞췄거나 아직 문제를 풀지 않았습니다.</p>
+                                <button class="btn-primary" onclick="goBack()">돌아가기</button>
+                            </div>
+                        `;
+                    } else {
+                        // 바로 풀기 모드인 경우 즉시 문제 풀이 시작
+                        if (solveMode) {
+                            startWrongProblems();
+                        } else {
+                            displayWrongProblemsList();
+                        }
+                    }
+                } else {
+                    alert('틀린 문제를 불러올 수 없습니다.');
+                }
+            } catch (error) {
+                console.error('틀린 문제 로드 오류:', error);
+                alert('틀린 문제를 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 틀린 문제 목록 표시
+        function displayWrongProblemsList() {
+            const container = document.getElementById('wrongProblemsList');
+            container.innerHTML = `
+                <div class="wrong-problems-header">
+                    <h3>틀린 문제 목록 (${wrongProblems.length}문제)</h3>
+                    <button class="btn-primary" onclick="startWrongProblems()">틀린 문제 다시 풀기</button>
+                </div>
+                <div class="wrong-problems-grid">
+                    ${wrongProblems.map((problem, index) => `
+                        <div class="wrong-problem-item">
+                            <div class="problem-preview">
+                                <h4>문제 ${index + 1}</h4>
+                                <p>${problem.question.substring(0, 100)}...</p>
+                                <div class="answer-info">
+                                    <span class="retry-note">다시 풀어보세요!</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // 틀린 문제 풀기 시작
+        function startWrongProblems() {
+            document.getElementById('wrongProblemsList').style.display = 'none';
+            document.getElementById('problemContainer').style.display = 'block';
+            
+            // 새로운 라운드 시작 - 틀린 문제 배열 초기화
+            newWrongProblems = [];
+            
+            // 저장된 진행상황 복원
+            const savedProgress = loadWrongProblemProgress();
+            if (savedProgress && savedProgress.currentIndex < wrongProblems.length && savedProgress.totalProblems === wrongProblems.length) {
+                currentProblemIndex = savedProgress.currentIndex;
+                // 저장된 새로운 틀린 문제들도 복원
+                if (savedProgress.newWrongProblems && Array.isArray(savedProgress.newWrongProblems)) {
+                    newWrongProblems = savedProgress.newWrongProblems;
+                }
+                console.log(`틀린 문제 진행상황 복원: ${currentProblemIndex + 1}번째 문제부터 시작`);
+            } else {
+                currentProblemIndex = 0;
+                // 진행상황이 유효하지 않으면 기존 진행상황 삭제
+                if (savedProgress) {
+                    clearWrongProblemProgress();
+                }
+            }
+            
+            // 문제 번호 즉시 업데이트
+            document.getElementById('problemInfo').textContent = `문제 ${currentProblemIndex + 1} / ${wrongProblems.length}`;
+            
+            loadCurrentProblem();
+        }
+
+        // 현재 문제 로드
+        async function loadCurrentProblem() {
+            if (currentProblemIndex >= wrongProblems.length) {
+                // 모든 틀린 문제를 다 풀었을 때
+                if (newWrongProblems.length > 0) {
+                    // 이번 라운드에서 틀린 문제가 있으면 다시 풀기 옵션 제공
+                    clearWrongProblemProgress(); // 현재 진행상황 삭제
+                    document.getElementById('problemContainer').innerHTML = `
+                        <div class="completion-message">
+                            <h3>🎯 이번 라운드 완료!</h3>
+                            <p>총 ${wrongProblems.length}문제 중 ${newWrongProblems.length}문제를 틀렸습니다.</p>
+                            <p>틀린 문제들을 다시 풀어서 완전히 마스터해보세요!</p>
+                            <div style="margin-top: 20px;">
+                                <button class="btn-primary" onclick="startNewRound()" style="margin-right: 10px;">틀린 문제 다시 풀기 (${newWrongProblems.length}문제)</button>
+                                <button class="btn-secondary" onclick="goBack()">돌아가기</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // 모든 문제를 맞췄을 때
+                    clearWrongProblemProgress(); // 진행상황 삭제
+                    document.getElementById('problemContainer').innerHTML = `
+                        <div class="completion-message">
+                            <h3>🎉 완벽하게 마스터했습니다!</h3>
+                            <p>모든 틀린 문제를 정답으로 완료했습니다!</p>
+                            <p>이제 이 과목의 틀린 문제가 없습니다.</p>
+                            <button class="btn-primary" onclick="goBack()">돌아가기</button>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            const problem = wrongProblems[currentProblemIndex];
+            currentProblem = problem;
+
+            try {
+                // 틀린 문제 데이터에 이미 모든 정보가 있으므로 직접 사용
+                const problemData = {
+                    question: problem.question,
+                    option_a: problem.option_a,
+                    option_b: problem.option_b,
+                    option_c: problem.option_c,
+                    option_d: problem.option_d
+                };
+                
+                // 페이지 제목 업데이트
+                document.getElementById('problemInfo').textContent = `문제 ${currentProblemIndex + 1} / ${wrongProblems.length}`;
+                
+                // 문제 내용 업데이트 (코드 블록 처리)
+                const questionElement = document.getElementById('question');
+                questionElement.innerHTML = formatCodeBlocks(problemData.question);
+                
+                // 코드 하이라이팅 적용
+                if (window.Prism) {
+                    Prism.highlightAll();
+                }
+                
+                // 선택지 업데이트 (코드 블록 처리)
+                const optionsContainer = document.getElementById('optionsContainer');
+                optionsContainer.innerHTML = `
+                    <div class="option" data-option="1"><strong>1.</strong> ${formatCodeBlocks(problemData.option_a)}</div>
+                    <div class="option" data-option="2"><strong>2.</strong> ${formatCodeBlocks(problemData.option_b)}</div>
+                    <div class="option" data-option="3"><strong>3.</strong> ${formatCodeBlocks(problemData.option_c)}</div>
+                    <div class="option" data-option="4"><strong>4.</strong> ${formatCodeBlocks(problemData.option_d)}</div>
+                `;
+                
+                // 선택지 코드 하이라이팅 적용
+                if (window.Prism) {
+                    Prism.highlightAll();
+                }
+
+                // 새 문제 로드 시 결과 영역 초기화
+                const result = document.getElementById('result');
+                const explanation = document.getElementById('explanation');
+                const nextBtn = document.getElementById('nextBtn');
+                const submitBtn = document.getElementById('submitBtn');
+                const selectedAnswer = document.getElementById('selectedAnswer');
+                
+                result.style.display = 'none';
+                explanation.style.display = 'none';
+                nextBtn.style.display = 'none';
+                submitBtn.disabled = true;
+                selectedAnswer.value = '';
+
+                // 틀린 문제는 이전 답안과 정답을 표시하지 않음 (다시 풀어보기 위함)
+                // showPreviousAnswerAndCorrectAnswer();
+
+                updateNavigationButtons();
+            } catch (error) {
+                console.error('문제 로드 오류:', error);
+                alert('문제를 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 이전 답안 표시
+        function showPreviousAnswer(userProgress) {
+            if (userProgress && userProgress.selected_answer) {
+                const selectedOption = userProgress.selected_answer;
+                document.getElementById('selectedAnswer').value = selectedOption;
+                
+                // 틀린 답안 표시
+                const optionElement = document.querySelector(`[data-option="${selectedOption}"]`);
+                if (optionElement) {
+                    optionElement.classList.add('selected', 'wrong-answer');
+                }
+                
+                // 정답 표시
+                const correctOption = currentProblem.correctAnswer;
+                const correctElement = document.querySelector(`[data-option="${correctOption}"]`);
+                if (correctElement) {
+                    correctElement.classList.add('correct-answer');
+                }
+                
+                document.getElementById('submitBtn').disabled = true;
+            }
+        }
+
+        // 네비게이션 버튼 상태 업데이트
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            if (currentProblemIndex <= 0) {
+                prevBtn.disabled = true;
+                prevBtn.style.opacity = '0.5';
+                prevBtn.style.cursor = 'not-allowed';
+            } else {
+                prevBtn.disabled = false;
+                prevBtn.style.opacity = '1';
+                prevBtn.style.cursor = 'pointer';
+            }
+            
+            if (currentProblemIndex >= wrongProblems.length - 1) {
+                nextBtn.textContent = '완료';
+            } else {
+                nextBtn.textContent = '다음 문제';
+            }
+        }
+
+        // 문제 이동
+        function navigateProblem(direction) {
+            const newIndex = currentProblemIndex + direction;
+            if (newIndex >= 0 && newIndex < wrongProblems.length) {
+                currentProblemIndex = newIndex;
+                // 진행상황 저장
+                saveWrongProblemProgress();
+                loadCurrentProblem();
+            } else if (newIndex >= wrongProblems.length) {
+                // 모든 문제를 다 풀었을 때
+                if (newWrongProblems.length > 0) {
+                    // 이번 라운드에서 틀린 문제가 있으면 다시 풀기 옵션 제공
+                    clearWrongProblemProgress(); // 현재 진행상황 삭제
+                    document.getElementById('problemContainer').innerHTML = `
+                        <div class="completion-message">
+                            <h3>🎯 이번 라운드 완료!</h3>
+                            <p>총 ${wrongProblems.length}문제 중 ${newWrongProblems.length}문제를 틀렸습니다.</p>
+                            <p>틀린 문제들을 다시 풀어서 완전히 마스터해보세요!</p>
+                            <div style="margin-top: 20px;">
+                                <button class="btn-primary" onclick="startNewRound()" style="margin-right: 10px;">틀린 문제 다시 풀기 (${newWrongProblems.length}문제)</button>
+                                <button class="btn-secondary" onclick="goBack()">돌아가기</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // 모든 문제를 맞췄을 때
+                    clearWrongProblemProgress(); // 진행상황 삭제
+                    document.getElementById('problemContainer').innerHTML = `
+                        <div class="completion-message">
+                            <h3>🎉 완벽하게 마스터했습니다!</h3>
+                            <p>모든 틀린 문제를 정답으로 완료했습니다!</p>
+                            <p>이제 이 과목의 틀린 문제가 없습니다.</p>
+                            <button class="btn-primary" onclick="goBack()">돌아가기</button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // 틀린 문제 진행상황 저장
+        function saveWrongProblemProgress() {
+            if (currentSubject && currentProblemIndex !== null && wrongProblems.length > 0) {
+                const progressKey = `wrongProblemProgress_${currentSubject}`;
+                const progressData = {
+                    currentIndex: currentProblemIndex,
+                    totalProblems: wrongProblems.length,
+                    newWrongProblems: newWrongProblems, // 새로운 틀린 문제들도 저장
+                    timestamp: Date.now(),
+                    subject: currentSubject // 과목 정보도 저장
+                };
+                
+                try {
+                    localStorage.setItem(progressKey, JSON.stringify(progressData));
+                    console.log(`틀린 문제 진행상황 저장: ${currentProblemIndex + 1}/${wrongProblems.length}, 새로 틀린 문제: ${newWrongProblems.length}개`);
+                } catch (error) {
+                    console.error('틀린 문제 진행상황 저장 오류:', error);
+                }
+            }
+        }
+
+        // 틀린 문제 진행상황 불러오기
+        function loadWrongProblemProgress() {
+            if (currentSubject) {
+                const progressKey = `wrongProblemProgress_${currentSubject}`;
+                const savedData = localStorage.getItem(progressKey);
+                
+                if (savedData) {
+                    try {
+                        const progressData = JSON.parse(savedData);
+                        
+                        // 과목 정보 확인
+                        if (progressData.subject !== currentSubject) {
+                            console.log('과목이 변경되어 진행상황을 초기화합니다.');
+                            localStorage.removeItem(progressKey);
+                            return null;
+                        }
+                        
+                        // 진행상황 유효성 검사
+                        if (progressData.currentIndex < 0 || progressData.totalProblems <= 0) {
+                            console.log('유효하지 않은 진행상황을 초기화합니다.');
+                            localStorage.removeItem(progressKey);
+                            return null;
+                        }
+                        
+                        console.log(`틀린 문제 진행상황 로드: ${progressData.currentIndex + 1}/${progressData.totalProblems}`);
+                        return progressData;
+                    } catch (error) {
+                        console.error('틀린 문제 진행상황 파싱 오류:', error);
+                        localStorage.removeItem(progressKey);
+                    }
+                }
+            }
+            return null;
+        }
+
+        // 틀린 문제 진행상황 삭제
+        function clearWrongProblemProgress() {
+            if (currentSubject) {
+                const progressKey = `wrongProblemProgress_${currentSubject}`;
+                localStorage.removeItem(progressKey);
+                console.log('틀린 문제 진행상황 삭제됨');
+            }
+        }
+
+        // 새로운 라운드 시작 (틀린 문제들로)
+        function startNewRound() {
+            if (newWrongProblems.length > 0) {
+                wrongProblems = [...newWrongProblems]; // 틀린 문제들을 새 문제 목록으로 설정
+                newWrongProblems = []; // 새로운 틀린 문제 배열 초기화
+                currentProblemIndex = 0;
+                
+                // 새 라운드 정보 업데이트
+                const problemContainer = document.getElementById('problemContainer');
+                const subjectNameInCard = problemContainer.querySelector('#subjectName');
+                if (subjectNameInCard) {
+                    subjectNameInCard.textContent = `${subjectNameInCard.textContent.replace('틀린 문제', '틀린 문제 (재도전)')}`;
+                }
+                document.getElementById('problemInfo').textContent = `문제 ${currentProblemIndex + 1} / ${wrongProblems.length}`;
+                
+                // 새 라운드 시작 시 진행상황 초기화 및 저장
+                saveWrongProblemProgress();
+                
+                // 문제 풀이 시작
+                document.getElementById('problemContainer').style.display = 'block';
+                loadCurrentProblem();
+                
+                console.log(`새 라운드 시작: ${wrongProblems.length}개의 틀린 문제를 다시 풀기`);
+            }
+        }
+
+        // 돌아가기
+        function goBack() {
+            const params = getUrlParams();
+            // 바로 풀기 모드인 경우 대시보드로, 아니면 이전 페이지로
+            if (params.mode === 'solve') {
+                // 틀린 문제풀이 완료 시 진행상황 정리
+                clearWrongProblemProgress();
+                window.location.href = '/profile.html';
+            } else {
+                window.history.back();
+            }
+        }
+
+        // 선택지 클릭 이벤트
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.option')) {
+                const option = e.target.closest('.option');
+                const selectedOption = option.dataset.option;
+                
+                // 기존 선택 해제
+                document.querySelectorAll('.option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                // 새 선택 표시
+                option.classList.add('selected');
+                document.getElementById('selectedAnswer').value = selectedOption;
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+
+        // 폼 제출
+        document.getElementById('problemForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const selectedAnswer = document.getElementById('selectedAnswer').value;
+            if (!selectedAnswer) {
+                alert('답안을 선택해주세요.');
+                return;
+            }
+            
+            try {
+                // 틀린 문제풀이용 별도 API 호출 (진행상황 업데이트 없음)
+                const response = await fetch(`/api/problems/${encodeURIComponent(currentSubject)}/wrong-submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        problemId: currentProblem.id,
+                        answer: selectedAnswer
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const result = document.getElementById('result');
+                    const resultMessage = document.getElementById('resultMessage');
+                    const explanation = document.getElementById('explanation');
+                    
+                    if (data.isCorrect) {
+                        resultMessage.innerHTML = '<span style="color: #28a745;">✓ 정답입니다!</span>';
+                        // 정답인 경우 현재 진행상황 저장 (다음 문제로 이동할 준비)
+                        saveWrongProblemProgress();
+                    } else {
+                        // 정답을 1, 2, 3, 4로 변환
+                        const answerMap = { 'A': '1', 'B': '2', 'C': '3', 'D': '4' };
+                        const displayCorrectAnswer = answerMap[data.correctAnswer] || data.correctAnswer;
+                        
+                        resultMessage.innerHTML = `<span style="color: #dc3545;">✗ 틀렸습니다. 정답은 ${displayCorrectAnswer}번입니다.</span>`;
+                        
+                        // 틀린 문제를 새로운 틀린 문제 배열에 추가
+                        const wrongProblem = {
+                            id: currentProblem.id,
+                            question: currentProblem.question,
+                            option_a: currentProblem.option_a,
+                            option_b: currentProblem.option_b,
+                            option_c: currentProblem.option_c,
+                            option_d: currentProblem.option_d,
+                            correct_answer: data.correctAnswer
+                        };
+                        
+                        // 중복 확인 후 추가
+                        const isDuplicate = newWrongProblems.some(problem => problem.id === wrongProblem.id);
+                        if (!isDuplicate) {
+                            newWrongProblems.push(wrongProblem);
+                            console.log(`틀린 문제 추가: 문제 ID ${wrongProblem.id}, 현재 틀린 문제 수: ${newWrongProblems.length}`);
+                        }
+                        
+                        // 틀렸어도 현재 진행상황은 저장 (같은 문제 다시 시도 가능)
+                        saveWrongProblemProgress();
+                    }
+                    
+                    result.style.display = 'block';
+                    
+                    // 해설이 있으면 표시
+                    if (data.explanation) {
+                        const formattedExplanation = formatCodeBlocks(data.explanation);
+                        explanation.innerHTML = `<strong>해설:</strong> ${formattedExplanation}`;
+                        explanation.style.display = 'block';
+                    }
+                    
+                    // 다음 문제 버튼 표시
+                    document.getElementById('nextBtn').style.display = 'inline-block';
+                    
+                    // 제출 버튼 비활성화
+                    document.getElementById('submitBtn').disabled = true;
+                } else {
+                    alert(data.message || '답안 제출 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('답안 제출 오류:', error);
+                alert('답안 제출 중 오류가 발생했습니다.');
+            }
+        });
+
+        // 키보드 단축키
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '1' && e.key <= '4') {
+                const option = document.querySelector(`[data-option="${e.key}"]`);
+                if (option) {
+                    option.click();
+                }
+            } else if (e.key === 'Enter') {
+                const submitBtn = document.getElementById('submitBtn');
+                if (!submitBtn.disabled) {
+                    submitBtn.click();
+                }
+            }
+        });
+
+        // 코드 블록 포맷팅 함수
+        function formatCodeBlocks(text) {
+            if (!text) return '';
+            
+            // 먼저 ```로 감싸진 코드 블록을 찾아서 HTML로 변환
+            let formattedText = text.replace(/```(\w+)?\n([\s\S]*?)```/g, function(match, language, code) {
+                const lang = language || 'javascript';
+                return `<pre><code class="language-${lang}">${escapeHtml(code.trim())}</code></pre>`;
+            });
+            
+            // 그 다음 `로 감싸진 인라인 코드를 찾아서 HTML로 변환
+            formattedText = formattedText.replace(/`([^`]+)`/g, function(match, code) {
+                return `<code>${escapeHtml(code)}</code>`;
+            });
+            
+            return formattedText;
+        }
+        
+        // HTML 이스케이프 함수
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuthStatus();
+            loadWrongProblems();
+        });
+
+        // 페이지를 떠날 때 진행상황 저장
+        window.addEventListener('beforeunload', () => {
+            if (currentSubject && currentProblemIndex !== null && document.getElementById('problemContainer').style.display !== 'none') {
+                saveWrongProblemProgress();
+            }
+        });
+
+        // 페이지 숨김 시에도 진행상황 저장 (모바일에서 앱 전환 시)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && currentSubject && currentProblemIndex !== null && document.getElementById('problemContainer').style.display !== 'none') {
+                saveWrongProblemProgress();
+            }
+        });
+    </script>
+</body>
+</html> 

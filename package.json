@@ -1,0 +1,36 @@
+{
+  "name": "coding-problems-site",
+  "version": "1.0.0",
+  "description": "4지 선다형 코딩 문제 학습 사이트",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "create-admin": "node create-admin.js",
+    "setup-db": "node setup-database.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "mysql2": "^3.6.5",
+    "nodemailer": "^7.0.5",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "coding",
+    "problems",
+    "learning",
+    "nodejs"
+  ],
+  "author": "",
+  "license": "MIT"
+}

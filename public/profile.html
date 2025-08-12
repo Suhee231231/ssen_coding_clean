@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 학습 | SSEN CODING</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css?v=1.1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+      (function(d) {
+        var config = {
+          kitId: 'web7wnn',
+          scriptTimeout: 3000,
+          async: true
+        },
+        h=d.documentElement,t=setTimeout(function(){h.className=h.className.replace(/\bwf-loading\b/g,"")+" wf-inactive";},config.scriptTimeout),tk=d.createElement("script"),f=false,s=d.getElementsByTagName("script")[0],a;h.className+=" wf-loading";tk.src='https://use.typekit.net/'+config.kitId+'.js';tk.async=true;tk.onload=tk.onreadystatechange=function(){a=this.readyState;if(f||a&&a!="complete"&&a!="loaded")return;f=true;clearTimeout(t);try{Typekit.load(config)}catch(e){}};s.parentNode.insertBefore(tk,s)
+      })(document);
+    </script>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-container">
+                <h1 class="logo"><a href="/" style="text-decoration: none; color: inherit;"><span class="logo-highlight">SSEN</span><span class="logo-underline">C</span>ODING</a></h1>
+                <div class="nav-links">
+                    <a href="/">홈</a>
+                    <a href="/profile.html" class="active">내 학습</a>
+                    <a href="#" onclick="logout()">로그아웃</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main>
+        <div class="profile-layout">
+            <!-- 사이드바 -->
+            <div class="profile-sidebar">
+                <div class="sidebar-header">
+                    <h3>내 학습 관리</h3>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="#" class="sidebar-item active" data-section="dashboard">
+                        <span class="sidebar-icon"><i class="fa-solid fa-book"></i></span>
+                        학습현황
+                    </a>
+                    <a href="#" class="sidebar-item" data-section="account-management">
+                        <span class="sidebar-icon"><i class="fa-solid fa-user"></i></span>
+                        계정관리
+                    </a>
+                </nav>
+            </div>
+
+            <!-- 메인 콘텐츠 영역 -->
+            <div class="profile-content">
+                <!-- 대시보드 섹션 -->
+                <div id="dashboard" class="content-section active">
+                    <div class="section-header">
+                        <h2>학습현황</h2>
+                        <p>과목별 진행상황과 통계를 확인할 수 있습니다. 문제를 풀면 자동으로 업데이트됩니다.</p>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="subjects-progress">
+                            <div class="subjects-grid" id="subjectsGrid">
+                                <!-- 과목별 진행상황이 여기에 로드됩니다 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 계정 관리 섹션 -->
+                <div id="account-management" class="content-section">
+                    <div class="section-header">
+                        <h2>계정관리</h2>
+                        <p>비밀번호 변경 및 회원탈퇴가 가능합니다. 회원탈퇴 시 모든 데이터가 삭제됩니다.</p>
+                    </div>
+                    
+                    
+
+                    <!-- 비밀번호 변경 -->
+                    <div style="margin-bottom: 3rem;">
+                        <h3 style="margin-bottom: 1rem; color: #333;">비밀번호 변경</h3>
+                        <div id="passwordMessage" class="message" style="display: none;"></div>
+                        <form id="passwordForm">
+                            <div class="form-group">
+                                <label for="currentPassword">현재 비밀번호</label>
+                                <input type="password" id="currentPassword" name="currentPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newPassword">새 비밀번호</label>
+                                <input type="password" id="newPassword" name="newPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmNewPassword">새 비밀번호 확인</label>
+                                <input type="password" id="confirmNewPassword" name="confirmNewPassword" required>
+                            </div>
+                            <button type="submit" class="form-btn">비밀번호 변경</button>
+                        </form>
+                    </div>
+
+                    <!-- 회원탈퇴 -->
+                    <div class="danger-zone">
+                        <p>이 작업은 되돌릴 수 없습니다.</p>
+                        <button type="button" class="danger-btn" onclick="showDeleteConfirm()">회원탈퇴</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 회원탈퇴 확인 모달 -->
+    <div id="deleteModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>회원탈퇴 확인</h3>
+            <p>정말로 회원탈퇴를 하시겠습니까?</p>
+            <p><strong>이 작업은 되돌릴 수 없으며, 모든 데이터가 삭제됩니다.</strong></p>
+            <div class="modal-actions">
+                <button type="button" class="form-btn" onclick="hideDeleteConfirm()">취소</button>
+                <button type="button" class="danger-btn" onclick="deleteAccount()">회원탈퇴</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userData = null;
+
+        // 페이지 로드 시 사용자 정보 로드
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserInfo();
+            setupSidebarNavigation();
+            
+            // URL 파라미터 확인하여 해당 섹션 활성화
+            const urlParams = new URLSearchParams(window.location.search);
+            const section = urlParams.get('section');
+            
+            if (section === 'account-management') {
+                // 계정관리 섹션 활성화
+                activateSection('account-management');
+            } else {
+                // 기본적으로 대시보드 활성화
+                activateSection('dashboard');
+            }
+        });
+
+        // 섹션 활성화 함수
+        function activateSection(sectionId) {
+            // 활성 상태 제거
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            
+            // 해당 섹션 활성화
+            const sidebarItem = document.querySelector(`[data-section="${sectionId}"]`);
+            if (sidebarItem) {
+                sidebarItem.classList.add('active');
+            }
+            
+            const contentSection = document.getElementById(sectionId);
+            if (contentSection) {
+                contentSection.classList.add('active');
+            }
+            
+            // 섹션별 데이터 로드
+            if (sectionId === 'dashboard') {
+                loadDashboard();
+            } else if (sectionId === 'account-management') {
+                loadUserInfo();
+            }
+        }
+
+        // 사이드바 네비게이션 설정
+        function setupSidebarNavigation() {
+            const sidebarItems = document.querySelectorAll('.sidebar-item');
+            
+            sidebarItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    const sectionId = item.getAttribute('data-section');
+                    activateSection(sectionId);
+                    
+                    // URL 업데이트 (새로고침 시에도 현재 섹션 유지)
+                    const url = new URL(window.location);
+                    if (sectionId === 'dashboard') {
+                        url.searchParams.delete('section');
+                    } else {
+                        url.searchParams.set('section', sectionId);
+                    }
+                    window.history.pushState({}, '', url);
+                });
+            });
+        }
+
+        // 사용자 정보 로드
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/auth/check');
+                const data = await response.json();
+                
+                if (data.isLoggedIn) {
+                    userData = data.user;
+                    displayUserInfo(data.user);
+                } else {
+                    // 로그인되지 않은 경우 로그인 페이지로 이동
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('사용자 정보 로드 오류:', error);
+            }
+        }
+
+                 // 사용자 정보 표시 (현재는 사용하지 않음)
+         function displayUserInfo(user) {
+             if (!user) {
+                 console.error('사용자 정보가 없습니다.');
+                 return;
+             }
+             // 기본정보 섹션이 삭제되어 현재는 사용하지 않음
+         }
+
+        // 날짜 포맷팅
+        function formatDate(dateString) {
+            if (!dateString) return '알 수 없음';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // 비밀번호 변경
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+            
+            // 비밀번호 확인
+            if (newPassword !== confirmNewPassword) {
+                showMessage('새 비밀번호가 일치하지 않습니다.', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    document.getElementById('passwordForm').reset();
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                console.error('비밀번호 변경 오류:', error);
+                showMessage('서버 오류가 발생했습니다.', 'error');
+            }
+        });
+
+        // 메시지 표시
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('passwordMessage');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // 회원탈퇴 확인 모달 표시
+        function showDeleteConfirm() {
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        // 회원탈퇴 확인 모달 숨기기
+        function hideDeleteConfirm() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        // 회원탈퇴
+        async function deleteAccount() {
+            try {
+                const response = await fetch('/api/auth/delete-account', {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('회원탈퇴가 완료되었습니다.');
+                    window.location.href = '/';
+                } else {
+                    alert(data.message || '회원탈퇴 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('회원탈퇴 오류:', error);
+                alert('서버 오류가 발생했습니다.');
+            }
+        }
+
+        // 대시보드 데이터 로드
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/dashboard/');
+                const data = await response.json();
+
+                if (data.success) {
+                    displayDashboard(data);
+                } else {
+                    console.error('대시보드 로드 실패:', data.message);
+                }
+            } catch (error) {
+                console.error('대시보드 로드 오류:', error);
+            }
+        }
+
+        // 대시보드 표시
+        function displayDashboard(data) {
+            // 과목별 진행상황 표시
+            displaySubjectsProgress(data.subjects);
+        }
+
+
+
+        // 과목별 진행상황 표시
+        function displaySubjectsProgress(subjects) {
+            const subjectsGrid = document.getElementById('subjectsGrid');
+            subjectsGrid.innerHTML = subjects.map(subject => `
+                <div class="subject-progress-card">
+                    <div class="subject-header">
+                        <h4>${subject.name}</h4>
+                        <p>${subject.description}</p>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${subject.progress.answered > 0 ? (subject.progress.answered / subject.progress.total) * 100 : 0}%"></div>
+                    </div>
+                    <div class="progress-stats">
+                        <span>${subject.progress.answered}/${subject.progress.total} 문제</span>
+                        <span>정답률: ${subject.progress.accuracy}%</span>
+                    </div>
+                    <div class="subject-actions">
+                        <a href="/problems.html?subject=${encodeURIComponent(subject.name)}" class="btn-primary">문제 풀기</a>
+                        ${subject.progress.answered > 0 ? `<a href="/wrong-problems.html?subject=${encodeURIComponent(subject.name)}&mode=solve" class="btn-secondary">틀린 문제</a>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 로그아웃
+        async function logout() {
+            try {
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                console.error('로그아웃 오류:', error);
+            }
+        }
+    </script>
+</body>
+</html> 

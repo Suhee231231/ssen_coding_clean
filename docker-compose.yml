@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: coding_problems_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 6305rpqkfk**
+      MYSQL_DATABASE: coding_problems
+      MYSQL_USER: coding_user
+      MYSQL_PASSWORD: coding_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    command: --default-authentication-plugin=mysql_native_password
+
+volumes:
+  mysql_data: 

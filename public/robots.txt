@@ -1,0 +1,32 @@
+User-agent: *
+Allow: /
+
+# 메인 페이지들
+Allow: /index.html
+Allow: /problems.html
+Allow: /login.html
+Allow: /register.html
+Allow: /profile.html
+Allow: /verify-email.html
+
+# RSS 피드
+Allow: /rss
+
+# Sitemap
+Allow: /sitemap.xml
+
+# CSS 및 이미지 파일
+Allow: /css/
+Allow: /favicon.ico
+
+# 관리자 페이지는 크롤링 제한
+Disallow: /admin.html
+
+# API 엔드포인트는 크롤링 제한
+Disallow: /api/
+
+# 인증 관련 경로는 크롤링 제한
+Disallow: /auth/
+
+# Sitemap 위치 알림
+Sitemap: http://localhost:3001/sitemap.xml

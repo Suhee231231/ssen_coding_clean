@@ -1,0 +1,2384 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 페이지 | SSEN CODING</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css?v=1.1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200;300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <script>
+      (function(d) {
+        var config = {
+          kitId: 'web7wnn',
+          scriptTimeout: 3000,
+          async: true
+        },
+        h=d.documentElement,t=setTimeout(function(){h.className=h.className.replace(/\bwf-loading\b/g,"")+" wf-inactive";},config.scriptTimeout),tk=d.createElement("script"),f=false,s=d.getElementsByTagName("script")[0],a;h.className+=" wf-loading";tk.src='https://use.typekit.net/'+config.kitId+'.js';tk.async=true;tk.onload=tk.onreadystatechange=function(){a=this.readyState;if(f||a&&a!="complete"&&a!="loaded")return;f=true;clearTimeout(t);try{Typekit.load(config)}catch(e){}};s.parentNode.insertBefore(tk,s)
+      })(document);
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <style>
+        /* 전체 관리자 페이지에 Noto Serif KR 폰트 적용 */
+        body {
+            font-family: 'Noto Serif KR', serif !important;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+        
+        /* 제목들에 더 굵은 폰트 적용 */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Noto Serif KR', serif !important;
+            font-weight: 600;
+        }
+        
+        /* 버튼과 입력 요소들 */
+        button, input, select, textarea {
+            font-family: 'Noto Serif KR', serif !important;
+            font-weight: 400;
+        }
+        
+        /* 코드 편집기는 모노스페이스 폰트 유지 */
+        .CodeMirror {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+        }
+        
+        /* 네비게이션 로고는 기존 폰트 유지 */
+        .logo {
+            font-family: 'Asta Sans', sans-serif !important;
+        }
+        
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .admin-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .admin-header h1 {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        .admin-header p {
+            font-weight: 300;
+            opacity: 0.9;
+        }
+        
+        .admin-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .admin-tab {
+            padding: 15px 30px;
+            background: #ecf0f1;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            letter-spacing: 0.3px;
+        }
+        
+        .admin-tab.active {
+            background: #00d4aa;
+            color: #1a1a1a;
+        }
+        
+        .admin-tab:hover {
+            background: #00d4aa;
+            color: #1a1a1a;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .problem-form {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+            letter-spacing: 0.2px;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #00d4aa;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .code-editor-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .code-editor-header {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .code-editor-header select {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .CodeMirror {
+            height: 200px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+        }
+        
+        .option-code-editor {
+            margin-top: 10px;
+        }
+        
+        .option-code-editor .CodeMirror {
+            height: 120px;
+        }
+        
+        .code-preview {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .code-preview pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        
+        .btn-primary {
+            background: #00d4aa;
+            color: #1a1a1a;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.3px;
+        }
+        
+        .btn-primary:hover {
+            background: #00b894;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-danger:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .btn-danger:disabled:hover {
+            background: #bdc3c7;
+        }
+        
+        .subjects-order-list {
+            margin-top: 15px;
+        }
+        
+        .subject-order-item {
+            background: white;
+            padding: 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s;
+        }
+        
+        .subject-order-item:hover {
+            border-color: #00d4aa;
+            box-shadow: 0 2px 8px rgba(0, 212, 170, 0.2);
+        }
+        
+        .subject-order-item.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+        
+        .subject-order-handle {
+            cursor: move;
+            color: #7f8c8d;
+            margin-right: 15px;
+            font-size: 18px;
+        }
+        
+        .subject-order-info {
+            flex: 1;
+        }
+        
+        .subject-order-info h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+        
+        .subject-order-info p {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .subject-order-number {
+            background: #00d4aa;
+            color: #1a1a1a;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-left: 15px;
+        }
+        
+        .problems-list {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .problem-item {
+            padding: 20px;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .problem-item:last-child {
+            border-bottom: none;
+        }
+        
+        .problem-info h4 {
+            margin: 0 0 8px 0;
+            color: #2c3e50;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        
+        .problem-info p {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 14px;
+            line-height: 1.5;
+            font-weight: 300;
+        }
+        
+        .problem-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #00d4aa;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+        
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .success-message {
+            background: #27ae60;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 0;
+            border: none;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+        }
+        
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .close:hover {
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.3px;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn-secondary:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .btn-secondary:disabled:hover {
+            background: #bdc3c7;
+        }
+        
+        #pagination {
+            border-top: 1px solid #ecf0f1;
+            padding-top: 20px;
+        }
+        
+        #pagination button {
+            min-width: 80px;
+        }
+        
+        #gotoPage {
+            border: 2px solid #ecf0f1;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        #gotoPage:focus {
+            outline: none;
+            border-color: #00d4aa;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-container">
+                <h1 class="logo"><a href="/" style="text-decoration: none; color: inherit;"><span class="logo-highlight">SSEN</span><span class="logo-underline">C</span>ODING</a></h1>
+                <div class="nav-links">
+                    <a href="/">홈으로</a>
+                    <a href="#" onclick="logout()">로그아웃</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="admin-container">
+        <div class="admin-header">
+            <h1>관리자 대시보드</h1>
+            <p>코딩 문제를 관리하고 새로운 문제를 추가하세요.</p>
+        </div>
+
+        <div id="messageContainer"></div>
+
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="showTab('dashboard')">대시보드</button>
+            <button class="admin-tab" onclick="showTab('add-problem')">문제 추가</button>
+            <button class="admin-tab" onclick="showTab('manage-problems')">문제 관리</button>
+            <button class="admin-tab" onclick="showTab('manage-subjects')">과목 관리</button>
+            <button class="admin-tab" onclick="showTab('change-password')">비밀번호 변경</button>
+        </div>
+
+        <!-- 대시보드 탭 -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid" id="statsGrid">
+                <!-- 통계가 여기에 로드됩니다 -->
+            </div>
+        </div>
+
+        <!-- 문제 추가 탭 -->
+        <div id="add-problem" class="tab-content">
+            <div class="problem-form">
+                <h3>새 문제 추가</h3>
+                <form id="addProblemForm">
+                    <div class="form-group">
+                        <label for="subject">과목 선택</label>
+                        <select id="subject" name="subject" required onchange="updateCodeMode()">
+                            <option value="">과목을 선택하세요</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="question">문제</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>문제 텍스트</span>
+                                <button type="button" onclick="toggleCodeEditor('question')" style="padding: 4px 8px; font-size: 12px; background: #00d4aa; color: white; border: none; border-radius: 3px; cursor: pointer;">코드 에디터</button>
+                            </div>
+                            <textarea id="question" name="question" required placeholder="문제를 입력하세요. 코드가 포함된 경우 코드 에디터를 사용하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="option_a">1번</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>1번 텍스트</span>
+                                <button type="button" onclick="toggleCodeEditor('option_a')" style="padding: 4px 8px; font-size: 12px; background: #00d4aa; color: white; border: none; border-radius: 3px; cursor: pointer;">코드 에디터</button>
+                            </div>
+                            <textarea id="option_a" name="option_a" required placeholder="1번을 입력하세요. 코드가 포함된 경우 코드 에디터를 사용하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="option_b">2번</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>2번 텍스트</span>
+                                <button type="button" onclick="toggleCodeEditor('option_b')" style="padding: 4px 8px; font-size: 12px; background: #00d4aa; color: white; border: none; border-radius: 3px; cursor: pointer;">코드 에디터</button>
+                            </div>
+                            <textarea id="option_b" name="option_b" required placeholder="2번을 입력하세요. 코드가 포함된 경우 코드 에디터를 사용하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="option_c">3번</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>3번 텍스트</span>
+                                <button type="button" onclick="toggleCodeEditor('option_c')" style="padding: 4px 8px; font-size: 12px; background: #00d4aa; color: white; border: none; border-radius: 3px; cursor: pointer;">코드 에디터</button>
+                            </div>
+                            <textarea id="option_c" name="option_c" required placeholder="3번을 입력하세요. 코드가 포함된 경우 코드 에디터를 사용하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="option_d">4번</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>4번 텍스트</span>
+                                <button type="button" onclick="toggleCodeEditor('option_d')" style="padding: 4px 8px; font-size: 12px; background: #00d4aa; color: white; border: none; border-radius: 3px; cursor: pointer;">코드 에디터</button>
+                            </div>
+                            <textarea id="option_d" name="option_d" required placeholder="4번을 입력하세요. 코드가 포함된 경우 코드 에디터를 사용하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="correct_answer">정답</label>
+                        <select id="correct_answer" name="correct_answer" required>
+                            <option value="">정답을 선택하세요</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="explanation">해설</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>해설 텍스트</span>
+                                <button type="button" onclick="toggleCodeEditor('explanation')" style="padding: 4px 8px; font-size: 12px; background: #00d4aa; color: white; border: none; border-radius: 3px; cursor: pointer;">코드 에디터</button>
+                            </div>
+                            <textarea id="explanation" name="explanation" required placeholder="문제 해설을 입력하세요. 코드가 포함된 경우 코드 에디터를 사용하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="difficulty">난이도</label>
+                        <select id="difficulty" name="difficulty" required>
+                            <option value="easy">쉬움</option>
+                            <option value="medium">보통</option>
+                            <option value="hard">어려움</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">문제 추가</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 문제 관리 탭 -->
+        <div id="manage-problems" class="tab-content">
+            <div class="problem-form" style="margin-bottom: 20px;">
+                <h3>문제 검색</h3>
+                <div class="form-group">
+                    <label for="problemSearch">문제 검색 (문제 내용, 과목명, ID, 과목별문제번호로 검색)</label>
+                    <input type="text" id="problemSearch" placeholder="검색어를 입력하세요... (예: HTML 4, ID:826)" style="width: 100%; padding: 10px;">
+                </div>
+                <div class="form-group">
+                    <label for="subjectFilter">과목 필터</label>
+                    <select id="subjectFilter" style="width: 200px; padding: 10px;">
+                        <option value="">모든 과목</option>
+                    </select>
+                    <label for="difficultyFilter" style="margin-left: 20px;">난이도 필터</label>
+                    <select id="difficultyFilter" style="width: 150px; padding: 10px;">
+                        <option value="">모든 난이도</option>
+                        <option value="easy">쉬움</option>
+                        <option value="medium">보통</option>
+                        <option value="hard">어려움</option>
+                    </select>
+                    <button type="button" class="btn-primary" onclick="searchProblems()" style="margin-left: 20px;">검색</button>
+                    <button type="button" class="btn-secondary" onclick="clearSearch()" style="margin-left: 10px;">초기화</button>
+                </div>
+                <div class="form-group">
+                    <label for="pageSize">페이지당 표시 개수:</label>
+                    <select id="pageSize" onchange="changePageSize()" style="width: 120px; padding: 8px; margin-left: 10px;">
+                        <option value="20">20개</option>
+                        <option value="50" selected>50개</option>
+                        <option value="100">100개</option>
+                        <option value="200">200개</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- 페이지네이션 -->
+            <div id="pagination" style="text-align: center; margin: 20px 0; display: none;">
+                <button id="prevPage" class="btn-secondary" onclick="goToPage(currentPage - 1)" style="margin: 0 5px;">&lt; 이전</button>
+                <span id="pageInfo" style="margin: 0 20px; font-weight: bold;"></span>
+                <button id="nextPage" class="btn-secondary" onclick="goToPage(currentPage + 1)" style="margin: 0 5px;">다음 &gt;</button>
+                <div style="margin-top: 10px;">
+                    <input type="number" id="gotoPage" placeholder="페이지 번호" style="width: 100px; padding: 5px; margin: 0 10px;" min="1">
+                    <button class="btn-secondary" onclick="goToPageInput()" style="padding: 5px 15px;">이동</button>
+                </div>
+            </div>
+            
+            <div class="problems-list" id="problemsList">
+                <!-- 문제 목록이 여기에 로드됩니다 -->
+            </div>
+        </div>
+
+        <!-- 과목 관리 탭 -->
+        <div id="manage-subjects" class="tab-content">
+            <div class="problem-form">
+                <h3>새 과목 추가</h3>
+                <form id="addSubjectForm">
+                    <div class="form-group">
+                        <label for="subject-name">과목명</label>
+                        <input type="text" id="subject-name" name="subject-name" required placeholder="과목명을 입력하세요">
+                    </div>
+                    <div class="form-group">
+                        <label for="subject-description">과목 설명</label>
+                        <textarea id="subject-description" name="subject-description" placeholder="과목에 대한 설명을 입력하세요"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject-category">카테고리</label>
+                        <input type="text" id="subject-category" name="subject-category" placeholder="예: Frontend, Backend, Database" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject-public">
+                            <input type="checkbox" id="subject-public" name="subject-public" style="width: auto; margin-right: 10px;">
+                            공개 설정 (체크하면 사용자들이 접근할 수 있습니다)
+                        </label>
+                    </div>
+                    <button type="submit" class="btn-primary">과목 추가</button>
+                </form>
+            </div>
+            
+            <div class="problem-form">
+                <h3>과목 순서 관리</h3>
+                <p>드래그하여 과목 순서를 변경할 수 있습니다. 변경 후 "순서 저장" 버튼을 클릭하세요.</p>
+                <div class="subjects-order-list" id="subjectsOrderList">
+                    <!-- 과목 순서 목록이 여기에 로드됩니다 -->
+                </div>
+                <button type="button" class="btn-primary" onclick="saveSubjectsOrder()" style="margin-top: 15px;">순서 저장</button>
+            </div>
+            
+            <div class="problems-list" id="subjectsList">
+                <!-- 과목 목록이 여기에 로드됩니다 -->
+            </div>
+        </div>
+
+        <!-- 비밀번호 변경 탭 -->
+        <div id="change-password" class="tab-content">
+            <div class="problem-form">
+                <h3>비밀번호 변경</h3>
+                <form id="changePasswordForm">
+                    <div class="form-group">
+                        <label for="current-password">현재 비밀번호</label>
+                        <input type="password" id="current-password" name="current-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">새 비밀번호</label>
+                        <input type="password" id="new-password" name="new-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-password">새 비밀번호 확인</label>
+                        <input type="password" id="confirm-password" name="confirm-password" required>
+                    </div>
+                    <button type="submit" class="btn-primary">비밀번호 변경</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- 과목 수정 모달 -->
+    <div id="editSubjectModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>과목 수정</h3>
+                <span class="close" onclick="closeEditSubjectModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editSubjectForm">
+                    <input type="hidden" id="edit-subject-id" name="subject-id">
+                    <div class="form-group">
+                        <label for="edit-subject-name">과목명</label>
+                        <input type="text" id="edit-subject-name" name="subject-name" required placeholder="과목명을 입력하세요">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-subject-description">과목 설명</label>
+                        <textarea id="edit-subject-description" name="subject-description" placeholder="과목에 대한 설명을 입력하세요"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-subject-category">카테고리</label>
+                        <input type="text" id="edit-subject-category" name="subject-category" placeholder="예: Frontend, Backend, Database" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-subject-public">
+                            <input type="checkbox" id="edit-subject-public" name="subject-public" style="width: auto; margin-right: 10px;">
+                            공개 설정 (체크하면 사용자들이 접근할 수 있습니다)
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">수정 완료</button>
+                        <button type="button" class="btn-secondary" onclick="closeEditSubjectModal()">취소</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 문제 수정 모달 -->
+    <div id="editProblemModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>문제 수정</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editProblemForm">
+                    <input type="hidden" id="edit-problem-id" name="problem-id">
+                    <div class="form-group">
+                        <label for="edit-subject">과목 선택</label>
+                        <select id="edit-subject" name="subject" required onchange="updateEditCodeMode()">
+                            <option value="">과목을 선택하세요</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-question">문제</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>문제 텍스트</span>
+                                <button type="button" onclick="toggleEditCodeEditor('question')" style="padding: 4px 8px; font-size: 12px; background: #00d4aa; color: white; border: none; border-radius: 3px; cursor: pointer;">코드 에디터</button>
+                            </div>
+                            <textarea id="edit-question" name="question" required placeholder="문제를 입력하세요. 코드가 포함된 경우 코드 에디터를 사용하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-option_a">1번</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>1번 텍스트</span>
+                                <button type="button" onclick="toggleEditCodeEditor('option_a')" style="padding: 4px 8px; font-size: 12px; background: #00d4aa; color: white; border: none; border-radius: 3px; cursor: pointer;">코드 에디터</button>
+                            </div>
+                            <textarea id="edit-option_a" name="option_a" required placeholder="1번을 입력하세요. 코드가 포함된 경우 코드 에디터를 사용하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-option_b">2번</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>2번 텍스트</span>
+                                <button type="button" onclick="toggleEditCodeEditor('option_b')" style="padding: 4px 8px; font-size: 12px; background: #00d4aa; color: white; border: none; border-radius: 3px; cursor: pointer;">코드 에디터</button>
+                            </div>
+                            <textarea id="edit-option_b" name="option_b" required placeholder="2번을 입력하세요. 코드가 포함된 경우 코드 에디터를 사용하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-option_c">3번</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>3번 텍스트</span>
+                                <button type="button" onclick="toggleEditCodeEditor('option_c')" style="padding: 4px 8px; font-size: 12px; background: #00d4aa; color: white; border: none; border-radius: 3px; cursor: pointer;">코드 에디터</button>
+                            </div>
+                            <textarea id="edit-option_c" name="option_c" required placeholder="3번을 입력하세요. 코드가 포함된 경우 코드 에디터를 사용하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-option_d">4번</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>4번 텍스트</span>
+                                <button type="button" onclick="toggleEditCodeEditor('option_d')" style="padding: 4px 8px; font-size: 12px; background: #00d4aa; color: white; border: none; border-radius: 3px; cursor: pointer;">코드 에디터</button>
+                            </div>
+                            <textarea id="edit-option_d" name="option_d" required placeholder="4번을 입력하세요. 코드가 포함된 경우 코드 에디터를 사용하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-correct_answer">정답</label>
+                        <select id="edit-correct_answer" name="correct_answer" required>
+                            <option value="">정답을 선택하세요</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-explanation">해설</label>
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>해설 텍스트</span>
+                                <button type="button" onclick="toggleEditCodeEditor('explanation')" style="padding: 4px 8px; font-size: 12px; background: #00d4aa; color: white; border: none; border-radius: 3px; cursor: pointer;">코드 에디터</button>
+                            </div>
+                            <textarea id="edit-explanation" name="explanation" required placeholder="문제 해설을 입력하세요. 코드가 포함된 경우 코드 에디터를 사용하세요."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-difficulty">난이도</label>
+                        <select id="edit-difficulty" name="difficulty" required>
+                            <option value="easy">쉬움</option>
+                            <option value="medium">보통</option>
+                            <option value="hard">어려움</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">수정 완료</button>
+                        <button type="button" class="btn-secondary" onclick="closeEditModal()">취소</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 관리자 권한 확인
+        async function checkAdminAuth() {
+            try {
+                const response = await fetch('/api/auth/check');
+                const data = await response.json();
+                
+                if (!data.isLoggedIn || !data.isAdmin) {
+                    alert('관리자 권한이 필요합니다.');
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                console.error('권한 확인 오류:', error);
+                window.location.href = '/';
+            }
+        }
+
+        // 탭 전환
+        function showTab(tabName) {
+            // 모든 탭과 콘텐츠 숨기기
+            document.querySelectorAll('.admin-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 선택된 탭과 콘텐츠 보이기
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            // 탭별 데이터 로드
+            if (tabName === 'dashboard') {
+                loadDashboardStats();
+            } else if (tabName === 'manage-problems') {
+                loadProblems();
+            } else if (tabName === 'manage-subjects') {
+                loadSubjectsList();
+            }
+        }
+
+        // 대시보드 통계 로드
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch('/api/admin/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const statsGrid = document.getElementById('statsGrid');
+                    statsGrid.innerHTML = `
+                        <div class="stat-card">
+                            <div class="stat-number">${data.stats.totalProblems}</div>
+                            <div class="stat-label">총 문제 수</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.stats.totalSubjects}</div>
+                            <div class="stat-label">총 과목 수</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.stats.totalUsers}</div>
+                            <div class="stat-label">총 사용자 수</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.stats.totalAttempts}</div>
+                            <div class="stat-label">총 풀이 시도</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('통계 로드 오류:', error);
+            }
+        }
+
+        // 과목 목록 로드 (문제 추가 폼용 - 모든 과목)
+        async function loadSubjects() {
+            try {
+                const response = await fetch('/api/admin/subjects');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const subjectSelect = document.getElementById('subject');
+                    subjectSelect.innerHTML = '<option value="">과목을 선택하세요</option>';
+                    
+                    data.subjects.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject.id;
+                        option.textContent = `${subject.name} ${subject.is_public ? '(공개)' : '(비공개)'}`;
+                        subjectSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('과목 로드 오류:', error);
+            }
+        }
+
+        // 문제 추가
+        async function addProblem(formData) {
+            try {
+                // 폼 유효성 검사
+                const form = document.getElementById('addProblemForm');
+                if (!form.checkValidity()) {
+                    // 숨겨진 필드들을 임시로 활성화하여 유효성 검사
+                    const hiddenFields = form.querySelectorAll('input[disabled], textarea[disabled]');
+                    hiddenFields.forEach(field => {
+                        field.removeAttribute('disabled');
+                        field.style.display = 'block';
+                    });
+                    
+                    // 유효성 검사 실행
+                    form.reportValidity();
+                    
+                    // 다시 숨김
+                    hiddenFields.forEach(field => {
+                        field.setAttribute('disabled', 'disabled');
+                        field.style.display = 'none';
+                    });
+                    
+                    return;
+                }
+                
+                // FormData를 객체로 변환
+                const problemData = {
+                    subject_id: formData.get('subject_id'),
+                    question: formData.get('question'),
+                    option_a: formData.get('option_a'),
+                    option_b: formData.get('option_b'),
+                    option_c: formData.get('option_c'),
+                    option_d: formData.get('option_d'),
+                    correct_answer: formData.get('correct_answer'),
+                    explanation: formData.get('explanation'),
+                    difficulty: formData.get('difficulty')
+                };
+                
+                // 디버깅을 위한 로그
+                console.log('전송할 데이터:', problemData);
+                
+                const response = await fetch('/api/admin/problems', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(problemData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('문제가 성공적으로 추가되었습니다.', 'success');
+                    document.getElementById('addProblemForm').reset();
+                    
+                    // 코드 에디터 초기화
+                    if (questionEditor) {
+                        questionEditor.setValue('');
+                    }
+                    if (explanationEditor) {
+                        explanationEditor.setValue('');
+                    }
+                    Object.values(optionEditors).forEach(editor => {
+                        if (editor) {
+                            editor.setValue('');
+                        }
+                    });
+                    
+                    loadProblems(); // 문제 목록 새로고침
+                } else {
+                    showMessage(data.message || '문제 추가에 실패했습니다.', 'error');
+                }
+            } catch (error) {
+                console.error('문제 추가 오류:', error);
+                showMessage('문제 추가 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        // 전역 변수로 모든 문제 저장
+        let allProblems = [];
+        let filteredProblems = [];
+        let currentPage = 1;
+        let pageSize = 50;
+        
+        // HTML 이스케이프 함수
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // 문제 목록 로드
+        async function loadProblems() {
+            try {
+                console.log('문제 목록 로드 시작...');
+                const response = await fetch('/api/admin/problems');
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log(`문제 목록 로드 성공: ${data.problems.length}개`);
+                    
+                    // 전역 변수에 모든 문제 저장
+                    allProblems = data.problems;
+                    filteredProblems = data.problems;
+                    
+                    // 페이지 상태 복원이 필요한 경우가 아니면 첫 페이지로
+                    if (!window.currentEditPage) {
+                        currentPage = 1;
+                    }
+                    
+                    // 검색 필터의 과목 옵션 업데이트
+                    loadSubjectFilter();
+                    
+                    // 페이지네이션과 함께 문제 표시
+                    displayProblemsWithPagination();
+                    
+                    console.log('✅ 문제 목록 렌더링 완료');
+                } else {
+                    console.error('❌ API 응답 실패:', data.message);
+                    showMessage(data.message || '문제 목록을 불러올 수 없습니다.', 'error');
+                }
+            } catch (error) {
+                console.error('❌ 문제 목록 로드 오류:', error);
+                showMessage('문제 목록 로드 중 오류가 발생했습니다.', 'error');
+            }
+        }
+        
+        // 페이지네이션과 함께 문제 표시
+        function displayProblemsWithPagination() {
+            console.log('📊 displayProblemsWithPagination 함수 시작');
+            console.log('📊 filteredProblems.length:', filteredProblems.length);
+            console.log('📊 pageSize:', pageSize);
+            console.log('📊 currentPage:', currentPage);
+            
+            const totalProblems = filteredProblems.length;
+            const totalPages = Math.ceil(totalProblems / pageSize);
+            
+            // 현재 페이지 범위 계산
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, totalProblems);
+            const currentPageProblems = filteredProblems.slice(startIndex, endIndex);
+            
+            console.log('totalPages:', totalPages);
+            console.log('startIndex:', startIndex);
+            console.log('endIndex:', endIndex);
+            console.log('currentPageProblems.length:', currentPageProblems.length);
+            
+            // 헤더 텍스트 생성
+            const headerText = `페이지 ${currentPage}/${totalPages} (${startIndex + 1}-${endIndex}번째 문제, 총 ${totalProblems}개)`;
+            
+            // 문제 표시
+            displayProblems(currentPageProblems, headerText);
+            
+            // 페이지네이션 UI 업데이트
+            updatePagination(totalPages);
+            
+            console.log('displayProblemsWithPagination 함수 완료');
+        }
+        
+        // 문제 표시 함수
+        function displayProblems(problems, headerText) {
+            console.log('displayProblems 함수 시작');
+            console.log('problems.length:', problems.length);
+            console.log('headerText:', headerText);
+            
+            const problemsList = document.getElementById('problemsList');
+            console.log('problemsList 엘리먼트:', problemsList);
+            
+            if (!problemsList) {
+                console.error('problemsList 엘리먼트를 찾을 수 없습니다!');
+                return;
+            }
+            
+            // 헤더 정보 추가
+            let headerHTML = `
+                <div class="problem-item" style="background: #f8f9fa; border-bottom: 2px solid #00d4aa;">
+                    <div class="problem-info">
+                        <h4>${headerText}</h4>
+                        <p>검색 및 필터 기능을 사용하여 특정 문제를 찾아보세요</p>
+                    </div>
+                </div>
+            `;
+            
+            console.log('문제 HTML 생성 시작...');
+            const problemsHTML = problems.map((problem, index) => {
+                try {
+                    if (index < 3) { // 처음 3개만 로그
+                        console.log(`문제 ${index + 1}:`, problem.id, problem.question ? problem.question.substring(0, 50) : 'No question');
+                    }
+                    
+                    // 안전한 데이터 처리
+                    const safeId = problem.id || 'unknown';
+                    const safeSubjectName = problem.subject_name || '알 수 없음';
+                    const safeDifficulty = problem.difficulty || '보통';
+                    const safeCreatedAt = problem.created_at ? new Date(problem.created_at).toLocaleDateString() : '날짜 없음';
+                    
+                    // 정답을 1, 2, 3, 4로 변환
+                    const answerMap = { 'A': '1', 'B': '2', 'C': '3', 'D': '4' };
+                    const displayCorrectAnswer = answerMap[problem.correct_answer] || problem.correct_answer || '?';
+                    
+                    // 문제 제목을 안전하게 처리 - HTML 이스케이프
+                    const questionPreview = problem.question 
+                        ? escapeHtml(problem.question.replace(/\n/g, ' ').substring(0, 80)) + (problem.question.length > 80 ? '...' : '')
+                        : '문제 내용 없음';
+                    
+                    // 과목별 문제번호 표시
+                    const subjectProblemNumber = problem.subject_problem_number || '?';
+                    
+                    return `
+                        <div class="problem-item">
+                            <div class="problem-info">
+                                <h4>${escapeHtml(safeSubjectName)} ${subjectProblemNumber}번 (ID: ${safeId}) - ${questionPreview}</h4>
+                                <p>과목: ${escapeHtml(safeSubjectName)} | 과목내번호: ${subjectProblemNumber} | 난이도: ${safeDifficulty} | 정답: ${displayCorrectAnswer} | 생성: ${safeCreatedAt}</p>
+                            </div>
+                            <div class="problem-actions">
+                                <button class="btn-primary" onclick="editProblem(${safeId})">수정</button>
+                                <button class="btn-danger" onclick="deleteProblem(${safeId})">삭제</button>
+                            </div>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error(`문제 ${index + 1} HTML 생성 오류:`, error, problem);
+                    return `
+                        <div class="problem-item" style="background-color: #ffe6e6;">
+                            <div class="problem-info">
+                                <h4>오류 - ID: ${problem.id || 'unknown'}</h4>
+                                <p>이 문제를 표시하는 중 오류가 발생했습니다.</p>
+                            </div>
+                            <div class="problem-actions">
+                                <button class="btn-danger" onclick="deleteProblem(${problem.id || 0})">삭제</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+            
+            console.log('HTML 생성 완료, DOM에 적용 중...');
+            problemsList.innerHTML = headerHTML + problemsHTML;
+            console.log('DOM 업데이트 완료');
+            console.log('최종 problemsList.innerHTML 길이:', problemsList.innerHTML.length);
+            
+            // DOM이 실제로 업데이트되었는지 확인
+            setTimeout(() => {
+                const items = problemsList.querySelectorAll('.problem-item');
+                console.log('실제 DOM에 렌더링된 problem-item 개수:', items.length);
+            }, 100);
+        }
+        
+        // 페이지네이션 UI 업데이트
+        function updatePagination(totalPages) {
+            console.log('페이지네이션 업데이트 시작, totalPages:', totalPages);
+            
+            const pagination = document.getElementById('pagination');
+            const pageInfo = document.getElementById('pageInfo');
+            const prevButton = document.getElementById('prevPage');
+            const nextButton = document.getElementById('nextPage');
+            const gotoPageInput = document.getElementById('gotoPage');
+            
+            console.log('페이지네이션 엘리먼트들:', {
+                pagination: !!pagination,
+                pageInfo: !!pageInfo,
+                prevButton: !!prevButton,
+                nextButton: !!nextButton,
+                gotoPageInput: !!gotoPageInput
+            });
+            
+            if (totalPages <= 1) {
+                console.log('totalPages <= 1, 페이지네이션 숨김');
+                if (pagination) pagination.style.display = 'none';
+                return;
+            }
+            
+            if (pagination) {
+                pagination.style.display = 'block';
+                console.log('페이지네이션 표시됨');
+            }
+            
+            if (pageInfo) {
+                pageInfo.textContent = `${currentPage} / ${totalPages} 페이지`;
+                console.log('페이지 정보 업데이트:', pageInfo.textContent);
+            }
+            
+            // 이전/다음 버튼 활성화/비활성화
+            if (prevButton) {
+                prevButton.disabled = currentPage <= 1;
+                console.log('이전 버튼 상태:', prevButton.disabled ? 'disabled' : 'enabled');
+            }
+            if (nextButton) {
+                nextButton.disabled = currentPage >= totalPages;
+                console.log('다음 버튼 상태:', nextButton.disabled ? 'disabled' : 'enabled');
+            }
+            
+            // 페이지 이동 input 설정
+            if (gotoPageInput) {
+                gotoPageInput.max = totalPages;
+                gotoPageInput.value = '';
+                console.log('페이지 이동 input 설정 완료, max:', totalPages);
+            }
+        }
+        
+        // 페이지 이동
+        function goToPage(page) {
+            const totalPages = Math.ceil(filteredProblems.length / pageSize);
+            
+            if (page < 1 || page > totalPages) {
+                return;
+            }
+            
+            currentPage = page;
+            displayProblemsWithPagination();
+            
+            // 스크롤을 맨 위로
+            document.getElementById('problemsList').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 페이지 번호 입력으로 이동
+        function goToPageInput() {
+            const pageInput = document.getElementById('gotoPage');
+            const page = parseInt(pageInput.value);
+            
+            if (isNaN(page)) {
+                alert('올바른 페이지 번호를 입력해주세요.');
+                return;
+            }
+            
+            goToPage(page);
+        }
+        
+        // 페이지 크기 변경
+        function changePageSize() {
+            const pageSizeSelect = document.getElementById('pageSize');
+            pageSize = parseInt(pageSizeSelect.value);
+            currentPage = 1; // 첫 페이지로 리셋
+            displayProblemsWithPagination();
+        }
+        
+        // 검색 필터의 과목 옵션 로드
+        function loadSubjectFilter() {
+            const subjectFilter = document.getElementById('subjectFilter');
+            if (!subjectFilter) return;
+            
+            const subjects = [...new Set(allProblems.map(p => p.subject_name))];
+            subjectFilter.innerHTML = '<option value="">모든 과목</option>';
+            
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                subjectFilter.appendChild(option);
+            });
+        }
+        
+        // 문제 검색 함수
+        function searchProblems() {
+            const searchTerm = document.getElementById('problemSearch').value.toLowerCase();
+            const subjectFilter = document.getElementById('subjectFilter').value;
+            const difficultyFilter = document.getElementById('difficultyFilter').value;
+            
+            filteredProblems = allProblems;
+            
+            // 텍스트 검색 (문제 내용, 과목명, ID, 과목별 문제번호)
+            if (searchTerm) {
+                filteredProblems = filteredProblems.filter(problem => 
+                    problem.question.toLowerCase().includes(searchTerm) ||
+                    problem.subject_name.toLowerCase().includes(searchTerm) ||
+                    problem.id.toString().includes(searchTerm) ||
+                    (problem.subject_problem_number && problem.subject_problem_number.toString().includes(searchTerm)) ||
+                    problem.option_a.toLowerCase().includes(searchTerm) ||
+                    problem.option_b.toLowerCase().includes(searchTerm) ||
+                    problem.option_c.toLowerCase().includes(searchTerm) ||
+                    problem.option_d.toLowerCase().includes(searchTerm) ||
+                    problem.explanation.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // 과목 필터
+            if (subjectFilter) {
+                filteredProblems = filteredProblems.filter(problem => 
+                    problem.subject_name === subjectFilter
+                );
+            }
+            
+            // 난이도 필터
+            if (difficultyFilter) {
+                filteredProblems = filteredProblems.filter(problem => 
+                    problem.difficulty === difficultyFilter
+                );
+            }
+            
+            // 페이지 상태 복원이 필요한 경우가 아니면 첫 페이지로 이동
+            if (!window.currentEditPage) {
+                currentPage = 1;
+            }
+            displayProblemsWithPagination();
+        }
+        
+        // 검색 초기화
+        function clearSearch() {
+            document.getElementById('problemSearch').value = '';
+            document.getElementById('subjectFilter').value = '';
+            document.getElementById('difficultyFilter').value = '';
+            
+            // 전체 문제로 리셋
+            filteredProblems = allProblems;
+            currentPage = 1;
+            displayProblemsWithPagination();
+        }
+
+        // 문제 수정 모달 열기
+        async function editProblem(problemId) {
+            console.log('🚀 editProblem 함수 호출됨 - problemId:', problemId);
+            try {
+                // 현재 페이지 상태 저장
+                window.currentEditPage = currentPage;
+                window.currentEditPageSize = pageSize;
+                window.currentEditSearchTerm = document.getElementById('problemSearch').value;
+                window.currentEditSubjectFilter = document.getElementById('subjectFilter').value;
+                window.currentEditDifficultyFilter = document.getElementById('difficultyFilter').value;
+                
+                console.log('🔍 문제 수정 모달 열기 - 저장된 상태:', {
+                    currentPage: window.currentEditPage,
+                    pageSize: window.currentEditPageSize,
+                    searchTerm: window.currentEditSearchTerm,
+                    subjectFilter: window.currentEditSubjectFilter,
+                    difficultyFilter: window.currentEditDifficultyFilter
+                });
+                
+                // 문제 정보 가져오기
+                const response = await fetch(`/api/admin/problems/${problemId}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    showMessage('문제 정보를 가져올 수 없습니다.', 'error');
+                    return;
+                }
+                
+                const problem = data.problem;
+                
+                // 수정 모달의 과목 선택 옵션 로드
+                await loadEditSubjects();
+                
+                // 정답을 1, 2, 3, 4로 변환
+                const answerMap = { 'A': '1', 'B': '2', 'C': '3', 'D': '4' };
+                const displayCorrectAnswer = answerMap[problem.correct_answer] || problem.correct_answer;
+                
+                // 모달 필드에 데이터 설정
+                document.getElementById('edit-problem-id').value = problem.id;
+                document.getElementById('edit-subject').value = problem.subject_id;
+                document.getElementById('edit-question').value = problem.question;
+                document.getElementById('edit-option_a').value = problem.option_a;
+                document.getElementById('edit-option_b').value = problem.option_b;
+                document.getElementById('edit-option_c').value = problem.option_c;
+                document.getElementById('edit-option_d').value = problem.option_d;
+                document.getElementById('edit-correct_answer').value = displayCorrectAnswer;
+                document.getElementById('edit-explanation').value = problem.explanation;
+                document.getElementById('edit-difficulty').value = problem.difficulty;
+                
+                // 모달 열기
+                document.getElementById('editProblemModal').style.display = 'block';
+                
+            } catch (error) {
+                console.error('문제 정보 로드 오류:', error);
+                showMessage('문제 정보를 불러오는 중 오류가 발생했습니다.', 'error');
+            }
+        }
+        
+        // 수정 모달용 과목 목록 로드 (모든 과목)
+        async function loadEditSubjects() {
+            try {
+                const response = await fetch('/api/admin/subjects');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const subjectSelect = document.getElementById('edit-subject');
+                    subjectSelect.innerHTML = '<option value="">과목을 선택하세요</option>';
+                    
+                    data.subjects.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject.id;
+                        option.textContent = `${subject.name} ${subject.is_public ? '(공개)' : '(비공개)'}`;
+                        subjectSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('수정 모달 과목 로드 오류:', error);
+            }
+        }
+        
+        // 문제 수정 모달 닫기
+        function closeEditModal() {
+            document.getElementById('editProblemModal').style.display = 'none';
+            
+            // 수정 모달 에디터들 정리
+            if (editQuestionEditor) {
+                editQuestionEditor.toTextArea();
+                editQuestionEditor = null;
+            }
+            if (editExplanationEditor) {
+                editExplanationEditor.toTextArea();
+                editExplanationEditor = null;
+            }
+            Object.values(editOptionEditors).forEach(editor => {
+                if (editor) {
+                    editor.toTextArea();
+                }
+            });
+            editOptionEditors = {};
+        }
+        
+        // 문제 수정 제출
+        async function submitEditProblem(formData) {
+            try {
+                const problemId = document.getElementById('edit-problem-id').value;
+                
+                // FormData를 객체로 변환
+                const problemData = {
+                    subject_id: formData.get('subject'),
+                    question: formData.get('question'),
+                    option_a: formData.get('option_a'),
+                    option_b: formData.get('option_b'),
+                    option_c: formData.get('option_c'),
+                    option_d: formData.get('option_d'),
+                    correct_answer: formData.get('correct_answer'),
+                    explanation: formData.get('explanation'),
+                    difficulty: formData.get('difficulty')
+                };
+                
+                const response = await fetch(`/api/admin/problems/${problemId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(problemData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('문제가 성공적으로 수정되었습니다.', 'success');
+                    closeEditModal();
+                    
+                    // 저장된 페이지 상태 복원
+                    if (window.currentEditPage) {
+                        console.log('🔄 문제 수정 완료 - 상태 복원 시작:', {
+                            savedPage: window.currentEditPage,
+                            savedPageSize: window.currentEditPageSize,
+                            savedSearchTerm: window.currentEditSearchTerm,
+                            savedSubjectFilter: window.currentEditSubjectFilter,
+                            savedDifficultyFilter: window.currentEditDifficultyFilter
+                        });
+                        
+                        // 검색 필터 복원
+                        if (window.currentEditSearchTerm !== undefined) {
+                            document.getElementById('problemSearch').value = window.currentEditSearchTerm;
+                        }
+                        if (window.currentEditSubjectFilter !== undefined) {
+                            document.getElementById('subjectFilter').value = window.currentEditSubjectFilter;
+                        }
+                        if (window.currentEditDifficultyFilter !== undefined) {
+                            document.getElementById('difficultyFilter').value = window.currentEditDifficultyFilter;
+                        }
+                        
+                        // 페이지 상태 복원
+                        currentPage = window.currentEditPage;
+                        pageSize = window.currentEditPageSize || 50;
+                        
+                        console.log('📄 복원된 페이지 상태:', {
+                            currentPage: currentPage,
+                            pageSize: pageSize
+                        });
+                        
+                        // 필터링된 문제 목록 다시 생성 (페이지 리셋 없이)
+                        const searchTerm = window.currentEditSearchTerm || '';
+                        const subjectFilter = window.currentEditSubjectFilter || '';
+                        const difficultyFilter = window.currentEditDifficultyFilter || '';
+                        
+                        filteredProblems = allProblems;
+                        
+                        // 텍스트 검색
+                        if (searchTerm) {
+                            filteredProblems = filteredProblems.filter(problem => 
+                                problem.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                problem.subject_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                problem.id.toString().includes(searchTerm) ||
+                                (problem.subject_problem_number && problem.subject_problem_number.toString().includes(searchTerm)) ||
+                                problem.option_a.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                problem.option_b.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                problem.option_c.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                problem.option_d.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                problem.explanation.toLowerCase().includes(searchTerm.toLowerCase())
+                            );
+                        }
+                        
+                        // 과목 필터
+                        if (subjectFilter) {
+                            filteredProblems = filteredProblems.filter(problem => 
+                                problem.subject_name === subjectFilter
+                            );
+                        }
+                        
+                        // 난이도 필터
+                        if (difficultyFilter) {
+                            filteredProblems = filteredProblems.filter(problem => 
+                                problem.difficulty === difficultyFilter
+                            );
+                        }
+                        
+                        console.log('🔍 필터링 결과:', {
+                            totalProblems: allProblems.length,
+                            filteredProblems: filteredProblems.length,
+                            searchTerm: searchTerm,
+                            subjectFilter: subjectFilter,
+                            difficultyFilter: difficultyFilter
+                        });
+                        
+                        // 페이지네이션과 함께 문제 표시
+                        displayProblemsWithPagination();
+                        
+                        // 저장된 상태 초기화
+                        delete window.currentEditPage;
+                        delete window.currentEditPageSize;
+                        delete window.currentEditSearchTerm;
+                        delete window.currentEditSubjectFilter;
+                        delete window.currentEditDifficultyFilter;
+                    } else {
+                        console.log('⚠️ 저장된 페이지 상태가 없음 - loadProblems() 호출');
+                        loadProblems(); // 문제 목록 새로고침
+                    }
+                } else {
+                    showMessage(data.message || '문제 수정에 실패했습니다.', 'error');
+                }
+            } catch (error) {
+                console.error('문제 수정 오류:', error);
+                showMessage('문제 수정 중 오류가 발생했습니다.', 'error');
+            }
+        }
+        
+        // 수정 모달용 코드 에디터 토글
+        function toggleEditCodeEditor(field) {
+            const container = document.getElementById(`edit-${field}`).parentElement;
+            const textarea = document.getElementById(`edit-${field}`);
+            const button = container.querySelector('button');
+            
+            if (textarea.style.display === 'none') {
+                // 텍스트 에디터로 전환
+                textarea.style.display = 'block';
+                textarea.removeAttribute('disabled');
+                if (field === 'question' && editQuestionEditor) {
+                    editQuestionEditor.toTextArea();
+                    editQuestionEditor = null;
+                } else if (field === 'explanation' && editExplanationEditor) {
+                    editExplanationEditor.toTextArea();
+                    editExplanationEditor = null;
+                } else if (editOptionEditors[field]) {
+                    editOptionEditors[field].toTextArea();
+                    editOptionEditors[field] = null;
+                }
+                button.textContent = '코드 에디터';
+            } else {
+                // 코드 에디터로 전환
+                textarea.style.display = 'none';
+                textarea.setAttribute('disabled', 'disabled');
+                if (field === 'question') {
+                    editQuestionEditor = CodeMirror.fromTextArea(textarea, {
+                        mode: 'javascript',
+                        theme: 'monokai',
+                        lineNumbers: true,
+                        autoCloseBrackets: true,
+                        matchBrackets: true,
+                        indentUnit: 4,
+                        tabSize: 4,
+                        lineWrapping: true
+                    });
+                } else if (field === 'explanation') {
+                    editExplanationEditor = CodeMirror.fromTextArea(textarea, {
+                        mode: 'javascript',
+                        theme: 'monokai',
+                        lineNumbers: true,
+                        autoCloseBrackets: true,
+                        matchBrackets: true,
+                        indentUnit: 4,
+                        tabSize: 4,
+                        lineWrapping: true
+                    });
+                } else if (['option_a', 'option_b', 'option_c', 'option_d'].includes(field)) {
+                    editOptionEditors[field] = CodeMirror.fromTextArea(textarea, {
+                        mode: 'javascript',
+                        theme: 'monokai',
+                        lineNumbers: true,
+                        autoCloseBrackets: true,
+                        matchBrackets: true,
+                        indentUnit: 4,
+                        tabSize: 4,
+                        lineWrapping: true
+                    });
+                }
+                button.textContent = '텍스트 에디터';
+            }
+        }
+        
+        // 수정 모달용 과목에 따른 코드 모드 업데이트
+        function updateEditCodeMode() {
+            const subjectSelect = document.getElementById('edit-subject');
+            const selectedOption = subjectSelect.options[subjectSelect.selectedIndex];
+            const subjectName = selectedOption.text;
+            
+            let mode = 'javascript'; // 기본값
+            
+            if (subjectName.includes('Python')) {
+                mode = 'python';
+            } else if (subjectName.includes('Java') || subjectName.includes('C++')) {
+                mode = 'text/x-java';
+            } else if (subjectName.includes('HTML') || subjectName.includes('CSS')) {
+                mode = 'xml';
+            } else if (subjectName.includes('SQL')) {
+                mode = 'text/x-sql';
+            }
+            
+            // 모든 수정 모달 에디터의 모드 업데이트
+            if (editQuestionEditor) {
+                editQuestionEditor.setOption('mode', mode);
+            }
+            if (editExplanationEditor) {
+                editExplanationEditor.setOption('mode', mode);
+            }
+            
+            Object.values(editOptionEditors).forEach(editor => {
+                if (editor) {
+                    editor.setOption('mode', mode);
+                }
+            });
+        }
+        
+        // 수정 모달용 폼 데이터 수집
+        function collectEditFormData(form) {
+            const formData = new FormData(form);
+            
+            // 코드 에디터 내용 수집
+            if (editQuestionEditor) {
+                formData.set('question', editQuestionEditor.getValue());
+            }
+            if (editExplanationEditor) {
+                formData.set('explanation', editExplanationEditor.getValue());
+            }
+            
+            // 보기 데이터 수집 (코드 에디터 또는 일반 입력)
+            ['option_a', 'option_b', 'option_c', 'option_d'].forEach(option => {
+                if (editOptionEditors[option]) {
+                    // 코드 에디터가 활성화된 경우
+                    formData.set(option, editOptionEditors[option].getValue());
+                } else {
+                    // 일반 텍스트 입력인 경우
+                    const textarea = document.getElementById(`edit-${option}`);
+                    if (textarea) {
+                        formData.set(option, textarea.value);
+                    }
+                }
+            });
+            
+            return formData;
+        }
+        
+        // 문제 삭제
+        async function deleteProblem(problemId) {
+            if (!confirm('정말로 이 문제를 삭제하시겠습니까?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/problems/${problemId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('문제가 성공적으로 삭제되었습니다.', 'success');
+                    loadProblems();
+                } else {
+                    showMessage(data.message || '문제 삭제에 실패했습니다.', 'error');
+                }
+            } catch (error) {
+                console.error('문제 삭제 오류:', error);
+                showMessage('문제 삭제 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        // 과목 목록 로드
+        async function loadSubjectsList() {
+            try {
+                const response = await fetch('/api/admin/subjects');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const subjectsList = document.getElementById('subjectsList');
+                    subjectsList.innerHTML = data.subjects.map(subject => `
+                        <div class="problem-item">
+                            <div class="problem-info">
+                                <h4>${subject.name} ${subject.is_public ? '<span style="color: #27ae60; font-size: 0.8em;">(공개)</span>' : '<span style="color: #e74c3c; font-size: 0.8em;">(비공개)</span>'}</h4>
+                                <p>카테고리: ${subject.category || '기타'} | 설명: ${subject.description || '설명 없음'} | 문제 수: ${subject.problem_count}개</p>
+                            </div>
+                            <div class="problem-actions">
+                                <button class="btn-primary" onclick="editSubject(${subject.id})">수정</button>
+                                <button class="${subject.is_public ? 'btn-secondary' : 'btn-primary'}" onclick="toggleSubjectPublicStatus(${subject.id}, ${!subject.is_public})">
+                                    ${subject.is_public ? '비공개로 변경' : '공개로 변경'}
+                                </button>
+                                <button class="btn-danger" onclick="deleteSubject(${subject.id})" ${subject.problem_count > 0 ? 'disabled' : ''}>삭제</button>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    // 과목 순서 목록도 로드
+                    loadSubjectsOrderList(data.subjects);
+                }
+            } catch (error) {
+                console.error('과목 목록 로드 오류:', error);
+            }
+        }
+
+        // 과목 순서 목록 로드
+        function loadSubjectsOrderList(subjects) {
+            const subjectsOrderList = document.getElementById('subjectsOrderList');
+            subjectsOrderList.innerHTML = subjects.map((subject, index) => `
+                <div class="subject-order-item" data-id="${subject.id}" data-order="${subject.sort_order || index + 1}">
+                    <div class="subject-order-handle">⋮⋮</div>
+                    <div class="subject-order-info">
+                        <h4>${subject.name} ${subject.is_public ? '<span style="color: #27ae60; font-size: 0.8em;">(공개)</span>' : '<span style="color: #e74c3c; font-size: 0.8em;">(비공개)</span>'}</h4>
+                        <p>카테고리: ${subject.category || '기타'} | ${subject.description || '설명 없음'} | 문제 수: ${subject.problem_count}개</p>
+                    </div>
+                    <div class="subject-order-number">${subject.sort_order || index + 1}</div>
+                </div>
+            `).join('');
+            
+            // 드래그 앤 드롭 기능 초기화
+            initDragAndDrop();
+        }
+
+        // 드래그 앤 드롭 기능 초기화
+        function initDragAndDrop() {
+            const container = document.getElementById('subjectsOrderList');
+            const items = container.querySelectorAll('.subject-order-item');
+            
+            items.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.draggable = true;
+            });
+        }
+
+        // 드래그 시작
+        function handleDragStart(e) {
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.outerHTML);
+        }
+
+        // 드래그 종료
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        // 드래그 오버
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        // 드롭
+        function handleDrop(e) {
+            e.preventDefault();
+            
+            const draggingItem = document.querySelector('.dragging');
+            const dropTarget = e.target.closest('.subject-order-item');
+            
+            if (draggingItem && dropTarget && draggingItem !== dropTarget) {
+                const container = document.getElementById('subjectsOrderList');
+                const items = Array.from(container.querySelectorAll('.subject-order-item'));
+                const draggingIndex = items.indexOf(draggingItem);
+                const dropIndex = items.indexOf(dropTarget);
+                
+                if (draggingIndex < dropIndex) {
+                    dropTarget.parentNode.insertBefore(draggingItem, dropTarget.nextSibling);
+                } else {
+                    dropTarget.parentNode.insertBefore(draggingItem, dropTarget);
+                }
+                
+                // 순서 번호 업데이트
+                updateOrderNumbers();
+            }
+        }
+
+        // 순서 번호 업데이트
+        function updateOrderNumbers() {
+            const items = document.querySelectorAll('.subject-order-item');
+            items.forEach((item, index) => {
+                const numberElement = item.querySelector('.subject-order-number');
+                numberElement.textContent = index + 1;
+                item.dataset.order = index + 1;
+            });
+        }
+
+        // 과목 순서 저장
+        async function saveSubjectsOrder() {
+            try {
+                const items = document.querySelectorAll('.subject-order-item');
+                const subjects = Array.from(items).map((item, index) => ({
+                    id: parseInt(item.dataset.id),
+                    sort_order: index + 1
+                }));
+                
+                const response = await fetch('/api/admin/subjects/order', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ subjects })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('과목 순서가 성공적으로 저장되었습니다.', 'success');
+                    loadSubjectsList(); // 목록 새로고침
+                } else {
+                    showMessage(data.message || '과목 순서 저장에 실패했습니다.', 'error');
+                }
+            } catch (error) {
+                console.error('과목 순서 저장 오류:', error);
+                showMessage('과목 순서 저장 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        // 과목 추가
+        async function addSubject(formData) {
+            try {
+                const response = await fetch('/api/admin/subjects', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: formData.get('subject-name'),
+                        description: formData.get('subject-description'),
+                        category: formData.get('subject-category'),
+                        is_public: formData.get('subject-public') === 'on'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('과목이 성공적으로 추가되었습니다.', 'success');
+                    document.getElementById('addSubjectForm').reset();
+                    loadSubjectsList();
+                    loadSubjects(); // 문제 추가 폼의 과목 선택 옵션도 업데이트
+                } else {
+                    showMessage(data.message || '과목 추가에 실패했습니다.', 'error');
+                }
+            } catch (error) {
+                console.error('과목 추가 오류:', error);
+                showMessage('과목 추가 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        // 과목 수정 모달 열기
+        async function editSubject(subjectId) {
+            try {
+                // 과목 정보 가져오기
+                const response = await fetch('/api/admin/subjects');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    showMessage('과목 정보를 가져올 수 없습니다.', 'error');
+                    return;
+                }
+                
+                const subject = data.subjects.find(s => s.id === subjectId);
+                if (!subject) {
+                    showMessage('과목을 찾을 수 없습니다.', 'error');
+                    return;
+                }
+                
+                // 모달 필드에 데이터 설정
+                document.getElementById('edit-subject-id').value = subject.id;
+                document.getElementById('edit-subject-name').value = subject.name;
+                document.getElementById('edit-subject-description').value = subject.description || '';
+                document.getElementById('edit-subject-category').value = subject.category || '';
+                document.getElementById('edit-subject-public').checked = subject.is_public || false;
+                
+                // 모달 열기
+                document.getElementById('editSubjectModal').style.display = 'block';
+                
+            } catch (error) {
+                console.error('과목 정보 로드 오류:', error);
+                showMessage('과목 정보를 불러오는 중 오류가 발생했습니다.', 'error');
+            }
+        }
+        
+        // 과목 수정 모달 닫기
+        function closeEditSubjectModal() {
+            document.getElementById('editSubjectModal').style.display = 'none';
+        }
+        
+        // 과목 수정 제출
+        async function submitEditSubject(formData) {
+            try {
+                const subjectId = document.getElementById('edit-subject-id').value;
+                
+                const response = await fetch(`/api/admin/subjects/${subjectId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: formData.get('subject-name'),
+                        description: formData.get('subject-description'),
+                        category: formData.get('subject-category'),
+                        is_public: formData.get('subject-public') === 'on'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('과목이 성공적으로 수정되었습니다.', 'success');
+                    closeEditSubjectModal();
+                    loadSubjectsList(); // 과목 목록 새로고침
+                    loadSubjects(); // 문제 추가 폼의 과목 선택 옵션도 업데이트
+                } else {
+                    showMessage(data.message || '과목 수정에 실패했습니다.', 'error');
+                }
+            } catch (error) {
+                console.error('과목 수정 오류:', error);
+                showMessage('과목 수정 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        // 과목 공개/비공개 상태 토글
+        async function toggleSubjectPublicStatus(subjectId, isPublic) {
+            const statusText = isPublic ? '공개' : '비공개';
+            if (!confirm(`정말로 이 과목을 ${statusText}로 설정하시겠습니까?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/subjects/${subjectId}/public-status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ is_public: isPublic })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    loadSubjectsList();
+                    loadSubjects(); // 문제 추가 폼의 과목 선택 옵션도 업데이트
+                } else {
+                    showMessage(data.message || '과목 상태 변경에 실패했습니다.', 'error');
+                }
+            } catch (error) {
+                console.error('과목 상태 변경 오류:', error);
+                showMessage('과목 상태 변경 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        // 과목 삭제
+        async function deleteSubject(subjectId) {
+            if (!confirm('정말로 이 과목을 삭제하시겠습니까?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/subjects/${subjectId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('과목이 성공적으로 삭제되었습니다.', 'success');
+                    loadSubjectsList();
+                    loadSubjects(); // 문제 추가 폼의 과목 선택 옵션도 업데이트
+                } else {
+                    showMessage(data.message || '과목 삭제에 실패했습니다.', 'error');
+                }
+            } catch (error) {
+                console.error('과목 삭제 오류:', error);
+                showMessage('과목 삭제 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        // 비밀번호 변경
+        async function changePassword(formData) {
+            const newPassword = formData.get('new-password');
+            const confirmPassword = formData.get('confirm-password');
+            
+            if (newPassword !== confirmPassword) {
+                showMessage('새 비밀번호가 일치하지 않습니다.', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        currentPassword: formData.get('current-password'),
+                        newPassword: newPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('비밀번호가 성공적으로 변경되었습니다.', 'success');
+                    document.getElementById('changePasswordForm').reset();
+                } else {
+                    showMessage(data.message || '비밀번호 변경에 실패했습니다.', 'error');
+                }
+            } catch (error) {
+                console.error('비밀번호 변경 오류:', error);
+                showMessage('비밀번호 변경 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        // 메시지 표시
+        function showMessage(message, type) {
+            const messageContainer = document.getElementById('messageContainer');
+            messageContainer.innerHTML = `<div class="${type}-message">${message}</div>`;
+            
+            setTimeout(() => {
+                messageContainer.innerHTML = '';
+            }, 3000);
+        }
+
+        // 로그아웃
+        async function logout() {
+            try {
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST'
+                });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('로그아웃 오류:', error);
+            }
+        }
+
+        // CodeMirror 에디터 인스턴스들
+        let questionEditor = null;
+        let explanationEditor = null;
+        let optionEditors = {};
+        
+        // 수정 모달용 CodeMirror 에디터 인스턴스들
+        let editQuestionEditor = null;
+        let editExplanationEditor = null;
+        let editOptionEditors = {};
+
+        // 코드 에디터 초기화
+        function initCodeEditors() {
+            // 문제 에디터
+            questionEditor = CodeMirror.fromTextArea(document.getElementById('question'), {
+                mode: 'javascript',
+                theme: 'monokai',
+                lineNumbers: true,
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                indentUnit: 4,
+                tabSize: 4,
+                lineWrapping: true
+            });
+
+            // 해설 에디터
+            explanationEditor = CodeMirror.fromTextArea(document.getElementById('explanation'), {
+                mode: 'javascript',
+                theme: 'monokai',
+                lineNumbers: true,
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                indentUnit: 4,
+                tabSize: 4,
+                lineWrapping: true
+            });
+
+            // 보기 에디터들은 필요할 때 동적으로 생성됨
+        }
+
+        // 과목에 따른 코드 모드 업데이트
+        function updateCodeMode() {
+            const subjectSelect = document.getElementById('subject');
+            const selectedOption = subjectSelect.options[subjectSelect.selectedIndex];
+            const subjectName = selectedOption.text;
+            
+            let mode = 'javascript'; // 기본값
+            
+            if (subjectName.includes('Python')) {
+                mode = 'python';
+            } else if (subjectName.includes('Java') || subjectName.includes('C++')) {
+                mode = 'text/x-java';
+            } else if (subjectName.includes('HTML') || subjectName.includes('CSS')) {
+                mode = 'xml';
+            } else if (subjectName.includes('SQL')) {
+                mode = 'text/x-sql';
+            }
+            
+            // 모든 에디터의 모드 업데이트
+            if (questionEditor) {
+                questionEditor.setOption('mode', mode);
+            }
+            if (explanationEditor) {
+                explanationEditor.setOption('mode', mode);
+            }
+            
+            Object.values(optionEditors).forEach(editor => {
+                if (editor) {
+                    editor.setOption('mode', mode);
+                }
+            });
+        }
+
+        // 코드 에디터 토글
+        function toggleCodeEditor(field) {
+            const container = document.getElementById(field).parentElement;
+            const textarea = document.getElementById(field);
+            const button = container.querySelector('button');
+            
+            if (textarea.style.display === 'none') {
+                // 텍스트 에디터로 전환
+                textarea.style.display = 'block';
+                textarea.removeAttribute('disabled');
+                if (field === 'question' && questionEditor) {
+                    questionEditor.toTextArea();
+                    questionEditor = null;
+                } else if (field === 'explanation' && explanationEditor) {
+                    explanationEditor.toTextArea();
+                    explanationEditor = null;
+                } else if (optionEditors[field]) {
+                    optionEditors[field].toTextArea();
+                    optionEditors[field] = null;
+                }
+                button.textContent = '코드 에디터';
+            } else {
+                // 코드 에디터로 전환
+                textarea.style.display = 'none';
+                textarea.setAttribute('disabled', 'disabled');
+                if (field === 'question') {
+                    questionEditor = CodeMirror.fromTextArea(textarea, {
+                        mode: 'javascript',
+                        theme: 'monokai',
+                        lineNumbers: true,
+                        autoCloseBrackets: true,
+                        matchBrackets: true,
+                        indentUnit: 4,
+                        tabSize: 4,
+                        lineWrapping: true
+                    });
+                } else if (field === 'explanation') {
+                    explanationEditor = CodeMirror.fromTextArea(textarea, {
+                        mode: 'javascript',
+                        theme: 'monokai',
+                        lineNumbers: true,
+                        autoCloseBrackets: true,
+                        matchBrackets: true,
+                        indentUnit: 4,
+                        tabSize: 4,
+                        lineWrapping: true
+                    });
+                } else if (['option_a', 'option_b', 'option_c', 'option_d'].includes(field)) {
+                    optionEditors[field] = CodeMirror.fromTextArea(textarea, {
+                        mode: 'javascript',
+                        theme: 'monokai',
+                        lineNumbers: true,
+                        autoCloseBrackets: true,
+                        matchBrackets: true,
+                        indentUnit: 4,
+                        tabSize: 4,
+                        lineWrapping: true
+                    });
+                }
+                button.textContent = '텍스트 에디터';
+            }
+        }
+
+
+
+        // 폼 데이터 수집 (코드 에디터 내용 포함)
+        function collectFormData(form) {
+            const formData = new FormData(form);
+            
+            // 코드 에디터 내용 수집
+            if (questionEditor) {
+                formData.set('question', questionEditor.getValue());
+            }
+            if (explanationEditor) {
+                formData.set('explanation', explanationEditor.getValue());
+            }
+            
+            // 보기 데이터 수집 (코드 에디터 또는 일반 입력)
+            ['option_a', 'option_b', 'option_c', 'option_d'].forEach(option => {
+                if (optionEditors[option]) {
+                    // 코드 에디터가 활성화된 경우
+                    formData.set(option, optionEditors[option].getValue());
+                } else {
+                    // 일반 텍스트 입력인 경우
+                    const textarea = document.getElementById(option);
+                    if (textarea) {
+                        formData.set(option, textarea.value);
+                    }
+                }
+            });
+            
+            // subject를 subject_id로 변경
+            const subjectValue = formData.get('subject');
+            formData.delete('subject');
+            formData.set('subject_id', subjectValue);
+            
+            return formData;
+        }
+
+        // 이벤트 리스너
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAdminAuth();
+            loadSubjects();
+            loadDashboardStats();
+            loadProblems(); // 문제 목록 로드
+            
+            // 코드 에디터 초기화
+            initCodeEditors();
+            
+            // 문제 추가 폼 제출
+            document.getElementById('addProblemForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = collectFormData(e.target);
+                addProblem(formData);
+            });
+            
+            // 과목 추가 폼 제출
+            document.getElementById('addSubjectForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                addSubject(formData);
+            });
+            
+            // 비밀번호 변경 폼 제출
+            document.getElementById('changePasswordForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                changePassword(formData);
+            });
+            
+            // 문제 수정 폼 제출
+            document.getElementById('editProblemForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = collectEditFormData(e.target);
+                submitEditProblem(formData);
+            });
+            
+            // 과목 수정 폼 제출
+            document.getElementById('editSubjectForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                submitEditSubject(formData);
+            });
+            
+            // 검색창에서 Enter 키 이벤트
+            document.getElementById('problemSearch').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchProblems();
+                }
+            });
+            
+            // 실시간 검색 (입력 시마다)
+            document.getElementById('problemSearch').addEventListener('input', () => {
+                clearTimeout(window.searchTimeout);
+                window.searchTimeout = setTimeout(searchProblems, 300); // 300ms 딜레이
+            });
+            
+            // 페이지 이동 입력창에서 Enter 키 이벤트
+            document.getElementById('gotoPage').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    goToPageInput();
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

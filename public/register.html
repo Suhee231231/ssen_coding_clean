@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 | SSEN CODING</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css?v=1.1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+    <script>
+      (function(d) {
+        var config = {
+          kitId: 'web7wnn',
+          scriptTimeout: 3000,
+          async: true
+        },
+        h=d.documentElement,t=setTimeout(function(){h.className=h.className.replace(/\bwf-loading\b/g,"")+" wf-inactive";},config.scriptTimeout),tk=d.createElement("script"),f=false,s=d.getElementsByTagName("script")[0],a;h.className+=" wf-loading";tk.src='https://use.typekit.net/'+config.kitId+'.js';tk.async=true;tk.onload=tk.onreadystatechange=function(){a=this.readyState;if(f||a&&a!="complete"&&a!="loaded")return;f=true;clearTimeout(t);try{Typekit.load(config)}catch(e){}};s.parentNode.insertBefore(tk,s)
+      })(document);
+    </script>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-container">
+                <h1 class="logo"><a href="/" style="text-decoration: none; color: inherit;"><span class="logo-highlight">SSEN</span><span class="logo-underline">C</span>ODING</a></h1>
+                <div class="nav-links">
+                    <a href="/">홈</a>
+                    <a href="/login.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">로그인</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main>
+        <div class="form-container">
+            <h2>회원가입</h2>
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            <div id="successMessage" class="success-message" style="display: none;"></div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="email">이메일</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">비밀번호</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">비밀번호 확인</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                <button type="submit" class="form-btn">회원가입</button>
+            </form>
+            
+            <div class="divider">
+                <span>또는</span>
+            </div>
+            
+            <button type="button" class="google-btn" onclick="googleLogin()">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
+                Google로 회원가입
+            </button>
+            
+            <div class="form-link">
+                이미 계정이 있으신가요? <a href="/login.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">로그인</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            
+            // 에러 메시지 초기화
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            // 비밀번호 확인
+            if (password !== confirmPassword) {
+                errorMessage.textContent = '비밀번호가 일치하지 않습니다.';
+                errorMessage.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/email-verification/request-verification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 인증 이메일 전송 성공
+                    successMessage.textContent = data.message;
+                    successMessage.style.display = 'block';
+                    
+                    // 폼 초기화
+                    document.getElementById('registerForm').reset();
+                } else {
+                    // 에러 메시지 표시
+                    errorMessage.textContent = data.message;
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('회원가입 오류:', error);
+                errorMessage.textContent = '서버 오류가 발생했습니다.';
+                errorMessage.style.display = 'block';
+            }
+        });
+        
+        // Google 로그인 함수
+        function googleLogin() {
+            window.location.href = '/auth/google';
+        }
+    </script>
+</body>
+</html> 

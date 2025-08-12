@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유니코드 문자 테스트</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+        .test-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .test-content {
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>유니코드 문자 테스트</h1>
+        
+        <div class="test-item">
+            <div class="test-label">아래첨자 테스트:</div>
+            <div class="test-content">
+                H₂O (물), CO₂ (이산화탄소), H₂SO₄ (황산), Ca(OH)₂ (수산화칼슘)
+            </div>
+        </div>
+        
+        <div class="test-item">
+            <div class="test-label">위첨자 테스트:</div>
+            <div class="test-content">
+                x² + y² = z², E = mc², 2³ = 8, 10⁴ = 10000
+            </div>
+        </div>
+        
+        <div class="test-item">
+            <div class="test-label">그리스 문자 테스트:</div>
+            <div class="test-content">
+                α, β, γ, δ, ε, π, μ, σ, θ, φ
+            </div>
+        </div>
+        
+        <div class="test-item">
+            <div class="test-label">수학 기호 테스트:</div>
+            <div class="test-content">
+                ±, ×, ÷, ≤, ≥, ≠, ≈, ∞, ∫, ∑, ∏
+            </div>
+        </div>
+        
+        <div class="test-item">
+            <div class="test-label">화학 기호 테스트:</div>
+            <div class="test-content">
+                H⁺, OH⁻, Na⁺, Cl⁻, Fe²⁺, Fe³⁺
+            </div>
+        </div>
+        
+        <div class="test-item">
+            <div class="test-label">코드 블록 내 유니코드 테스트:</div>
+            <div class="test-content">
+                <pre><code>// 화학식 예시
+const water = "H₂O";
+const carbonDioxide = "CO₂";
+const sulfuricAcid = "H₂SO₄";
+
+// 수학 공식 예시
+const pythagorean = "a² + b² = c²";
+const einstein = "E = mc²";</code></pre>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
