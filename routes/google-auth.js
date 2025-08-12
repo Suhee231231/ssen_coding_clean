@@ -106,8 +106,8 @@ router.get('/google/callback', (req, res) => {
             failureFlash: true 
         })(req, res, () => {
             console.log('Google OAuth 로그인 성공:', req.user);
-            // 성공적으로 로그인되면 대시보드로 리디렉션
-            res.redirect('/dashboard.html');
+            // 성공적으로 로그인되면 메인 페이지로 리디렉션
+            res.redirect('/');
         });
     } else {
         res.status(400).json({ error: 'Google OAuth가 설정되지 않았습니다.' });
