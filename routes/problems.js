@@ -10,14 +10,34 @@ router.get('/subjects', async (req, res) => {
             'SELECT * FROM subjects WHERE is_public = TRUE ORDER BY sort_order ASC, name ASC'
         );
         
+        // 각 과목별 문제 수 계산
+        const subjectsWithCounts = await Promise.all(
+            subjects.map(async (subject) => {
+                const [countResult] = await pool.execute(
+                    'SELECT COUNT(*) as count FROM problems WHERE subject_id = ?',
+                    [subject.id]
+                );
+                return {
+                    ...subject,
+                    problem_count: countResult[0].count
+                };
+            })
+        );
+        
         // 최신 수정일 조회 (problems 테이블의 created_at 중 가장 최신)
         const [latestUpdate] = await pool.execute(
             'SELECT MAX(created_at) as latest_update FROM problems'
         );
         
+        // 전체 문제 수 계산
+        const [totalProblems] = await pool.execute(
+            'SELECT COUNT(*) as count FROM problems'
+        );
+        
         res.json({ 
             success: true, 
-            subjects,
+            subjects: subjectsWithCounts,
+            totalProblems: totalProblems[0].count,
             latestUpdate: latestUpdate[0].latest_update
         });
     } catch (error) {
