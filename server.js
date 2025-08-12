@@ -36,7 +36,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: process.env.NODE_ENV === 'production', // HTTPS 사용시 true로 변경
+        secure: false, // Railway 환경에서는 false로 설정
         maxAge: 24 * 60 * 60 * 1000 // 24시간
     }
 }));
