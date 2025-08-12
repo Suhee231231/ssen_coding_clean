@@ -5,6 +5,7 @@ const dbConfig = {
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '6305rpqkfk**',
     database: process.env.DB_NAME || 'coding_problems',
+    port: process.env.DB_PORT || 3306,
     charset: process.env.DB_CHARSET || 'utf8mb4'
 };
 
