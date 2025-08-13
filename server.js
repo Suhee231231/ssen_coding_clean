@@ -66,14 +66,18 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://use.typekit.net"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'"],
-            frameSrc: ["'self'"],
+            connectSrc: ["'self'", "https://use.typekit.net", "https://p.typekit.net", "https://googleads.g.doubleclick.net", "https://ep1.adtrafficquality.google"],
+            frameSrc: ["'self'", "https://googleads.g.doubleclick.net", "https://pagead2.googlesyndication.com"],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],
             formAction: ["'self'"]
         }
     }
 })); // 기본 보안 헤더 설정
+
+// Railway 환경에서 trust proxy 설정
+app.set('trust proxy', 1);
+
 app.use(cors());
 app.use(limiter); // 전역 rate limiting 적용
 
