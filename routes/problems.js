@@ -139,43 +139,47 @@ router.get('/:subject', async (req, res) => {
                                 // 저장된 문제가 현재 문제 목록에 없음 (삭제된 문제일 수 있음)
                                 console.log(`저장된 문제 ${progress[0].last_problem_id}가 현재 문제 목록에 없음. 지능적 복원 시도...`);
                                 
-                                // 사용자가 이미 푼 문제들 조회
-                                const [solvedProblems] = await pool.execute(
-                                    'SELECT problem_id FROM user_progress WHERE user_id = ? AND problem_id IN (' + 
-                                    problems.map(() => '?').join(',') + ')',
-                                    [req.user.id, ...problems.map(p => p.id)]
-                                );
-                                
-                                const solvedIds = new Set(solvedProblems.map(p => p.problem_id));
-                                
-                                // 아직 풀지 않은 첫 번째 문제 찾기
-                                let foundUnsolvedIndex = -1;
-                                for (let i = 0; i < problems.length; i++) {
-                                    if (!solvedIds.has(problems[i].id)) {
-                                        foundUnsolvedIndex = i;
-                                        break;
+                                // 사용자가 이미 푼 문제들 조회 (성능 최적화)
+                                if (problems.length > 0) {
+                                    const [solvedProblems] = await pool.execute(
+                                        'SELECT problem_id FROM user_progress WHERE user_id = ? AND problem_id IN (' + 
+                                        problems.map(() => '?').join(',') + ')',
+                                        [req.user.id, ...problems.map(p => p.id)]
+                                    );
+                                    
+                                    const solvedIds = new Set(solvedProblems.map(p => p.problem_id));
+                                    
+                                    // 아직 풀지 않은 첫 번째 문제 찾기
+                                    let foundUnsolvedIndex = -1;
+                                    for (let i = 0; i < problems.length; i++) {
+                                        if (!solvedIds.has(problems[i].id)) {
+                                            foundUnsolvedIndex = i;
+                                            break;
+                                        }
                                     }
-                                }
-                                
-                                if (foundUnsolvedIndex !== -1) {
-                                    problemIndex = foundUnsolvedIndex;
-                                    console.log(`첫 번째 미해결 문제로 복원: 인덱스 ${problemIndex}, 문제 ID ${problems[problemIndex].id}`);
                                     
-                                    // 진행상황 업데이트
-                                    await pool.execute(
-                                        'UPDATE user_subject_progress SET last_problem_id = ? WHERE user_id = ? AND subject_id = ?',
-                                        [problems[problemIndex].id, req.user.id, subjectInfo.id]
-                                    );
+                                    if (foundUnsolvedIndex !== -1) {
+                                        problemIndex = foundUnsolvedIndex;
+                                        console.log(`첫 번째 미해결 문제로 복원: 인덱스 ${problemIndex}, 문제 ID ${problems[problemIndex].id}`);
+                                        
+                                        // 진행상황 업데이트
+                                        await pool.execute(
+                                            'UPDATE user_subject_progress SET last_problem_id = ? WHERE user_id = ? AND subject_id = ?',
+                                            [problems[problemIndex].id, req.user.id, subjectInfo.id]
+                                        );
+                                    } else {
+                                        // 모든 문제를 다 풀었다면 마지막 문제로
+                                        problemIndex = problems.length - 1;
+                                        console.log(`모든 문제 완료됨, 마지막 문제로 설정: 인덱스 ${problemIndex}`);
+                                        
+                                        // 진행상황 업데이트
+                                        await pool.execute(
+                                            'UPDATE user_subject_progress SET last_problem_id = ? WHERE user_id = ? AND subject_id = ?',
+                                            [problems[problemIndex].id, req.user.id, subjectInfo.id]
+                                        );
+                                    }
                                 } else {
-                                    // 모든 문제를 다 풀었다면 마지막 문제로
-                                    problemIndex = problems.length - 1;
-                                    console.log(`모든 문제 완료됨, 마지막 문제로 설정: 인덱스 ${problemIndex}`);
-                                    
-                                    // 진행상황 업데이트
-                                    await pool.execute(
-                                        'UPDATE user_subject_progress SET last_problem_id = ? WHERE user_id = ? AND subject_id = ?',
-                                        [problems[problemIndex].id, req.user.id, subjectInfo.id]
-                                    );
+                                    problemIndex = 0;
                                 }
                             }
                         } else {
