@@ -553,6 +553,16 @@
                     }
                 }
                 
+                // URL 파라미터가 없으면 재설정
+                const params = getUrlParams();
+                if (!params.subject || !params.mode) {
+                    if (currentSubject) {
+                        const newUrl = `/wrong-problems.html?subject=${encodeURIComponent(currentSubject)}&mode=solve`;
+                        window.history.replaceState({}, '', newUrl);
+                        console.log('handleAllProblemsCorrect에서 URL 파라미터 재설정:', newUrl);
+                    }
+                }
+                
                 // 현재 재도전 라운드의 문제 ID들을 수집
                 const problemIds = wrongProblems.map(problem => problem.id);
                 console.log('제거할 문제 ID들:', problemIds);
@@ -730,6 +740,16 @@
         // 폼 제출
         document.getElementById('problemForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // URL 파라미터가 없으면 재설정
+            const params = getUrlParams();
+            if (!params.subject || !params.mode) {
+                if (currentSubject) {
+                    const newUrl = `/wrong-problems.html?subject=${encodeURIComponent(currentSubject)}&mode=solve`;
+                    window.history.replaceState({}, '', newUrl);
+                    console.log('답안 제출 시 URL 파라미터 재설정:', newUrl);
+                }
+            }
             
             const selectedAnswer = document.getElementById('selectedAnswer').value;
             if (!selectedAnswer) {
