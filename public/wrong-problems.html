@@ -337,9 +337,7 @@
                 
                 // 선택지 스타일 초기화
                 document.querySelectorAll('.option').forEach(opt => {
-                    opt.style.borderColor = '';
-                    opt.style.backgroundColor = '';
-                    opt.style.color = '';
+                    opt.classList.remove('wrong-selected', 'correct-answer-show');
                 });
 
                 // 틀린 문제는 이전 답안과 정답을 표시하지 않음 (다시 풀어보기 위함)
@@ -590,9 +588,7 @@
                 document.querySelectorAll('.option').forEach(opt => {
                     opt.classList.remove('selected');
                     // 이전 스타일 초기화
-                    opt.style.borderColor = '';
-                    opt.style.backgroundColor = '';
-                    opt.style.color = '';
+                    opt.classList.remove('wrong-selected', 'correct-answer-show');
                 });
                 
                 // 새 선택 표시
@@ -638,9 +634,7 @@
                         // 정답인 경우 선택한 답안에 민트색 스타일 적용
                         const selectedOption = document.querySelector('.option.selected');
                         if (selectedOption) {
-                            selectedOption.style.borderColor = '#00d4aa';
-                            selectedOption.style.backgroundColor = '#f0f8ff';
-                            selectedOption.style.color = '#333';
+                            selectedOption.classList.add('correct-answer-show');
                         }
                         
                         // 정답인 경우 현재 진행상황 저장 (다음 문제로 이동할 준비)
@@ -655,17 +649,13 @@
                         // 틀린 답안에 핑크색 스타일 적용
                         const selectedOption = document.querySelector('.option.selected');
                         if (selectedOption) {
-                            selectedOption.style.borderColor = '#FF7EB3';
-                            selectedOption.style.backgroundColor = '#fff0f5';
-                            selectedOption.style.color = '#333';
+                            selectedOption.classList.add('wrong-selected');
                         }
                         
                         // 정답에 민트색 스타일 적용
                         const correctOption = document.querySelector(`[data-option="${displayCorrectAnswer}"]`);
                         if (correctOption) {
-                            correctOption.style.borderColor = '#00d4aa';
-                            correctOption.style.backgroundColor = '#f0f8ff';
-                            correctOption.style.color = '#333';
+                            correctOption.classList.add('correct-answer-show');
                         }
                         
                         // 틀린 문제를 새로운 틀린 문제 배열에 추가
