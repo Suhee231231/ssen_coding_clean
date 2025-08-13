@@ -62,11 +62,12 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://pagead2.googlesyndication.com", "https://use.typekit.net", "https://cdnjs.cloudflare.com", "https://developers.google.com"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://pagead2.googlesyndication.com", "https://use.typekit.net", "https://cdnjs.cloudflare.com", "https://developers.google.com", "https://ep2.adtrafficquality.google"],
+            scriptSrcAttr: ["'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://use.typekit.net"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https://use.typekit.net", "https://p.typekit.net", "https://googleads.g.doubleclick.net", "https://ep1.adtrafficquality.google"],
+            connectSrc: ["'self'", "https://use.typekit.net", "https://p.typekit.net", "https://googleads.g.doubleclick.net", "https://ep1.adtrafficquality.google", "https://ep2.adtrafficquality.google"],
             frameSrc: ["'self'", "https://googleads.g.doubleclick.net", "https://pagead2.googlesyndication.com"],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],

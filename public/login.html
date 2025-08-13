@@ -58,7 +58,7 @@
                 <span>또는</span>
             </div>
             
-            <button type="button" class="google-btn" onclick="googleLogin()">
+            <button type="button" class="google-btn" id="googleLoginBtn">
                 <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
                 Google로 로그인
             </button>
@@ -104,9 +104,9 @@
         });
         
         // Google 로그인 함수
-        function googleLogin() {
+        document.getElementById('googleLoginBtn').addEventListener('click', () => {
             window.location.href = '/auth/google';
-        }
+        });
     </script>
 </body>
 </html> 
