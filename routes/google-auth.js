@@ -31,6 +31,7 @@ if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
 
             if (existingUser.length > 0) {
                 // 기존 사용자가 있으면 로그인
+                console.log('기존 사용자 로그인:', existingUser[0]);
                 return done(null, existingUser[0]);
             } else {
                 // 새 사용자 생성 (사용자명 중복 처리)
@@ -63,6 +64,7 @@ if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
                     [result.insertId]
                 );
 
+                console.log('새 사용자 생성:', newUser[0]);
                 return done(null, newUser[0]);
             }
         } catch (error) {
@@ -75,14 +77,18 @@ if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
 
 // Passport serialize/deserialize 설정
 passport.serializeUser((user, done) => {
+    console.log('사용자 직렬화:', user);
     done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
     try {
+        console.log('사용자 역직렬화, ID:', id);
         const [users] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
+        console.log('역직렬화된 사용자:', users[0]);
         done(null, users[0]);
     } catch (error) {
+        console.error('역직렬화 오류:', error);
         done(error, null);
     }
 });
@@ -106,6 +112,12 @@ router.get('/google/callback', (req, res) => {
             failureFlash: true 
         })(req, res, () => {
             console.log('Google OAuth 로그인 성공:', req.user);
+            
+            // req.user가 존재하는지 확인
+            if (!req.user) {
+                console.error('req.user가 undefined입니다.');
+                return res.redirect('/login.html?error=user_not_found');
+            }
             
             // 세션 저장을 명시적으로 처리
             req.session.save((err) => {
