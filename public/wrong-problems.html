@@ -148,6 +148,13 @@
             currentSubject = params.subject;
             const solveMode = params.mode === 'solve';
 
+            // currentSubject가 없으면 오류 처리
+            if (!currentSubject) {
+                console.error('과목 정보가 없습니다:', params);
+                alert('과목 정보를 찾을 수 없습니다.');
+                return;
+            }
+
             try {
                 const response = await fetch(`/api/problems/${encodeURIComponent(currentSubject)}/progress`);
                 const data = await response.json();
@@ -532,6 +539,13 @@
             
             if (newWrongProblems.length > 0) {
                 console.log('새 라운드 시작 준비 중...');
+                
+                // currentSubject가 설정되어 있는지 확인
+                if (!currentSubject) {
+                    const params = getUrlParams();
+                    currentSubject = params.subject;
+                    console.log('currentSubject 재설정:', currentSubject);
+                }
                 
                 isRetryRound = true; // 재도전 라운드로 설정
                 wrongProblems = [...newWrongProblems]; // 틀린 문제들을 새 문제 목록으로 설정
