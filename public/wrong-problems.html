@@ -162,6 +162,10 @@
 
                 if (data.success) {
                     wrongProblems = data.wrongProblems;
+                    console.log(`서버에서 받은 틀린 문제 ${wrongProblems.length}개:`);
+                    wrongProblems.forEach((problem, index) => {
+                        console.log(`  ${index + 1}. ID: ${problem.id}, 문제: ${problem.question.substring(0, 50)}...`);
+                    });
                     
                     // 카드 내부의 제목만 업데이트 (문제 컨테이너가 표시될 때)
                     const problemContainer = document.getElementById('problemContainer');

@@ -132,6 +132,8 @@ router.get('/wrong-problems/:subject', requireAuth, async (req, res) => {
         const subjectInfo = subjects[0];
 
         // 틀린 문제들 조회
+        console.log(`틀린 문제 조회: 사용자 ${userId}, 과목 ${subject} (ID: ${subjectInfo.id})`);
+        
         const [wrongProblems] = await pool.execute(
             `SELECT p.*, up.selected_answer, up.answered_at
              FROM user_progress up
@@ -140,6 +142,11 @@ router.get('/wrong-problems/:subject', requireAuth, async (req, res) => {
              ORDER BY up.answered_at DESC`,
             [userId, subjectInfo.id]
         );
+        
+        console.log(`조회된 틀린 문제 ${wrongProblems.length}개:`);
+        wrongProblems.forEach((problem, index) => {
+            console.log(`  ${index + 1}. ID: ${problem.id}, 문제: ${problem.question.substring(0, 50)}...`);
+        });
 
         res.json({
             success: true,
