@@ -157,11 +157,11 @@
             }
 
             try {
-                const response = await fetch(`/api/problems/${encodeURIComponent(currentSubject)}/progress`);
+                const response = await fetch(`/api/dashboard/wrong-problems/${encodeURIComponent(currentSubject)}`);
                 const data = await response.json();
 
                 if (data.success) {
-                    wrongProblems = data.progress.wrongProblems;
+                    wrongProblems = data.wrongProblems;
                     
                     // 카드 내부의 제목만 업데이트 (문제 컨테이너가 표시될 때)
                     const problemContainer = document.getElementById('problemContainer');
