@@ -1309,15 +1309,15 @@ footer {
 
 /* 틀린 문제 풀이 페이지 답안 체크 후 스타일 (일반 문제 풀이와 동일) */
 .option.wrong-selected {
-    border-color: #FF7EB3 !important;
-    background-color: #fff0f5 !important;
-    color: #333 !important;
+    border-color: #FF7EB3;
+    background-color: #fff0f5;
+    color: #333;
 }
 
 .option.correct-answer-show {
-    border-color: #00d4aa !important;
-    background-color: #f0f8ff !important;
-    color: #333 !important;
+    border-color: #00d4aa;
+    background-color: #f0f8ff;
+    color: #333;
 }
 
 /* 내 정보 페이지 스타일 */

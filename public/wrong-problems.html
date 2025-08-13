@@ -634,6 +634,7 @@
                         // 정답인 경우 선택한 답안에 민트색 스타일 적용
                         const selectedOption = document.querySelector('.option.selected');
                         if (selectedOption) {
+                            selectedOption.classList.remove('selected'); // selected 클래스 제거
                             selectedOption.classList.add('correct-answer-show');
                         }
                         
@@ -649,6 +650,7 @@
                         // 틀린 답안에 핑크색 스타일 적용
                         const selectedOption = document.querySelector('.option.selected');
                         if (selectedOption) {
+                            selectedOption.classList.remove('selected'); // selected 클래스 제거
                             selectedOption.classList.add('wrong-selected');
                         }
                         
