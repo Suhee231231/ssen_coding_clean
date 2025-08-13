@@ -242,16 +242,27 @@
             // 저장된 진행상황 복원
             const savedProgress = loadWrongProblemProgress();
             if (savedProgress) {
-                // 진행상황 데이터 검증
-                const isValidProgress = savedProgress.retryWrongProblems && 
-                                       Array.isArray(savedProgress.retryWrongProblems) && 
-                                       savedProgress.retryWrongProblems.length > 0 &&
-                                       savedProgress.retryWrongProblems.every(p => p.id && p.question);
+                console.log('저장된 진행상황 데이터:', savedProgress);
                 
-                if (!isValidProgress) {
+                // 진행상황 데이터 검증 - 더 엄격한 검증
+                const hasValidRetryData = savedProgress.retryWrongProblems && 
+                                        Array.isArray(savedProgress.retryWrongProblems) && 
+                                        savedProgress.retryWrongProblems.length > 0;
+                
+                const hasValidTotalCount = savedProgress.totalProblems && 
+                                         savedProgress.totalProblems === wrongProblems.length;
+                
+                const hasValidCurrentIndex = savedProgress.currentIndex !== undefined && 
+                                           savedProgress.currentIndex >= 0 && 
+                                           savedProgress.currentIndex < wrongProblems.length;
+                
+                console.log(`진행상황 검증: retryWrongProblems=${hasValidRetryData}, totalCount=${hasValidTotalCount}, currentIndex=${hasValidCurrentIndex}`);
+                
+                if (!hasValidRetryData || !hasValidTotalCount || !hasValidCurrentIndex) {
                     console.log('저장된 진행상황이 유효하지 않아 초기화합니다.');
                     clearWrongProblemProgress();
                     currentProblemIndex = 0;
+                    isRetryRound = false;
                 } else {
                     // 재도전 라운드인지 확인
                     if (savedProgress.isRetryRound) {
@@ -260,18 +271,12 @@
                         wrongProblems = savedProgress.retryWrongProblems;
                     }
                     
-                    if (savedProgress.currentIndex < wrongProblems.length && savedProgress.totalProblems === wrongProblems.length) {
-                        currentProblemIndex = savedProgress.currentIndex;
-                        // 저장된 새로운 틀린 문제들도 복원
-                        if (savedProgress.newWrongProblems && Array.isArray(savedProgress.newWrongProblems)) {
-                            newWrongProblems = savedProgress.newWrongProblems;
-                        }
-                        console.log(`틀린 문제 진행상황 복원: ${currentProblemIndex + 1}번째 문제부터 시작 (재도전: ${isRetryRound})`);
-                    } else {
-                        currentProblemIndex = 0;
-                        console.log('저장된 진행상황이 현재 틀린 문제 목록과 일치하지 않아 초기화합니다.');
-                        clearWrongProblemProgress();
+                    currentProblemIndex = savedProgress.currentIndex;
+                    // 저장된 새로운 틀린 문제들도 복원
+                    if (savedProgress.newWrongProblems && Array.isArray(savedProgress.newWrongProblems)) {
+                        newWrongProblems = savedProgress.newWrongProblems;
                     }
+                    console.log(`틀린 문제 진행상황 복원: ${currentProblemIndex + 1}번째 문제부터 시작 (재도전: ${isRetryRound})`);
                 }
             } else {
                 currentProblemIndex = 0;
