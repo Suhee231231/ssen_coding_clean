@@ -571,9 +571,11 @@ router.post('/:subject/remove-wrong-problems', async (req, res) => {
         );
         console.log(`과목 ${subject}의 모든 문제 ID들:`, allProblems.map(p => p.id));
         
+        // MySQL에서 IN (?) 구문이 배열을 제대로 처리하지 못할 수 있으므로 수동으로 처리
+        const placeholders = problemIds.map(() => '?').join(',');
         const [problems] = await pool.execute(
-            'SELECT id FROM problems WHERE subject_id = ? AND id IN (?)',
-            [subjectInfo.id, problemIds]
+            `SELECT id FROM problems WHERE subject_id = ? AND id IN (${placeholders})`,
+            [subjectInfo.id, ...problemIds]
         );
 
         const validProblemIds = problems.map(p => p.id);
@@ -591,9 +593,10 @@ router.post('/:subject/remove-wrong-problems', async (req, res) => {
         }
 
         // user_progress 테이블에 해당 문제들의 기록이 있는지 확인
+        const progressPlaceholders = validProblemIds.map(() => '?').join(',');
         const [existingProgress] = await pool.execute(
-            'SELECT problem_id FROM user_progress WHERE user_id = ? AND problem_id IN (?)',
-            [req.user.id, validProblemIds]
+            `SELECT problem_id FROM user_progress WHERE user_id = ? AND problem_id IN (${progressPlaceholders})`,
+            [req.user.id, ...validProblemIds]
         );
 
         const existingProblemIds = existingProgress.map(p => p.problem_id);
@@ -603,9 +606,10 @@ router.post('/:subject/remove-wrong-problems', async (req, res) => {
 
         // 기존 기록이 있는 문제들은 정답으로 업데이트
         if (existingProblemIds.length > 0) {
+            const updatePlaceholders = existingProblemIds.map(() => '?').join(',');
             await pool.execute(
-                'UPDATE user_progress SET is_correct = TRUE WHERE user_id = ? AND problem_id IN (?)',
-                [req.user.id, existingProblemIds]
+                `UPDATE user_progress SET is_correct = TRUE WHERE user_id = ? AND problem_id IN (${updatePlaceholders})`,
+                [req.user.id, ...existingProblemIds]
             );
         }
 
