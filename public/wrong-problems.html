@@ -297,15 +297,8 @@
                         handleAllProblemsCorrect();
                     } else {
                         // 첫 번째 라운드에서 모든 문제를 맞춘 경우
-                        clearWrongProblemProgress(); // 진행상황 삭제
-                        document.getElementById('problemContainer').innerHTML = `
-                            <div class="completion-message">
-                                <h3>🎉 완벽하게 마스터했습니다!</h3>
-                                <p>모든 틀린 문제를 정답으로 완료했습니다!</p>
-                                <p>이제 이 과목의 틀린 문제가 없습니다.</p>
-                                <button class="btn-primary" onclick="goBack()">돌아가기</button>
-                            </div>
-                        `;
+                        // 틀린 문제가 없으므로 서버에서 틀린 문제 제거 요청
+                        handleAllProblemsCorrect();
                     }
                 }
                 return;
@@ -467,15 +460,8 @@
                         handleAllProblemsCorrect();
                     } else {
                         // 첫 번째 라운드에서 모든 문제를 맞춘 경우
-                        clearWrongProblemProgress(); // 진행상황 삭제
-                        document.getElementById('problemContainer').innerHTML = `
-                            <div class="completion-message">
-                                <h3>🎉 완벽하게 마스터했습니다!</h3>
-                                <p>모든 틀린 문제를 정답으로 완료했습니다!</p>
-                                <p>이제 이 과목의 틀린 문제가 없습니다.</p>
-                                <button class="btn-primary" onclick="goBack()">돌아가기</button>
-                            </div>
-                        `;
+                        // 틀린 문제가 없으므로 서버에서 틀린 문제 제거 요청
+                        handleAllProblemsCorrect();
                     }
                 }
             }
@@ -549,10 +535,10 @@
             }
         }
 
-        // 재도전에서 모든 문제를 맞췄을 때 처리
+        // 모든 문제를 맞췄을 때 처리 (재도전 또는 첫 번째 라운드)
         async function handleAllProblemsCorrect() {
             try {
-                console.log('재도전에서 모든 문제를 맞춤 - 틀린 문제 제거 및 정답률 업데이트 시작');
+                console.log(`${isRetryRound ? '재도전' : '첫 번째 라운드'}에서 모든 문제를 맞춤 - 틀린 문제 제거 및 정답률 업데이트 시작`);
                 
                 // currentSubject가 없으면 재설정 시도
                 if (!currentSubject) {
