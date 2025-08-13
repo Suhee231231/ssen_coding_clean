@@ -24,7 +24,7 @@ const PORT = process.env.PORT || 3001;
 // Rate Limiting 설정
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15분
-    max: 200, // IP당 최대 요청 수 (100에서 200으로 증가)
+    max: 500, // IP당 최대 요청 수 (200에서 500으로 증가)
     message: {
         success: false,
         message: '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
