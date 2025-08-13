@@ -122,23 +122,45 @@
 
         // 통계 데이터 로드 (최적화된 버전)
         async function loadStats() {
+            console.log('loadStats 함수 시작');
+            
             // 로딩 상태 표시
             const statsElements = ['totalProblems', 'totalSubjects', 'latestUpdate'];
             statsElements.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
                     element.textContent = '로딩중...';
+                    console.log(`${id} 요소에 로딩중... 표시`);
+                } else {
+                    console.error(`${id} 요소를 찾을 수 없음`);
                 }
             });
 
             try {
+                console.log('API 호출 시작: /api/problems/stats');
                 // 통계만 별도로 가져오는 API 호출
                 const response = await fetch('/api/problems/stats');
+                console.log('API 응답 받음:', response.status);
+                
                 const data = await response.json();
+                console.log('API 데이터:', data);
                 
                 if (data.success) {
-                    document.getElementById('totalProblems').textContent = data.totalProblems || 0;
-                    document.getElementById('totalSubjects').textContent = data.totalSubjects || 0;
+                    console.log('API 성공, 데이터 업데이트 시작');
+                    
+                    const totalProblemsElement = document.getElementById('totalProblems');
+                    const totalSubjectsElement = document.getElementById('totalSubjects');
+                    const latestUpdateElement = document.getElementById('latestUpdate');
+                    
+                    if (totalProblemsElement) {
+                        totalProblemsElement.textContent = data.totalProblems || 0;
+                        console.log('totalProblems 업데이트:', data.totalProblems);
+                    }
+                    
+                    if (totalSubjectsElement) {
+                        totalSubjectsElement.textContent = data.totalSubjects || 0;
+                        console.log('totalSubjects 업데이트:', data.totalSubjects);
+                    }
                     
                     let latestUpdateText = '업데이트 없음';
                     if (data.latestUpdate) {
@@ -149,7 +171,13 @@
                             day: '2-digit'
                         });
                     }
-                    document.getElementById('latestUpdate').textContent = latestUpdateText;
+                    
+                    if (latestUpdateElement) {
+                        latestUpdateElement.textContent = latestUpdateText;
+                        console.log('latestUpdate 업데이트:', latestUpdateText);
+                    }
+                } else {
+                    console.error('API 응답이 성공이 아님:', data);
                 }
             } catch (error) {
                 console.error('통계 로드 오류:', error);
@@ -198,15 +226,22 @@
 
         // 페이지 로드 시 실행 (최적화된 버전)
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOMContentLoaded 이벤트 발생');
+            
             // 즉시 실행할 작업
+            console.log('checkAuthStatus 실행');
             checkAuthStatus();
             
             // 지연 로딩으로 성능 향상
+            console.log('loadStats 100ms 후 실행 예정');
             setTimeout(() => {
+                console.log('loadStats 실행 시작');
                 loadStats();
             }, 100);
             
+            console.log('loadSubjects 200ms 후 실행 예정');
             setTimeout(() => {
+                console.log('loadSubjects 실행 시작');
                 loadSubjects();
             }, 200);
         });
