@@ -566,6 +566,7 @@
                 // 현재 재도전 라운드의 문제 ID들을 수집
                 const problemIds = wrongProblems.map(problem => problem.id);
                 console.log('제거할 문제 ID들:', problemIds);
+                console.log('틀린 문제 데이터:', wrongProblems);
                 
                 // 서버에 틀린 문제 제거 요청
                 console.log('API 요청 전송:', {

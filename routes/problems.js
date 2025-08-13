@@ -562,14 +562,19 @@ router.post('/:subject/remove-wrong-problems', async (req, res) => {
         const subjectInfo = subjects[0];
 
         // 해당 과목의 문제들만 필터링
+        console.log(`틀린 문제 제거 요청: 과목=${subject}, 요청된 문제 ID들=${problemIds}`);
+        
         const [problems] = await pool.execute(
             'SELECT id FROM problems WHERE subject_id = ? AND id IN (?)',
             [subjectInfo.id, problemIds]
         );
 
         const validProblemIds = problems.map(p => p.id);
+        
+        console.log(`과목 ID=${subjectInfo.id}, 찾은 문제들=${validProblemIds}, 요청된 문제들=${problemIds}`);
 
         if (validProblemIds.length === 0) {
+            console.log(`유효한 문제가 없음: 과목=${subject}, 요청된 문제 ID들=${problemIds}`);
             return res.status(400).json({ 
                 success: false, 
                 message: '유효한 문제가 없습니다.' 
