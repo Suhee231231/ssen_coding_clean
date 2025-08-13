@@ -148,12 +148,7 @@ router.post('/problems', requireAdmin, async (req, res) => {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [subject_id, question, option_a, option_b, option_c, option_d, dbCorrectAnswer, explanation, difficulty]);
         
-        // 과목의 총 문제 수 업데이트
-        await connection.execute(`
-            UPDATE subjects 
-            SET total_problems = (SELECT COUNT(*) FROM problems WHERE subject_id = ?)
-            WHERE id = ?
-        `, [subject_id, subject_id]);
+        // 과목의 총 문제 수는 실시간으로 계산되므로 업데이트 불필요
         
         connection.release();
         
@@ -221,20 +216,7 @@ router.put('/problems/:id', requireAdmin, async (req, res) => {
             WHERE id = ?
         `, [subject_id, question, option_a, option_b, option_c, option_d, dbCorrectAnswer, explanation, difficulty, problemId]);
         
-        // 과목의 총 문제 수 업데이트 (기존 과목과 새 과목 모두)
-        await connection.execute(`
-            UPDATE subjects 
-            SET total_problems = (SELECT COUNT(*) FROM problems WHERE subject_id = ?)
-            WHERE id = ?
-        `, [oldSubjectId, oldSubjectId]);
-        
-        if (oldSubjectId !== parseInt(subject_id)) {
-            await connection.execute(`
-                UPDATE subjects 
-                SET total_problems = (SELECT COUNT(*) FROM problems WHERE subject_id = ?)
-                WHERE id = ?
-            `, [subject_id, subject_id]);
-        }
+        // 과목의 총 문제 수는 실시간으로 계산되므로 업데이트 불필요
         
         connection.release();
         
@@ -328,12 +310,7 @@ router.delete('/problems/:id', requireAdmin, async (req, res) => {
             }
         }
         
-        // 과목의 총 문제 수 업데이트
-        await connection.execute(`
-            UPDATE subjects 
-            SET total_problems = (SELECT COUNT(*) FROM problems WHERE subject_id = ?)
-            WHERE id = ?
-        `, [subjectId, subjectId]);
+        // 과목의 총 문제 수는 실시간으로 계산되므로 업데이트 불필요
         
         connection.release();
         
@@ -363,8 +340,8 @@ router.post('/subjects', requireAdmin, async (req, res) => {
         const connection = await pool.getConnection();
         
         const [result] = await connection.execute(`
-            INSERT INTO subjects (name, description, category, total_problems, is_public)
-            VALUES (?, ?, ?, 0, ?)
+            INSERT INTO subjects (name, description, category, is_public)
+            VALUES (?, ?, ?, ?)
         `, [name, description || '', category, is_public || false]);
         
         connection.release();
