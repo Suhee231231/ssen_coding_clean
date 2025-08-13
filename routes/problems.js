@@ -564,6 +564,13 @@ router.post('/:subject/remove-wrong-problems', async (req, res) => {
         // 해당 과목의 문제들만 필터링
         console.log(`틀린 문제 제거 요청: 과목=${subject}, 요청된 문제 ID들=${problemIds}`);
         
+        // 먼저 해당 과목의 모든 문제 ID를 확인
+        const [allProblems] = await pool.execute(
+            'SELECT id FROM problems WHERE subject_id = ?',
+            [subjectInfo.id]
+        );
+        console.log(`과목 ${subject}의 모든 문제 ID들:`, allProblems.map(p => p.id));
+        
         const [problems] = await pool.execute(
             'SELECT id FROM problems WHERE subject_id = ? AND id IN (?)',
             [subjectInfo.id, problemIds]
@@ -575,9 +582,11 @@ router.post('/:subject/remove-wrong-problems', async (req, res) => {
 
         if (validProblemIds.length === 0) {
             console.log(`유효한 문제가 없음: 과목=${subject}, 요청된 문제 ID들=${problemIds}`);
-            return res.status(400).json({ 
-                success: false, 
-                message: '유효한 문제가 없습니다.' 
+            // 유효한 문제가 없어도 성공으로 처리 (이미 정답이거나 문제가 없는 경우)
+            return res.json({ 
+                success: true, 
+                message: '처리할 틀린 문제가 없습니다.',
+                removedCount: 0
             });
         }
 
