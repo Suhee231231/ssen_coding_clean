@@ -232,6 +232,9 @@
                 originalWrongProblems = [...wrongProblems];
             }
             
+            // 첫 번째 라운드임을 명시적으로 설정
+            isRetryRound = false;
+            
             // 저장된 진행상황 복원
             const savedProgress = loadWrongProblemProgress();
             if (savedProgress) {
@@ -495,6 +498,7 @@
                 try {
                     localStorage.setItem(progressKey, JSON.stringify(progressData));
                     console.log(`틀린 문제 진행상황 저장: ${currentProblemIndex + 1}/${wrongProblems.length}, 새로 틀린 문제: ${newWrongProblems.length}개, 재도전: ${isRetryRound}`);
+                    console.log('저장된 진행상황 데이터:', progressData);
                 } catch (error) {
                     console.error('틀린 문제 진행상황 저장 오류:', error);
                 }
