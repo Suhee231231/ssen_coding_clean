@@ -88,9 +88,6 @@
         let wrongProblems = [];
         let currentProblemIndex = 0;
         let currentProblem = null;
-        let newWrongProblems = []; // 이번 라운드에서 틀린 문제들
-        let isRetryRound = false; // 재도전 라운드 여부 (두 번째 라운드)
-        let originalWrongProblems = []; // 원본 틀린 문제 목록 (첫 번째 라운드용)
 
         // URL에서 과목과 모드 파싱
         function getUrlParams() {
@@ -223,104 +220,25 @@
             `;
         }
 
-        // 틀린 문제 풀기 시작
+        // 틀린 문제 풀기 시작 (단순화)
         function startWrongProblems() {
             document.getElementById('wrongProblemsList').style.display = 'none';
             document.getElementById('problemContainer').style.display = 'block';
             
-            // 새로운 라운드 시작 - 틀린 문제 배열 초기화
-            newWrongProblems = [];
+            // 첫 번째 문제부터 시작
+            currentProblemIndex = 0;
             
-            // 원본 틀린 문제 목록 저장 (첫 번째 라운드용)
-            if (!isRetryRound) {
-                originalWrongProblems = [...wrongProblems];
-            }
-            
-            // 첫 번째 라운드임을 명시적으로 설정
-            isRetryRound = false;
-            
-            // 저장된 진행상황 복원
-            const savedProgress = loadWrongProblemProgress();
-            if (savedProgress) {
-                console.log('저장된 진행상황 데이터:', savedProgress);
-                
-                // 진행상황 데이터 검증 - 더 엄격한 검증
-                const hasValidRetryData = savedProgress.retryWrongProblems && 
-                                        Array.isArray(savedProgress.retryWrongProblems) && 
-                                        savedProgress.retryWrongProblems.length > 0;
-                
-                const hasValidTotalCount = savedProgress.totalProblems && 
-                                         savedProgress.totalProblems === wrongProblems.length;
-                
-                const hasValidCurrentIndex = savedProgress.currentIndex !== undefined && 
-                                           savedProgress.currentIndex >= 0 && 
-                                           savedProgress.currentIndex < wrongProblems.length;
-                
-                console.log(`진행상황 검증: retryWrongProblems=${hasValidRetryData}, totalCount=${hasValidTotalCount}, currentIndex=${hasValidCurrentIndex}`);
-                
-                if (!hasValidRetryData || !hasValidTotalCount || !hasValidCurrentIndex) {
-                    console.log('저장된 진행상황이 유효하지 않아 초기화합니다.');
-                    clearWrongProblemProgress();
-                    currentProblemIndex = 0;
-                    isRetryRound = false;
-                } else {
-                    // 재도전 라운드인지 확인
-                    if (savedProgress.isRetryRound) {
-                        isRetryRound = true;
-                        // 재도전 라운드의 경우 줄어든 틀린 문제들로 복원
-                        wrongProblems = savedProgress.retryWrongProblems;
-                    }
-                    
-                    currentProblemIndex = savedProgress.currentIndex;
-                    // 저장된 새로운 틀린 문제들도 복원
-                    if (savedProgress.newWrongProblems && Array.isArray(savedProgress.newWrongProblems)) {
-                        newWrongProblems = savedProgress.newWrongProblems;
-                    }
-                    console.log(`틀린 문제 진행상황 복원: ${currentProblemIndex + 1}번째 문제부터 시작 (재도전: ${isRetryRound})`);
-                }
-            } else {
-                currentProblemIndex = 0;
-                console.log('저장된 진행상황이 없어 처음부터 시작합니다.');
-            }
-            
-            // 문제 번호 즉시 업데이트
+            // 문제 번호 업데이트
             document.getElementById('problemInfo').textContent = `문제 ${currentProblemIndex + 1} / ${wrongProblems.length}`;
             
             loadCurrentProblem();
         }
 
-        // 현재 문제 로드
+        // 현재 문제 로드 (단순화)
         async function loadCurrentProblem() {
             if (currentProblemIndex >= wrongProblems.length) {
                 // 모든 틀린 문제를 다 풀었을 때
-                if (newWrongProblems.length > 0) {
-                    // 이번 라운드에서 틀린 문제가 있으면 다시 풀기 옵션 제공
-                    if (!isRetryRound) {
-                        // 첫 번째 라운드인 경우에만 진행상황 삭제
-                        clearWrongProblemProgress();
-                    }
-                    document.getElementById('problemContainer').innerHTML = `
-                        <div class="completion-message">
-                            <h3>🎯 이번 라운드 완료!</h3>
-                            <p>총 ${wrongProblems.length}문제 중 ${newWrongProblems.length}문제를 틀렸습니다.</p>
-                            <p>틀린 문제들을 다시 풀어서 완전히 마스터해보세요!</p>
-                            <div style="margin-top: 20px;">
-                                <button class="btn-primary" onclick="startNewRound()" style="margin-right: 10px;">틀린 문제 다시 풀기 (${newWrongProblems.length}문제)</button>
-                                <button class="btn-secondary" onclick="goBack()">돌아가기</button>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    // 모든 문제를 맞췄을 때
-                    if (isRetryRound) {
-                        // 재도전 라운드에서 모든 문제를 맞춘 경우
-                        handleAllProblemsCorrect();
-                    } else {
-                        // 첫 번째 라운드에서 모든 문제를 맞춘 경우
-                        // 틀린 문제가 없으므로 서버에서 틀린 문제 제거 요청
-                        handleAllProblemsCorrect();
-                    }
-                }
+                handleAllProblemsCorrect();
                 return;
             }
 
@@ -487,82 +405,18 @@
             }
         }
 
-        // 틀린 문제 진행상황 저장
-        function saveWrongProblemProgress() {
-            if (currentSubject && currentProblemIndex !== null && wrongProblems.length > 0) {
-                const progressKey = `wrongProblemProgress_${currentSubject}`;
-                const progressData = {
-                    currentIndex: currentProblemIndex,
-                    totalProblems: wrongProblems.length,
-                    newWrongProblems: newWrongProblems, // 새로운 틀린 문제들도 저장
-                    timestamp: Date.now(),
-                    subject: currentSubject, // 과목 정보도 저장
-                    isRetryRound: isRetryRound, // 재도전 라운드 여부
-                    retryWrongProblems: isRetryRound ? wrongProblems : null // 재도전 라운드인 경우 현재 틀린 문제 목록 저장
-                };
-                
-                try {
-                    localStorage.setItem(progressKey, JSON.stringify(progressData));
-                    console.log(`틀린 문제 진행상황 저장: ${currentProblemIndex + 1}/${wrongProblems.length}, 새로 틀린 문제: ${newWrongProblems.length}개, 재도전: ${isRetryRound}`);
-                    console.log('저장된 진행상황 데이터:', progressData);
-                } catch (error) {
-                    console.error('틀린 문제 진행상황 저장 오류:', error);
-                }
-            }
-        }
-
-        // 틀린 문제 진행상황 불러오기
-        function loadWrongProblemProgress() {
-            if (currentSubject) {
-                const progressKey = `wrongProblemProgress_${currentSubject}`;
-                const savedData = localStorage.getItem(progressKey);
-                
-                if (savedData) {
-                    try {
-                        const progressData = JSON.parse(savedData);
-                        
-                        // 과목 정보 확인
-                        if (progressData.subject !== currentSubject) {
-                            console.log('과목이 변경되어 진행상황을 초기화합니다.');
-                            localStorage.removeItem(progressKey);
-                            return null;
-                        }
-                        
-                        // 진행상황 유효성 검사
-                        if (progressData.currentIndex < 0 || progressData.totalProblems <= 0) {
-                            console.log('유효하지 않은 진행상황을 초기화합니다.');
-                            localStorage.removeItem(progressKey);
-                            return null;
-                        }
-                        
-                        console.log(`틀린 문제 진행상황 로드: ${progressData.currentIndex + 1}/${progressData.totalProblems}`);
-                        return progressData;
-                    } catch (error) {
-                        console.error('틀린 문제 진행상황 파싱 오류:', error);
-                        localStorage.removeItem(progressKey);
-                    }
-                }
-            }
-            return null;
-        }
-
-        // 틀린 문제 진행상황 삭제
-        function clearWrongProblemProgress() {
-            if (currentSubject) {
-                const progressKey = `wrongProblemProgress_${currentSubject}`;
-                localStorage.removeItem(progressKey);
-                console.log('틀린 문제 진행상황 삭제됨');
-            }
-        }
-
-        // 틀린 문제 진행상황 강제 초기화 (디버깅용)
-        function forceClearProgress() {
-            if (currentSubject) {
-                const progressKey = `wrongProblemProgress_${currentSubject}`;
-                localStorage.removeItem(progressKey);
-                console.log('틀린 문제 진행상황 강제 초기화됨');
-                alert('진행상황이 초기화되었습니다. 페이지를 새로고침하세요.');
-            }
+        // 간단한 틀린 문제 풀이 시작
+        function startWrongProblems() {
+            document.getElementById('wrongProblemsList').style.display = 'none';
+            document.getElementById('problemContainer').style.display = 'block';
+            
+            // 첫 번째 문제부터 시작
+            currentProblemIndex = 0;
+            
+            // 문제 번호 업데이트
+            document.getElementById('problemInfo').textContent = `문제 ${currentProblemIndex + 1} / ${wrongProblems.length}`;
+            
+            loadCurrentProblem();
         }
 
         // 모든 문제를 맞췄을 때 처리 (재도전 또는 첫 번째 라운드)
@@ -650,102 +504,11 @@
             window.location.href = '/profile.html';
         }
 
-        // 새로운 라운드 시작 (틀린 문제들로)
-        function startNewRound() {
-            console.log('startNewRound 함수 호출됨');
-            console.log('newWrongProblems:', newWrongProblems);
-            
-            if (newWrongProblems.length > 0) {
-                console.log('새 라운드 시작 준비 중...');
-                
-                // currentSubject가 설정되어 있는지 확인
-                if (!currentSubject) {
-                    const params = getUrlParams();
-                    currentSubject = params.subject;
-                    console.log('currentSubject 재설정:', currentSubject);
-                }
-                
-                // URL 파라미터가 없으면 재설정
-                const params = getUrlParams();
-                if (!params.subject || !params.mode) {
-                    const newUrl = `/wrong-problems.html?subject=${encodeURIComponent(currentSubject)}&mode=solve`;
-                    window.history.replaceState({}, '', newUrl);
-                    console.log('URL 파라미터 재설정:', newUrl);
-                }
-                
-                isRetryRound = true; // 재도전 라운드로 설정
-                wrongProblems = [...newWrongProblems]; // 틀린 문제들을 새 문제 목록으로 설정
-                newWrongProblems = []; // 새로운 틀린 문제 배열 초기화
-                currentProblemIndex = 0;
-                
-                console.log('새로운 wrongProblems:', wrongProblems);
-                console.log('currentProblemIndex:', currentProblemIndex);
-                console.log('재도전 라운드 시작:', isRetryRound);
-                
-                // 문제 컨테이너를 원래 상태로 복원
-                const problemContainer = document.getElementById('problemContainer');
-                if (!problemContainer) {
-                    console.error('problemContainer를 찾을 수 없습니다!');
-                    return;
-                }
-                
-                problemContainer.innerHTML = `
-                    <div class="problem-header">
-                        <h2 id="subjectName">${currentSubject} 틀린 문제 ${isRetryRound ? '(재도전)' : ''}</h2>
-                        <div class="problem-info-row">
-                            <p id="problemInfo">문제 ${currentProblemIndex + 1} / ${wrongProblems.length}</p>
-                        </div>
-                    </div>
-                    <div class="problem-question" id="question">
-                        <!-- 문제 내용이 여기에 로드됩니다 -->
-                    </div>
-                    <form id="problemForm">
-                        <div class="options-container" id="optionsContainer">
-                            <!-- 선택지들이 여기에 로드됩니다 -->
-                        </div>
-                        <input type="hidden" name="answer" id="selectedAnswer">
-                        <button type="submit" class="submit-btn" id="submitBtn" disabled>정답 제출</button>
-                    </form>
-                    <div id="result" style="display: none;">
-                        <div id="resultMessage"></div>
-                        <div id="explanation" class="explanation" style="display: none;"></div>
-                    </div>
-                    <div class="navigation-buttons">
-                        <button class="nav-btn" id="prevBtn" onclick="navigateProblem(-1)">이전 문제</button>
-                        <button class="nav-btn primary" id="nextBtn" onclick="navigateProblem(1)" style="display: none;">다음 문제</button>
-                    </div>
-                `;
-                
-                console.log('문제 컨테이너 복원 완료');
-                
-                // DOM 업데이트를 위한 짧은 지연
-                setTimeout(() => {
-                    // 새 라운드 시작 시 진행상황 초기화 및 저장
-                    saveWrongProblemProgress();
-                    
-                    // 문제 풀이 시작
-                    loadCurrentProblem();
-                    
-                    console.log(`새 라운드 시작: ${wrongProblems.length}개의 틀린 문제를 다시 풀기`);
-                }, 100);
-            } else {
-                console.log('newWrongProblems가 비어있어서 새 라운드를 시작할 수 없습니다.');
-            }
-        }
 
-        // 돌아가기
+
+        // 돌아가기 (단순화)
         function goBack() {
-            const params = getUrlParams();
-            // 바로 풀기 모드인 경우 대시보드로, 아니면 이전 페이지로
-            if (params.mode === 'solve') {
-                // 틀린 문제풀이 완료 시 진행상황 정리 (재도전 라운드가 아닌 경우에만)
-                if (!isRetryRound) {
-                    clearWrongProblemProgress();
-                }
-                window.location.href = '/profile.html';
-            } else {
-                window.history.back();
-            }
+            window.location.href = '/profile.html';
         }
 
         // 선택지 클릭 이벤트
@@ -965,35 +728,12 @@
                             
                             if (data.isCorrect) {
                                 resultMessage.innerHTML = '<span style="color: #28a745;">✓ 정답입니다!</span>';
-                                // 정답인 경우 현재 진행상황 저장 (다음 문제로 이동할 준비)
-                                saveWrongProblemProgress();
                             } else {
                                 // 정답을 1, 2, 3, 4로 변환
                                 const answerMap = { 'A': '1', 'B': '2', 'C': '3', 'D': '4' };
                                 const displayCorrectAnswer = answerMap[data.correctAnswer] || data.correctAnswer;
                                 
                                 resultMessage.innerHTML = `<span style="color: #dc3545;">✗ 틀렸습니다. 정답은 ${displayCorrectAnswer}번입니다.</span>`;
-                                
-                                // 틀린 문제 정보 저장
-                                const wrongProblem = {
-                                    id: currentProblem.id,
-                                    question: currentProblem.question || currentProblem.content,
-                                    option_a: currentProblem.option_a,
-                                    option_b: currentProblem.option_b,
-                                    option_c: currentProblem.option_c,
-                                    option_d: currentProblem.option_d,
-                                    correct_answer: data.correctAnswer
-                                };
-                                
-                                // 중복 확인 후 추가
-                                const isDuplicate = newWrongProblems.some(problem => problem.id === wrongProblem.id);
-                                if (!isDuplicate) {
-                                    newWrongProblems.push(wrongProblem);
-                                    console.log(`틀린 문제 추가: 문제 ID ${wrongProblem.id}, 현재 틀린 문제 수: ${newWrongProblems.length}`);
-                                }
-                                
-                                // 틀렸어도 현재 진행상황은 저장 (같은 문제 다시 시도 가능)
-                                saveWrongProblemProgress();
                             }
                             
                             result.style.display = 'block';
@@ -1027,19 +767,7 @@
             loadWrongProblems();
         });
 
-        // 페이지를 떠날 때 진행상황 저장
-        window.addEventListener('beforeunload', () => {
-            if (currentSubject && currentProblemIndex !== null && document.getElementById('problemContainer').style.display !== 'none') {
-                saveWrongProblemProgress();
-            }
-        });
 
-        // 페이지 숨김 시에도 진행상황 저장 (모바일에서 앱 전환 시)
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && currentSubject && currentProblemIndex !== null && document.getElementById('problemContainer').style.display !== 'none') {
-                saveWrongProblemProgress();
-            }
-        });
     </script>
 </body>
 </html> 
