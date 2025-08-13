@@ -151,7 +151,8 @@
             // currentSubject가 없으면 오류 처리
             if (!currentSubject) {
                 console.error('과목 정보가 없습니다:', params);
-                alert('과목 정보를 찾을 수 없습니다.');
+                console.error('현재 URL:', window.location.href);
+                alert('과목 정보를 찾을 수 없습니다. 페이지를 새로고침하거나 다시 시도해주세요.');
                 return;
             }
 
@@ -549,6 +550,19 @@
             try {
                 console.log('재도전에서 모든 문제를 맞춤 - 틀린 문제 제거 및 정답률 업데이트 시작');
                 
+                // currentSubject가 없으면 재설정 시도
+                if (!currentSubject) {
+                    const params = getUrlParams();
+                    currentSubject = params.subject;
+                    console.log('handleAllProblemsCorrect에서 currentSubject 재설정:', currentSubject);
+                    
+                    if (!currentSubject) {
+                        console.error('currentSubject를 찾을 수 없습니다.');
+                        alert('과목 정보를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+                        return;
+                    }
+                }
+                
                 // 현재 재도전 라운드의 문제 ID들을 수집
                 const problemIds = wrongProblems.map(problem => problem.id);
                 console.log('제거할 문제 ID들:', problemIds);
@@ -609,6 +623,14 @@
                     const params = getUrlParams();
                     currentSubject = params.subject;
                     console.log('currentSubject 재설정:', currentSubject);
+                }
+                
+                // URL 파라미터가 없으면 재설정
+                const params = getUrlParams();
+                if (!params.subject || !params.mode) {
+                    const newUrl = `/wrong-problems.html?subject=${encodeURIComponent(currentSubject)}&mode=solve`;
+                    window.history.replaceState({}, '', newUrl);
+                    console.log('URL 파라미터 재설정:', newUrl);
                 }
                 
                 isRetryRound = true; // 재도전 라운드로 설정
