@@ -92,7 +92,7 @@
             });
             return {
                 subject: urlParams.get('subject'),
-                id: idParam ? parseInt(idParam) : 1 // 기본값을 1로 설정
+                id: idParam ? parseInt(idParam) : null // id가 없으면 null로 설정하여 서버에서 진행상황 복원
             };
         }
 
@@ -159,6 +159,11 @@
                     if (!currentProblemId) {
                         currentProblemId = data.problemNumber;
                         console.log(`진행 상황 복원 후 currentProblemId 업데이트: ${currentProblemId}`);
+                        
+                        // URL 업데이트 (새로고침 시에도 같은 문제가 로드되도록)
+                        const newUrl = `/problems.html?subject=${encodeURIComponent(currentSubject)}&id=${currentProblemId}`;
+                        window.history.replaceState({}, '', newUrl);
+                        console.log(`URL 업데이트: ${newUrl}`);
                     }
                     
                     console.log(`문제 로드 성공: 문제 ID=${data.problem.id}, 전체 문제 수=${totalProblems}, 현재 문제 번호=${currentProblemId}`);
