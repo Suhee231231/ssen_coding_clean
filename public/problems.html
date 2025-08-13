@@ -91,31 +91,7 @@
             };
         }
 
-        // 세션 상태 확인 및 네비게이션 업데이트
-        async function checkAuthStatus() {
-            try {
-                const response = await fetch('/api/auth/check');
-                const data = await response.json();
-                
-                const navLinks = document.getElementById('navLinks');
-                
-                if (data.isLoggedIn) {
-                    navLinks.innerHTML += `
-                        <a href="/profile.html">내 학습</a>
-                        <a href="#" onclick="logout()">로그아웃</a>
-                    `;
-                } else {
-                    navLinks.innerHTML += `
-                        <a href="/login.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">로그인</a>
-                        <a href="/register.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">회원가입</a>
-                    `;
-                }
-            } catch (error) {
-                console.error('인증 상태 확인 오류:', error);
-            }
-        }
-
-        // 로그아웃
+        // 로그아웃 (common.js의 함수 사용)
         async function logout() {
             try {
                 const response = await fetch('/api/auth/logout', {
