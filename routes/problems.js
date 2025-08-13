@@ -62,7 +62,7 @@ router.get('/:subject', async (req, res) => {
         const { subject } = req.params;
         const { id } = req.query;
 
-        console.log(`[DEBUG] 과목 문제 조회 요청: subject=${subject}, id=${id}`);
+        console.log(`[DEBUG] 과목 문제 조회 요청: subject=${subject}, id=${id}, id type=${typeof id}, isNaN=${isNaN(parseInt(id))}`);
 
         // 과목 정보 조회 (공개된 과목만)
         const [subjects] = await pool.execute(
@@ -95,11 +95,12 @@ router.get('/:subject', async (req, res) => {
         
         let problemIndex = 0; // 기본값: 첫 번째 문제
         
-        if (id) {
+        if (id && id !== 'null' && !isNaN(parseInt(id))) {
             // 특정 순서의 문제 조회
             problemIndex = parseInt(id) - 1;
         } else {
             // 로그인한 사용자의 경우 마지막 진행 상황 확인
+            console.log(`[DEBUG] id가 null이거나 유효하지 않음. 진행상황 복원 시도...`);
             if (req.isAuthenticated() && req.user && req.user.id) {
                 try {
                     const [progress] = await pool.execute(
@@ -186,6 +187,8 @@ router.get('/:subject', async (req, res) => {
                 } catch (error) {
                     console.error('진행 상황 조회 오류:', error);
                 }
+            } else {
+                console.log(`[DEBUG] 로그인되지 않은 사용자. 첫 번째 문제부터 시작.`);
             }
         }
         
