@@ -334,6 +334,13 @@
                 nextBtn.style.display = 'none';
                 submitBtn.disabled = true;
                 selectedAnswer.value = '';
+                
+                // 선택지 스타일 초기화
+                document.querySelectorAll('.option').forEach(opt => {
+                    opt.style.borderColor = '';
+                    opt.style.backgroundColor = '';
+                    opt.style.color = '';
+                });
 
                 // 틀린 문제는 이전 답안과 정답을 표시하지 않음 (다시 풀어보기 위함)
                 // showPreviousAnswerAndCorrectAnswer();
@@ -579,9 +586,13 @@
                 const option = e.target.closest('.option');
                 const selectedOption = option.dataset.option;
                 
-                // 기존 선택 해제
+                // 기존 선택 해제 및 스타일 초기화
                 document.querySelectorAll('.option').forEach(opt => {
                     opt.classList.remove('selected');
+                    // 이전 스타일 초기화
+                    opt.style.borderColor = '';
+                    opt.style.backgroundColor = '';
+                    opt.style.color = '';
                 });
                 
                 // 새 선택 표시
@@ -623,6 +634,15 @@
                     
                     if (data.isCorrect) {
                         resultMessage.innerHTML = '<span style="color: #28a745;">✓ 정답입니다!</span>';
+                        
+                        // 정답인 경우 선택한 답안에 민트색 스타일 적용
+                        const selectedOption = document.querySelector('.option.selected');
+                        if (selectedOption) {
+                            selectedOption.style.borderColor = '#00d4aa';
+                            selectedOption.style.backgroundColor = '#f0f8ff';
+                            selectedOption.style.color = '#333';
+                        }
+                        
                         // 정답인 경우 현재 진행상황 저장 (다음 문제로 이동할 준비)
                         saveWrongProblemProgress();
                     } else {
@@ -631,6 +651,22 @@
                         const displayCorrectAnswer = answerMap[data.correctAnswer] || data.correctAnswer;
                         
                         resultMessage.innerHTML = `<span style="color: #dc3545;">✗ 틀렸습니다. 정답은 ${displayCorrectAnswer}번입니다.</span>`;
+                        
+                        // 틀린 답안에 핑크색 스타일 적용
+                        const selectedOption = document.querySelector('.option.selected');
+                        if (selectedOption) {
+                            selectedOption.style.borderColor = '#FF7EB3';
+                            selectedOption.style.backgroundColor = '#fff0f5';
+                            selectedOption.style.color = '#333';
+                        }
+                        
+                        // 정답에 민트색 스타일 적용
+                        const correctOption = document.querySelector(`[data-option="${displayCorrectAnswer}"]`);
+                        if (correctOption) {
+                            correctOption.style.borderColor = '#00d4aa';
+                            correctOption.style.backgroundColor = '#f0f8ff';
+                            correctOption.style.color = '#333';
+                        }
                         
                         // 틀린 문제를 새로운 틀린 문제 배열에 추가
                         const wrongProblem = {
