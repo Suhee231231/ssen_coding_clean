@@ -275,11 +275,20 @@
 
             const problem = wrongProblems[currentProblemIndex];
             currentProblem = problem;
+            
+            console.log('틀린 문제 데이터:', problem);
+            console.log('문제 내용 필드:', {
+                question: problem.question,
+                content: problem.content,
+                hasQuestion: !!problem.question,
+                hasContent: !!problem.content
+            });
 
             try {
                 // 틀린 문제 데이터에 이미 모든 정보가 있으므로 직접 사용
                 const problemData = {
-                    question: problem.question,
+                    question: problem.question || problem.content,
+                    content: problem.content || problem.question,
                     option_a: problem.option_a,
                     option_b: problem.option_b,
                     option_c: problem.option_c,
@@ -291,7 +300,8 @@
                 
                 // 문제 내용 업데이트 (코드 블록 처리)
                 const questionElement = document.getElementById('question');
-                questionElement.innerHTML = formatCodeBlocks(problemData.question);
+                const questionContent = problemData.question || problemData.content || '문제 내용을 불러올 수 없습니다.';
+                questionElement.innerHTML = formatCodeBlocks(questionContent);
                 
                 // 코드 하이라이팅 적용
                 if (window.Prism) {

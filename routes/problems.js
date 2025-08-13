@@ -501,7 +501,7 @@ router.get('/:subject/progress', async (req, res) => {
                     
                     return {
                         id: p.id,
-                        question: p.question,
+                        question: p.content || p.question, // content 필드 우선, 없으면 question 필드 사용
                         option_a: p.option_a,
                         option_b: p.option_b,
                         option_c: p.option_c,
