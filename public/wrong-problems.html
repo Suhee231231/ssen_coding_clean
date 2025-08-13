@@ -650,14 +650,18 @@
                         // 틀린 답안에 핑크색 스타일 적용
                         const selectedOption = document.querySelector('.option.selected');
                         if (selectedOption) {
+                            console.log('틀린 답안 스타일 적용:', selectedOption);
                             selectedOption.classList.remove('selected'); // selected 클래스 제거
                             selectedOption.classList.add('wrong-selected');
+                            console.log('틀린 답안 클래스:', selectedOption.className);
                         }
                         
                         // 정답에 민트색 스타일 적용
                         const correctOption = document.querySelector(`[data-option="${displayCorrectAnswer}"]`);
                         if (correctOption) {
+                            console.log('정답 스타일 적용:', correctOption);
                             correctOption.classList.add('correct-answer-show');
+                            console.log('정답 클래스:', correctOption.className);
                         }
                         
                         // 틀린 문제를 새로운 틀린 문제 배열에 추가
