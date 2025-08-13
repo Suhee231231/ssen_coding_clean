@@ -288,15 +288,21 @@
                     `;
                 } else {
                     // 모든 문제를 맞췄을 때
-                    clearWrongProblemProgress(); // 진행상황 삭제
-                    document.getElementById('problemContainer').innerHTML = `
-                        <div class="completion-message">
-                            <h3>🎉 완벽하게 마스터했습니다!</h3>
-                            <p>모든 틀린 문제를 정답으로 완료했습니다!</p>
-                            <p>이제 이 과목의 틀린 문제가 없습니다.</p>
-                            <button class="btn-primary" onclick="goBack()">돌아가기</button>
-                        </div>
-                    `;
+                    if (isRetryRound) {
+                        // 재도전 라운드에서 모든 문제를 맞춘 경우
+                        handleAllProblemsCorrect();
+                    } else {
+                        // 첫 번째 라운드에서 모든 문제를 맞춘 경우
+                        clearWrongProblemProgress(); // 진행상황 삭제
+                        document.getElementById('problemContainer').innerHTML = `
+                            <div class="completion-message">
+                                <h3>🎉 완벽하게 마스터했습니다!</h3>
+                                <p>모든 틀린 문제를 정답으로 완료했습니다!</p>
+                                <p>이제 이 과목의 틀린 문제가 없습니다.</p>
+                                <button class="btn-primary" onclick="goBack()">돌아가기</button>
+                            </div>
+                        `;
+                    }
                 }
                 return;
             }
@@ -452,15 +458,21 @@
                     `;
                 } else {
                     // 모든 문제를 맞췄을 때
-                    clearWrongProblemProgress(); // 진행상황 삭제
-                    document.getElementById('problemContainer').innerHTML = `
-                        <div class="completion-message">
-                            <h3>🎉 완벽하게 마스터했습니다!</h3>
-                            <p>모든 틀린 문제를 정답으로 완료했습니다!</p>
-                            <p>이제 이 과목의 틀린 문제가 없습니다.</p>
-                            <button class="btn-primary" onclick="goBack()">돌아가기</button>
-                        </div>
-                    `;
+                    if (isRetryRound) {
+                        // 재도전 라운드에서 모든 문제를 맞춘 경우
+                        handleAllProblemsCorrect();
+                    } else {
+                        // 첫 번째 라운드에서 모든 문제를 맞춘 경우
+                        clearWrongProblemProgress(); // 진행상황 삭제
+                        document.getElementById('problemContainer').innerHTML = `
+                            <div class="completion-message">
+                                <h3>🎉 완벽하게 마스터했습니다!</h3>
+                                <p>모든 틀린 문제를 정답으로 완료했습니다!</p>
+                                <p>이제 이 과목의 틀린 문제가 없습니다.</p>
+                                <button class="btn-primary" onclick="goBack()">돌아가기</button>
+                            </div>
+                        `;
+                    }
                 }
             }
         }
@@ -530,6 +542,58 @@
                 localStorage.removeItem(progressKey);
                 console.log('틀린 문제 진행상황 삭제됨');
             }
+        }
+
+        // 재도전에서 모든 문제를 맞췄을 때 처리
+        async function handleAllProblemsCorrect() {
+            try {
+                console.log('재도전에서 모든 문제를 맞춤 - 틀린 문제 제거 및 정답률 업데이트 시작');
+                
+                // 현재 재도전 라운드의 문제 ID들을 수집
+                const problemIds = wrongProblems.map(problem => problem.id);
+                console.log('제거할 문제 ID들:', problemIds);
+                
+                // 서버에 틀린 문제 제거 요청
+                const response = await fetch(`/api/problems/${encodeURIComponent(currentSubject)}/remove-wrong-problems`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        problemIds: problemIds
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('틀린 문제 제거 및 정답률 업데이트 성공');
+                    
+                    // 진행상황 삭제
+                    clearWrongProblemProgress();
+                    
+                    // 완료 메시지 표시
+                    document.getElementById('problemContainer').innerHTML = `
+                        <div class="completion-message">
+                            <h3>🎉 완벽하게 마스터했습니다!</h3>
+                            <p>재도전에서 모든 문제를 정답으로 완료했습니다!</p>
+                            <p>이제 이 과목의 틀린 문제가 없습니다.</p>
+                            <button class="btn-primary" onclick="goToProfile()">내 학습현황으로</button>
+                        </div>
+                    `;
+                } else {
+                    console.error('틀린 문제 제거 실패:', data.message);
+                    alert('틀린 문제 제거 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('틀린 문제 제거 오류:', error);
+                alert('틀린 문제 제거 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 내 학습현황 페이지로 이동
+        function goToProfile() {
+            window.location.href = '/profile.html';
         }
 
         // 새로운 라운드 시작 (틀린 문제들로)

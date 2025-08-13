@@ -526,4 +526,77 @@ router.get('/:subject/progress', async (req, res) => {
     }
 });
 
+// 틀린 문제 제거 및 정답률 업데이트
+router.post('/:subject/remove-wrong-problems', async (req, res) => {
+    try {
+        if (!req.isAuthenticated() || !req.user || !req.user.id) {
+            return res.status(401).json({ 
+                success: false, 
+                message: '로그인이 필요합니다.' 
+            });
+        }
+
+        const { subject } = req.params;
+        const { problemIds } = req.body;
+
+        if (!problemIds || !Array.isArray(problemIds) || problemIds.length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: '제거할 문제 ID가 필요합니다.' 
+            });
+        }
+
+        // 과목 정보 조회
+        const [subjects] = await pool.execute(
+            'SELECT * FROM subjects WHERE name = ?',
+            [subject]
+        );
+
+        if (subjects.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: '과목을 찾을 수 없습니다.' 
+            });
+        }
+
+        const subjectInfo = subjects[0];
+
+        // 해당 과목의 문제들만 필터링
+        const [problems] = await pool.execute(
+            'SELECT id FROM problems WHERE subject_id = ? AND id IN (?)',
+            [subjectInfo.id, problemIds]
+        );
+
+        const validProblemIds = problems.map(p => p.id);
+
+        if (validProblemIds.length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: '유효한 문제가 없습니다.' 
+            });
+        }
+
+        // 틀린 문제들을 정답으로 변경
+        await pool.execute(
+            'UPDATE user_progress SET is_correct = TRUE WHERE user_id = ? AND problem_id IN (?)',
+            [req.user.id, validProblemIds]
+        );
+
+        console.log(`틀린 문제 제거 완료: 사용자 ${req.user.id}, 과목 ${subject}, 문제 ${validProblemIds.length}개`);
+
+        res.json({ 
+            success: true, 
+            message: `${validProblemIds.length}개의 틀린 문제가 제거되었습니다.`,
+            removedCount: validProblemIds.length
+        });
+
+    } catch (error) {
+        console.error('틀린 문제 제거 오류:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: '서버 오류가 발생했습니다.' 
+        });
+    }
+});
+
 module.exports = router; 
