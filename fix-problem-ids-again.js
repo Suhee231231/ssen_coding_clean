@@ -32,7 +32,7 @@ async function fixProblemIds() {
             // 임시 테이블 생성
             await connection.promise().execute(`
                 CREATE TEMPORARY TABLE temp_problems (
-                    old_id INT, new_id INT, subject_id INT, question TEXT, option_a VARCHAR(500),
+                    old_id INT, new_id INT, subject_id INT, title TEXT, content TEXT, option_a VARCHAR(500),
                     option_b VARCHAR(500), option_c VARCHAR(500), option_d VARCHAR(500),
                     correct_answer CHAR(1), explanation TEXT, difficulty ENUM('easy', 'medium', 'hard'), created_at TIMESTAMP
                 )
@@ -44,14 +44,15 @@ async function fixProblemIds() {
                 const newId = i + 1;
                 
                 await connection.promise().execute(`
-                    INSERT INTO temp_problems VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO temp_problems VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `, [
-                    problem.id, newId, problem.subject_id, problem.question, problem.option_a,
+                    problem.id, newId, problem.subject_id, problem.title || problem.question, problem.content || problem.question, problem.option_a,
                     problem.option_b, problem.option_c, problem.option_d, problem.correct_answer,
                     problem.explanation, problem.difficulty, problem.created_at
                 ]);
                 
-                console.log(`  - 문제 ${problem.id} → ${newId}: "${problem.question.substring(0, 30)}..."`);
+                const questionText = problem.content || problem.title || problem.question || '내용 없음';
+                console.log(`  - 문제 ${problem.id} → ${newId}: "${questionText.substring(0, 30)}..."`);
             }
             
             // 기존 문제 삭제
@@ -59,8 +60,8 @@ async function fixProblemIds() {
             
             // 새 ID로 문제 재삽입
             await connection.promise().execute(`
-                INSERT INTO problems (id, subject_id, question, option_a, option_b, option_c, option_d, correct_answer, explanation, difficulty, created_at)
-                SELECT new_id, subject_id, question, option_a, option_b, option_c, option_d, correct_answer, explanation, difficulty, created_at
+                INSERT INTO problems (id, subject_id, title, content, option_a, option_b, option_c, option_d, correct_answer, explanation, difficulty, created_at)
+                SELECT new_id, subject_id, title, content, option_a, option_b, option_c, option_d, correct_answer, explanation, difficulty, created_at
                 FROM temp_problems ORDER BY new_id
             `);
             

@@ -144,9 +144,9 @@ router.post('/problems', requireAdmin, async (req, res) => {
         
         // 문제 추가
         const [result] = await connection.execute(`
-            INSERT INTO problems (subject_id, question, option_a, option_b, option_c, option_d, correct_answer, explanation, difficulty)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [subject_id, question, option_a, option_b, option_c, option_d, dbCorrectAnswer, explanation, difficulty]);
+            INSERT INTO problems (subject_id, title, content, option_a, option_b, option_c, option_d, correct_answer, explanation, difficulty)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [subject_id, question, question, option_a, option_b, option_c, option_d, dbCorrectAnswer, explanation, difficulty]);
         
         // 과목의 총 문제 수는 실시간으로 계산되므로 업데이트 불필요
         
@@ -211,10 +211,10 @@ router.put('/problems/:id', requireAdmin, async (req, res) => {
         // 문제 수정
         await connection.execute(`
             UPDATE problems 
-            SET subject_id = ?, question = ?, option_a = ?, option_b = ?, option_c = ?, option_d = ?, 
+            SET subject_id = ?, title = ?, content = ?, option_a = ?, option_b = ?, option_c = ?, option_d = ?, 
                 correct_answer = ?, explanation = ?, difficulty = ?
             WHERE id = ?
-        `, [subject_id, question, option_a, option_b, option_c, option_d, dbCorrectAnswer, explanation, difficulty, problemId]);
+        `, [subject_id, question, question, option_a, option_b, option_c, option_d, dbCorrectAnswer, explanation, difficulty, problemId]);
         
         // 과목의 총 문제 수는 실시간으로 계산되므로 업데이트 불필요
         

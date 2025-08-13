@@ -24,7 +24,7 @@ function generateRSSFeed(problems) {
         
         rssContent += `
         <item>
-            <title>${problem.question}</title>
+            <title>${problem.title || problem.content}</title>
             <link>${baseUrl}/problems.html?id=${problem.id}</link>
             <guid>${baseUrl}/problems.html?id=${problem.id}</guid>
             <pubDate>${pubDate}</pubDate>
@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
     try {
         // 최근 문제들을 가져옴 (최대 20개)
         const [problems] = await pool.execute(`
-            SELECT p.id, p.question, p.explanation, s.name as subject, p.created_at 
+            SELECT p.id, p.title, p.content, p.explanation, s.name as subject, p.created_at 
             FROM problems p
             LEFT JOIN subjects s ON p.subject_id = s.id
             ORDER BY p.created_at DESC 

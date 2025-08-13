@@ -32,13 +32,14 @@ async function debugProgress() {
         // 3. 문제 테이블 확인
         console.log('\n❓ 문제 목록:');
         const [problems] = await connection.execute(`
-            SELECT p.id, p.subject_id, s.name as subject_name, p.question 
+            SELECT p.id, p.subject_id, s.name as subject_name, p.title, p.content 
             FROM problems p 
             JOIN subjects s ON p.subject_id = s.id 
             ORDER BY p.subject_id, p.id
         `);
         problems.forEach(problem => {
-            console.log(`- ID: ${problem.id}, 과목: ${problem.subject_name} (${problem.subject_id}), 문제: ${problem.question.substring(0, 50)}...`);
+            const questionText = problem.content || problem.title || '내용 없음';
+            console.log(`- ID: ${problem.id}, 과목: ${problem.subject_name} (${problem.subject_id}), 문제: ${questionText.substring(0, 50)}...`);
         });
         
         // 4. 진행 상황 테이블 확인
