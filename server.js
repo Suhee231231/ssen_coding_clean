@@ -67,8 +67,8 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://use.typekit.net", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https://use.typekit.net", "https://p.typekit.net", "https://*.google.com", "https://*.googlesyndication.com", "https://*.gstatic.com", "https://*.doubleclick.net", "https://*.adtrafficquality.google"],
-            frameSrc: ["'self'", "https://*.google.com", "https://*.googlesyndication.com", "https://*.doubleclick.net"],
+            connectSrc: ["'self'", "https://use.typekit.net", "https://p.typekit.net", "https://*.google.com", "https://*.googlesyndication.com", "https://*.gstatic.com", "https://*.doubleclick.net", "https://*.adtrafficquality.google", "https://ep1.adtrafficquality.google", "https://ep2.adtrafficquality.google"],
+            frameSrc: ["'self'", "https://*.google.com", "https://*.googlesyndication.com", "https://*.doubleclick.net", "https://*.adtrafficquality.google", "https://ep1.adtrafficquality.google", "https://ep2.adtrafficquality.google"],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],
             formAction: ["'self'"]
