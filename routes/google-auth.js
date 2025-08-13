@@ -34,11 +34,13 @@ if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
                 console.log('기존 사용자 로그인:', existingUser[0]);
                 return done(null, existingUser[0]);
             } else {
+                console.log('새 사용자 생성 시작:', { googleId, email, name, picture });
                 // 새 사용자 생성 (사용자명 중복 처리)
                 let finalUsername = name;
                 let counter = 1;
                 
                 // 사용자명 중복 확인 및 처리
+                console.log('사용자명 중복 확인 시작:', finalUsername);
                 while (true) {
                     const [existingUsers] = await pool.query(
                         'SELECT id FROM users WHERE username = ?',
@@ -46,28 +48,39 @@ if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
                     );
                     
                     if (existingUsers.length === 0) {
+                        console.log('최종 사용자명 결정:', finalUsername);
                         break; // 중복되지 않는 사용자명을 찾음
                     }
                     
                     // 중복되는 경우 숫자를 붙여서 새로운 사용자명 생성
                     finalUsername = `${name}${counter}`;
                     counter++;
+                    console.log('사용자명 중복, 새 이름 시도:', finalUsername);
                 }
                 
+                console.log('데이터베이스에 새 사용자 삽입 시도:', { finalUsername, email, googleId, picture });
                 const [result] = await pool.query(
                     'INSERT INTO users (username, email, google_id, google_picture, created_at) VALUES (?, ?, ?, ?, NOW())',
                     [finalUsername, email, googleId, picture]
                 );
+                console.log('삽입 결과:', result);
 
                 const [newUser] = await pool.query(
                     'SELECT * FROM users WHERE id = ?',
                     [result.insertId]
                 );
+                console.log('조회된 새 사용자:', newUser[0]);
 
-                console.log('새 사용자 생성:', newUser[0]);
+                if (!newUser[0]) {
+                    console.error('새 사용자 생성 실패: 사용자를 찾을 수 없습니다.');
+                    return done(new Error('새 사용자 생성 실패'), null);
+                }
+
+                console.log('새 사용자 생성 완료:', newUser[0]);
                 return done(null, newUser[0]);
             }
         } catch (error) {
+            console.error('Google OAuth 전략 오류:', error);
             return done(error, null);
         }
     }));
