@@ -139,15 +139,9 @@ router.post('/logout', (req, res) => {
     });
 });
 
-// 세션 확인 (디버깅 정보 포함)
+// 세션 확인 (성능 최적화)
 router.get('/check', (req, res) => {
-    console.log('세션 확인 요청');
-    console.log('req.isAuthenticated():', req.isAuthenticated());
-    console.log('req.user:', req.user);
-    console.log('req.session:', req.session);
-    
     if (req.isAuthenticated()) {
-        console.log('인증된 사용자:', req.user.username);
         res.json({ 
             success: true, 
             isLoggedIn: true,
@@ -159,7 +153,6 @@ router.get('/check', (req, res) => {
             }
         });
     } else {
-        console.log('인증되지 않은 사용자');
         res.json({ 
             success: true, 
             isLoggedIn: false,

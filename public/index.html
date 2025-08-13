@@ -202,19 +202,18 @@
 
 
 
-        // 페이지 로드 시 실행 (최적화된 버전)
+        // 페이지 로드 시 실행 (병렬 처리 최적화)
         document.addEventListener('DOMContentLoaded', () => {
             // 즉시 실행할 작업
             checkAuthStatus();
             
-            // 지연 로딩으로 성능 향상
-            setTimeout(() => {
-                loadStats();
-            }, 100);
-            
-            setTimeout(() => {
-                loadSubjects();
-            }, 200);
+            // API 호출을 병렬로 실행하여 성능 향상
+            Promise.all([
+                loadStats(),
+                loadSubjects()
+            ]).catch(error => {
+                console.error('데이터 로드 오류:', error);
+            });
         });
     </script>
 </body>

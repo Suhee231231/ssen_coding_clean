@@ -24,9 +24,16 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public'), {
-    maxAge: '1d', // 1일간 캐싱
+    maxAge: '7d', // 7일간 캐싱으로 연장
     etag: true,
-    lastModified: true
+    lastModified: true,
+    immutable: true, // 파일이 변경되지 않음을 명시
+    setHeaders: (res, path) => {
+        // CSS, JS 파일에 대한 추가 캐싱 설정
+        if (path.endsWith('.css') || path.endsWith('.js')) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1년
+        }
+    }
 }));
 
 // favicon 명시적 라우트

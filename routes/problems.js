@@ -3,27 +3,21 @@ const { pool } = require('../config/database');
 
 const router = express.Router();
 
-// 통계 데이터만 조회 (빠른 로딩용)
+// 통계 데이터만 조회 (단일 쿼리 최적화)
 router.get('/stats', async (req, res) => {
     try {
-        const [stats] = await pool.execute(`
+        const [results] = await pool.execute(`
             SELECT 
-                COUNT(*) as total_count,
-                MAX(created_at) as latest_update
-            FROM problems
-        `);
-        
-        const [subjectCount] = await pool.execute(`
-            SELECT COUNT(*) as subject_count
-            FROM subjects
-            WHERE is_public = TRUE
+                (SELECT COUNT(*) FROM problems) as total_count,
+                (SELECT MAX(created_at) FROM problems) as latest_update,
+                (SELECT COUNT(*) FROM subjects WHERE is_public = TRUE) as subject_count
         `);
         
         res.json({ 
             success: true, 
-            totalProblems: stats[0].total_count,
-            totalSubjects: subjectCount[0].subject_count,
-            latestUpdate: stats[0].latest_update
+            totalProblems: results[0].total_count,
+            totalSubjects: results[0].subject_count,
+            latestUpdate: results[0].latest_update
         });
     } catch (error) {
         console.error('통계 조회 오류:', error);
