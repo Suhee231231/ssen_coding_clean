@@ -578,16 +578,16 @@
                 
                 console.log('문제 컨테이너 복원 완료');
                 
-                // 새 라운드 시작 시 진행상황 초기화 및 저장
-                saveWrongProblemProgress();
-                
-                // 이벤트 리스너 재등록
-                reattachEventListeners();
-                
-                // 문제 풀이 시작
-                loadCurrentProblem();
-                
-                console.log(`새 라운드 시작: ${wrongProblems.length}개의 틀린 문제를 다시 풀기`);
+                // DOM 업데이트를 위한 짧은 지연
+                setTimeout(() => {
+                    // 새 라운드 시작 시 진행상황 초기화 및 저장
+                    saveWrongProblemProgress();
+                    
+                    // 문제 풀이 시작
+                    loadCurrentProblem();
+                    
+                    console.log(`새 라운드 시작: ${wrongProblems.length}개의 틀린 문제를 다시 풀기`);
+                }, 100);
             } else {
                 console.log('newWrongProblems가 비어있어서 새 라운드를 시작할 수 없습니다.');
             }
