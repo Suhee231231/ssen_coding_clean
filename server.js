@@ -61,13 +61,13 @@ const googleAuthLimiter = rateLimit({
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
-            defaultSrc: ["'self'", "https:", "data:"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https:"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https:"],
-            fontSrc: ["'self'", "https:", "data:"],
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://pagead2.googlesyndication.com", "https://use.typekit.net", "https://cdnjs.cloudflare.com", "https://developers.google.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://use.typekit.net"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https:"],
-            frameSrc: ["'self'", "https:"],
+            connectSrc: ["'self'", "https://use.typekit.net", "https://p.typekit.net", "https://googleads.g.doubleclick.net", "https://ep1.adtrafficquality.google"],
+            frameSrc: ["'self'", "https://googleads.g.doubleclick.net", "https://pagead2.googlesyndication.com"],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],
             formAction: ["'self'"]
