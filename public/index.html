@@ -31,6 +31,19 @@
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/style.css?v=1.1">
+    <style>
+        /* Critical CSS - 초기 렌더링에 필요한 스타일 */
+        .hero { background: #282A35; color: white; padding: 4rem 0; text-align: center; }
+        .hero-content h1 { font-size: 3rem; font-weight: 900; margin-bottom: 1rem; }
+        .hero-content p { font-size: 1.2rem; margin-bottom: 2rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin: 3rem 0; }
+        .stat-card { background: white; padding: 2rem; border-radius: 12px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .stat-number { font-size: 2.5rem; font-weight: 700; color: #00d4aa; margin-bottom: 0.5rem; }
+        .subject-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin: 3rem 0; }
+        .subject-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.3s ease; }
+        .subject-card:hover { transform: translateY(-5px); }
+        .loading { opacity: 0.6; }
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
@@ -98,34 +111,8 @@
         </div>
     </footer>
 
+    <script src="/js/common.js"></script>
     <script>
-        // 세션 상태 확인 및 네비게이션 업데이트
-        async function checkAuthStatus() {
-            try {
-                const response = await fetch('/api/auth/check');
-                const data = await response.json();
-                
-                const navLinks = document.getElementById('navLinks');
-                
-                if (data.isLoggedIn) {
-                    let navHTML = `<a href="/profile.html">내 학습</a>`;
-                    if (data.isAdmin) {
-                        navHTML += `<a href="/admin.html">관리자</a>`;
-                    }
-                    navHTML += `<a href="#" onclick="logout()">로그아웃</a>`;
-                    navLinks.innerHTML = navHTML;
-                } else {
-                    navLinks.innerHTML = `
-                        <a href="#" onclick="showLoginPrompt()">내 학습</a>
-                        <a href="/login.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">로그인</a>
-                        <a href="/register.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">회원가입</a>
-                    `;
-                }
-            } catch (error) {
-                console.error('인증 상태 확인 오류:', error);
-            }
-        }
-
         // 로그인 안내 메시지 표시
         function showLoginPrompt() {
             if (confirm('로그인 시 이용 가능합니다.\n진행상황 저장 및 틀린 문제 다시풀기 등이 가능합니다.\n\n로그인 페이지로 이동하시겠습니까?')) {
@@ -133,58 +120,46 @@
             }
         }
 
-        // 로그아웃
-        async function logout() {
-            try {
-                const response = await fetch('/api/auth/logout', {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    window.location.href = '/';
-                }
-            } catch (error) {
-                console.error('로그아웃 오류:', error);
-            }
-        }
-
-        // 통계 데이터 로드
+        // 통계 데이터 로드 (최적화된 버전)
         async function loadStats() {
+            // 로딩 상태 표시
+            const statsElements = ['totalProblems', 'totalSubjects', 'latestUpdate'];
+            statsElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = '로딩중...';
+                }
+            });
+
             try {
-                const response = await fetch('/api/problems/subjects');
+                // 통계만 별도로 가져오는 API 호출
+                const response = await fetch('/api/problems/stats');
                 const data = await response.json();
                 
                 if (data.success) {
-                    // 과목 수 계산
-                    const totalSubjects = data.subjects.length;
+                    document.getElementById('totalProblems').textContent = data.totalProblems || 0;
+                    document.getElementById('totalSubjects').textContent = data.totalSubjects || 0;
                     
-                    // 전체 문제 수 계산 (API에서 제공하는 totalProblems 사용)
-                    const totalProblems = data.totalProblems || 0;
-                    
-                    // 최신 수정일 포맷팅
-                    console.log('API 응답의 latestUpdate:', data.latestUpdate);
                     let latestUpdateText = '업데이트 없음';
                     if (data.latestUpdate) {
                         const updateDate = new Date(data.latestUpdate);
-                        console.log('파싱된 날짜:', updateDate);
                         latestUpdateText = updateDate.toLocaleDateString('ko-KR', {
                             year: 'numeric',
                             month: '2-digit',
                             day: '2-digit'
                         });
-                        console.log('포맷된 날짜:', latestUpdateText);
                     }
-                    
-                    document.getElementById('totalProblems').textContent = totalProblems;
-                    document.getElementById('totalSubjects').textContent = totalSubjects;
                     document.getElementById('latestUpdate').textContent = latestUpdateText;
                 }
             } catch (error) {
                 console.error('통계 로드 오류:', error);
                 // 에러 시 기본값 표시
-                document.getElementById('totalProblems').textContent = '0';
-                document.getElementById('totalSubjects').textContent = '0';
+                statsElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = '0';
+                    }
+                });
                 document.getElementById('latestUpdate').textContent = '오류';
             }
         }

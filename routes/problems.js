@@ -3,6 +3,37 @@ const { pool } = require('../config/database');
 
 const router = express.Router();
 
+// 통계 데이터만 조회 (빠른 로딩용)
+router.get('/stats', async (req, res) => {
+    try {
+        const [stats] = await pool.execute(`
+            SELECT 
+                COUNT(*) as total_count,
+                MAX(created_at) as latest_update
+            FROM problems
+        `);
+        
+        const [subjectCount] = await pool.execute(`
+            SELECT COUNT(*) as subject_count
+            FROM subjects
+            WHERE is_public = TRUE
+        `);
+        
+        res.json({ 
+            success: true, 
+            totalProblems: stats[0].total_count,
+            totalSubjects: subjectCount[0].subject_count,
+            latestUpdate: stats[0].latest_update
+        });
+    } catch (error) {
+        console.error('통계 조회 오류:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: '서버 오류가 발생했습니다.' 
+        });
+    }
+});
+
 // 과목별 문제 목록 조회 (최적화된 버전)
 router.get('/subjects', async (req, res) => {
     try {
@@ -18,19 +49,9 @@ router.get('/subjects', async (req, res) => {
             ORDER BY s.sort_order ASC, s.name ASC
         `);
         
-        // 전체 문제 수와 최신 수정일을 별도 쿼리로 가져오기
-        const [stats] = await pool.execute(`
-            SELECT 
-                COUNT(*) as total_count,
-                MAX(created_at) as latest_update
-            FROM problems
-        `);
-        
         res.json({ 
             success: true, 
-            subjects: results,
-            totalProblems: stats[0].total_count,
-            latestUpdate: stats[0].latest_update
+            subjects: results
         });
     } catch (error) {
         console.error('과목 조회 오류:', error);
