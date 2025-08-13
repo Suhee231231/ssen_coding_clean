@@ -31,16 +31,15 @@ if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
 
             if (existingUser.length > 0) {
                 // 기존 사용자가 있으면 로그인
-                console.log('기존 사용자 로그인:', existingUser[0]);
+                console.log('Google OAuth: 기존 사용자 로그인');
                 return done(null, existingUser[0]);
             } else {
-                console.log('새 사용자 생성 시작:', { googleId, email, name, picture });
+                console.log('Google OAuth: 새 사용자 생성');
                 // 새 사용자 생성 (사용자명 중복 처리)
                 let finalUsername = name;
                 let counter = 1;
                 
                 // 사용자명 중복 확인 및 처리
-                console.log('사용자명 중복 확인 시작:', finalUsername);
                 while (true) {
                     const [existingUsers] = await pool.query(
                         'SELECT id FROM users WHERE username = ?',
@@ -48,35 +47,30 @@ if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
                     );
                     
                     if (existingUsers.length === 0) {
-                        console.log('최종 사용자명 결정:', finalUsername);
                         break; // 중복되지 않는 사용자명을 찾음
                     }
                     
                     // 중복되는 경우 숫자를 붙여서 새로운 사용자명 생성
                     finalUsername = `${name}${counter}`;
                     counter++;
-                    console.log('사용자명 중복, 새 이름 시도:', finalUsername);
                 }
                 
-                console.log('데이터베이스에 새 사용자 삽입 시도:', { finalUsername, email, googleId, picture });
                 const [result] = await pool.query(
                     'INSERT INTO users (username, email, password, google_id, google_picture, created_at) VALUES (?, ?, ?, ?, ?, NOW())',
                     [finalUsername, email, 'GOOGLE_OAUTH_USER', googleId, picture]
                 );
-                console.log('삽입 결과:', result);
 
                 const [newUser] = await pool.query(
                     'SELECT * FROM users WHERE id = ?',
                     [result.insertId]
                 );
-                console.log('조회된 새 사용자:', newUser[0]);
 
                 if (!newUser[0]) {
-                    console.error('새 사용자 생성 실패: 사용자를 찾을 수 없습니다.');
+                    console.error('Google OAuth: 새 사용자 생성 실패');
                     return done(new Error('새 사용자 생성 실패'), null);
                 }
 
-                console.log('새 사용자 생성 완료:', newUser[0]);
+                console.log('Google OAuth: 새 사용자 생성 완료');
                 return done(null, newUser[0]);
             }
         } catch (error) {
@@ -90,18 +84,15 @@ if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
 
 // Passport serialize/deserialize 설정
 passport.serializeUser((user, done) => {
-    console.log('사용자 직렬화:', user);
     done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
     try {
-        console.log('사용자 역직렬화, ID:', id);
         const [users] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
-        console.log('역직렬화된 사용자:', users[0]);
         done(null, users[0]);
     } catch (error) {
-        console.error('역직렬화 오류:', error);
+        console.error('Passport 역직렬화 오류:', error);
         done(error, null);
     }
 });
@@ -124,23 +115,20 @@ router.get('/google/callback', (req, res) => {
             failureRedirect: '/login.html',
             failureFlash: true 
         })(req, res, () => {
-            console.log('Google OAuth 로그인 성공:', req.user);
-            
             // req.user가 존재하는지 확인
             if (!req.user) {
-                console.error('req.user가 undefined입니다.');
+                console.error('Google OAuth: req.user가 undefined');
                 return res.redirect('/login.html?error=user_not_found');
             }
             
             // 세션 저장을 명시적으로 처리
             req.session.save((err) => {
                 if (err) {
-                    console.error('세션 저장 오류:', err);
+                    console.error('Google OAuth: 세션 저장 오류:', err);
                     return res.redirect('/login.html?error=session_error');
                 }
                 
-                console.log('세션 저장 완료, 사용자 ID:', req.user.id);
-                console.log('세션 정보:', req.session);
+                console.log('Google OAuth: 로그인 성공');
                 
                 // 성공적으로 로그인되면 메인 페이지로 리디렉션
                 res.redirect('/');
