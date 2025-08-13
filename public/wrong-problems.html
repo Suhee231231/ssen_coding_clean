@@ -496,13 +496,26 @@
 
         // 새로운 라운드 시작 (틀린 문제들로)
         function startNewRound() {
+            console.log('startNewRound 함수 호출됨');
+            console.log('newWrongProblems:', newWrongProblems);
+            
             if (newWrongProblems.length > 0) {
+                console.log('새 라운드 시작 준비 중...');
+                
                 wrongProblems = [...newWrongProblems]; // 틀린 문제들을 새 문제 목록으로 설정
                 newWrongProblems = []; // 새로운 틀린 문제 배열 초기화
                 currentProblemIndex = 0;
                 
+                console.log('새로운 wrongProblems:', wrongProblems);
+                console.log('currentProblemIndex:', currentProblemIndex);
+                
                 // 문제 컨테이너를 원래 상태로 복원
                 const problemContainer = document.getElementById('problemContainer');
+                if (!problemContainer) {
+                    console.error('problemContainer를 찾을 수 없습니다!');
+                    return;
+                }
+                
                 problemContainer.innerHTML = `
                     <div class="problem-header">
                         <h2 id="subjectName">${currentSubject} 틀린 문제 (재도전)</h2>
@@ -530,6 +543,8 @@
                     </div>
                 `;
                 
+                console.log('문제 컨테이너 복원 완료');
+                
                 // 새 라운드 시작 시 진행상황 초기화 및 저장
                 saveWrongProblemProgress();
                 
@@ -540,6 +555,8 @@
                 loadCurrentProblem();
                 
                 console.log(`새 라운드 시작: ${wrongProblems.length}개의 틀린 문제를 다시 풀기`);
+            } else {
+                console.log('newWrongProblems가 비어있어서 새 라운드를 시작할 수 없습니다.');
             }
         }
 
