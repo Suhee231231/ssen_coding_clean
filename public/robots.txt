@@ -1,7 +1,14 @@
 User-agent: *
 Allow: /
 
-# 사이트맵 위치
+# 보안 관련 디렉토리 접근 제한
+Disallow: /api/
+Disallow: /auth/
+Disallow: /admin.html
+Disallow: /config/
+Disallow: /database/
+
+# 검색엔진 최적화
 Sitemap: https://ssencoding.com/sitemap.xml
 
 # CSS, JS, 이미지 파일 허용
@@ -9,12 +16,6 @@ Allow: /css/
 Allow: /js/
 Allow: /images/
 Allow: /favicon.ico
-
-# 관리자 페이지 제한 (선택사항)
-Disallow: /admin.html
-
-# API 엔드포인트 제한
-Disallow: /api/
 
 # 크롤링 지연 (선택사항)
 Crawl-delay: 1

@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const passport = require('passport');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 
 // 라우터들 import
 const authRoutes = require('./routes/auth');
@@ -19,8 +21,50 @@ const sitemapRoutes = require('./routes/sitemap');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Rate Limiting 설정
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15분
+    max: 100, // IP당 최대 요청 수
+    message: {
+        success: false,
+        message: '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// 로그인/회원가입 전용 rate limiter (더 엄격)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15분
+    max: 5, // IP당 최대 5번 시도
+    message: {
+        success: false,
+        message: '로그인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // 미들웨어 설정
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://pagead2.googlesyndication.com", "https://use.typekit.net", "https://cdnjs.cloudflare.com", "https://developers.google.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://use.typekit.net"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'"],
+            frameSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            baseUri: ["'self'"],
+            formAction: ["'self'"]
+        }
+    }
+})); // 기본 보안 헤더 설정
 app.use(cors());
+app.use(limiter); // 전역 rate limiting 적용
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public'), {
@@ -44,15 +88,17 @@ app.get('/favicon.ico', (req, res) => {
 // 세션 설정 (Railway 호환 버전)
 app.use(session({
     secret: process.env.SESSION_SECRET || 'coding-problems-secret-key',
-    resave: true, // Railway 환경에서 안정성을 위해 true로 유지
-    saveUninitialized: true, // Railway 환경에서 안정성을 위해 true로 유지
+    resave: false, // 보안을 위해 false로 변경
+    saveUninitialized: false, // 보안을 위해 false로 변경
     cookie: { 
-        secure: false, // Railway 환경에서는 false로 설정
+        secure: process.env.NODE_ENV === 'production', // 프로덕션에서만 HTTPS 강제
         httpOnly: true, // XSS 공격 방지
         maxAge: 3 * 24 * 60 * 60 * 1000, // 3일 (적당한 세션)
-        sameSite: 'lax' // CSRF 공격 방지
+        sameSite: 'strict' // CSRF 공격 방지 강화
     },
-    name: 'ssen-coding-session' // 세션 쿠키 이름 명시
+    name: 'ssen-coding-session', // 세션 쿠키 이름 명시
+    rolling: true, // 세션 갱신
+    unset: 'destroy' // 세션 삭제 시 완전히 제거
 }));
 
 // Passport 초기화
@@ -60,12 +106,12 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // 라우터 설정
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes); // 인증 라우트에 엄격한 rate limiting 적용
 app.use('/api/problems', problemRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/auth', googleAuthRoutes);
-app.use('/api/email-verification', emailVerificationRoutes);
+app.use('/auth', authLimiter, googleAuthRoutes); // Google 인증에도 rate limiting 적용
+app.use('/api/email-verification', authLimiter, emailVerificationRoutes); // 이메일 인증에도 rate limiting 적용
 app.use('/rss', rssRoutes);
 app.use('/sitemap.xml', sitemapRoutes);
 
