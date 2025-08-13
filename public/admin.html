@@ -1180,7 +1180,7 @@
             const problemsHTML = problems.map((problem, index) => {
                 try {
                     if (index < 3) { // 처음 3개만 로그
-                        console.log(`문제 ${index + 1}:`, problem.id, problem.question ? problem.question.substring(0, 50) : 'No question');
+                        console.log(`문제 ${index + 1}:`, problem.id, problem.content ? problem.content.substring(0, 50) : 'No content');
                     }
                     
                     // 안전한 데이터 처리
@@ -1194,9 +1194,9 @@
                     const displayCorrectAnswer = answerMap[problem.correct_answer] || problem.correct_answer || '?';
                     
                     // 문제 제목을 안전하게 처리 - HTML 이스케이프
-                    const questionPreview = problem.question 
-                        ? escapeHtml(problem.question.replace(/\n/g, ' ').substring(0, 80)) + (problem.question.length > 80 ? '...' : '')
-                        : '문제 내용 없음';
+                                const questionPreview = problem.content
+                ? escapeHtml(problem.content.replace(/\n/g, ' ').substring(0, 80)) + (problem.content.length > 80 ? '...' : '')
+                : '문제 내용 없음';
                     
                     // 과목별 문제번호 표시
                     const subjectProblemNumber = problem.subject_problem_number || '?';
@@ -1356,7 +1356,7 @@
             // 텍스트 검색 (문제 내용, 과목명, ID, 과목별 문제번호)
             if (searchTerm) {
                 filteredProblems = filteredProblems.filter(problem => 
-                    problem.question.toLowerCase().includes(searchTerm) ||
+                    problem.content.toLowerCase().includes(searchTerm) ||
                     problem.subject_name.toLowerCase().includes(searchTerm) ||
                     problem.id.toString().includes(searchTerm) ||
                     (problem.subject_problem_number && problem.subject_problem_number.toString().includes(searchTerm)) ||
@@ -1441,7 +1441,7 @@
                 // 모달 필드에 데이터 설정
                 document.getElementById('edit-problem-id').value = problem.id;
                 document.getElementById('edit-subject').value = problem.subject_id;
-                document.getElementById('edit-question').value = problem.question;
+                document.getElementById('edit-question').value = problem.content;
                 document.getElementById('edit-option_a').value = problem.option_a;
                 document.getElementById('edit-option_b').value = problem.option_b;
                 document.getElementById('edit-option_c').value = problem.option_c;
@@ -1574,7 +1574,7 @@
                         // 텍스트 검색
                         if (searchTerm) {
                             filteredProblems = filteredProblems.filter(problem => 
-                                problem.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                problem.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 problem.subject_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 problem.id.toString().includes(searchTerm) ||
                                 (problem.subject_problem_number && problem.subject_problem_number.toString().includes(searchTerm)) ||

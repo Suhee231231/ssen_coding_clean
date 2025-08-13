@@ -177,7 +177,7 @@
                     
                     // 문제 내용 업데이트 (코드 블록 처리)
                     const questionElement = document.getElementById('question');
-                    questionElement.innerHTML = formatCodeBlocks(currentProblem.question);
+                    questionElement.innerHTML = formatCodeBlocks(currentProblem.content || currentProblem.question);
                     
                     // 코드 하이라이팅 적용
                     if (window.Prism) {
