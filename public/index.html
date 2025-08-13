@@ -173,11 +173,15 @@
         // 과목 목록 로드
         async function loadSubjects() {
             try {
+                console.log('과목 목록 로드 시작');
                 const response = await fetch('/api/problems/subjects');
                 const data = await response.json();
+                console.log('과목 API 응답:', data);
                 
                 if (data.success) {
                     const subjectGrid = document.getElementById('subjectGrid');
+                    console.log('과목 데이터:', data.subjects);
+                    
                     subjectGrid.innerHTML = data.subjects.map(subject => `
                         <div class="subject-card" onclick="location.href='/problems.html?subject=${encodeURIComponent(subject.name)}'">
                             <div class="card-cover">
@@ -194,6 +198,7 @@
                             </div>
                         </div>
                     `).join('');
+                    console.log('과목 목록 렌더링 완료');
                 }
             } catch (error) {
                 console.error('과목 로드 오류:', error);
@@ -202,18 +207,19 @@
 
 
 
-        // 페이지 로드 시 실행 (병렬 처리 최적화)
+        // 페이지 로드 시 실행 (안정적인 순차 처리)
         document.addEventListener('DOMContentLoaded', () => {
             // 즉시 실행할 작업
             checkAuthStatus();
             
-            // API 호출을 병렬로 실행하여 성능 향상
-            Promise.all([
-                loadStats(),
-                loadSubjects()
-            ]).catch(error => {
-                console.error('데이터 로드 오류:', error);
-            });
+            // 안정적인 순차 처리로 복원
+            setTimeout(() => {
+                loadStats();
+            }, 100);
+            
+            setTimeout(() => {
+                loadSubjects();
+            }, 200);
         });
     </script>
 </body>
