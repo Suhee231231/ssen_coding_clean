@@ -231,7 +231,7 @@ router.get('/:subject', async (req, res) => {
             subject: subjectInfo,
             problem: {
                 id: problem.id,
-                question: problem.question,
+                content: problem.content,
                 option_a: problem.option_a,
                 option_b: problem.option_b,
                 option_c: problem.option_c,
