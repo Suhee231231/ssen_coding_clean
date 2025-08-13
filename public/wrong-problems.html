@@ -589,8 +589,9 @@
                 
                 if (data.success) {
                     console.log('틀린 문제 제거 및 정답률 업데이트 성공');
+                    console.log('제거된 문제 수:', data.removedCount);
                     
-                    // 진행상황 삭제
+                    // 진행상황 삭제 (성공한 경우에만)
                     clearWrongProblemProgress();
                     
                     // 완료 메시지 표시
@@ -604,7 +605,8 @@
                     `;
                 } else {
                     console.error('틀린 문제 제거 실패:', data.message);
-                    alert('틀린 문제 제거 중 오류가 발생했습니다.');
+                    console.error('실패 응답:', data);
+                    alert(`틀린 문제 제거 중 오류가 발생했습니다: ${data.message}`);
                 }
             } catch (error) {
                 console.error('틀린 문제 제거 오류:', error);
