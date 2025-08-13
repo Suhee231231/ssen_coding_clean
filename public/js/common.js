@@ -7,19 +7,18 @@ async function checkAuthStatus() {
         
         const navLinks = document.getElementById('navLinks');
         if (navLinks) {
-            if (data.authenticated) {
-                navLinks.innerHTML = `
-                    <a href="/">홈</a>
-                    <a href="/problems.html">문제 풀기</a>
-                    <a href="/profile.html">내 학습</a>
-                    <a href="/wrong-problems.html">틀린 문제</a>
-                    <a href="#" onclick="logout()">로그아웃</a>
-                `;
+            if (data.isLoggedIn) {
+                let navHTML = `<a href="/profile.html">내 학습</a>`;
+                if (data.isAdmin) {
+                    navHTML += `<a href="/admin.html">관리자</a>`;
+                }
+                navHTML += `<a href="#" onclick="logout()">로그아웃</a>`;
+                navLinks.innerHTML = navHTML;
             } else {
                 navLinks.innerHTML = `
-                    <a href="/">홈</a>
-                    <a href="/login.html">로그인</a>
-                    <a href="/register.html">회원가입</a>
+                    <a href="#" onclick="showLoginPrompt()">내 학습</a>
+                    <a href="/login.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">로그인</a>
+                    <a href="/register.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">회원가입</a>
                 `;
             }
         }
@@ -67,5 +66,12 @@ function handleError(error, elementId, defaultValue = '0') {
     const element = document.getElementById(elementId);
     if (element) {
         element.textContent = defaultValue;
+    }
+}
+
+// 로그인 안내 메시지 표시
+function showLoginPrompt() {
+    if (confirm('로그인 시 이용 가능합니다.\n진행상황 저장 및 틀린 문제 다시풀기 등이 가능합니다.\n\n로그인 페이지로 이동하시겠습니까?')) {
+        window.location.href = '/login.html';
     }
 }
