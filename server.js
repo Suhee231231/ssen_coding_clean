@@ -68,7 +68,7 @@ app.use(helmet({
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://use.typekit.net"],
             imgSrc: ["'self'", "data:", "https:"],
             connectSrc: ["'self'", "https://use.typekit.net", "https://p.typekit.net", "https://googleads.g.doubleclick.net", "https://ep1.adtrafficquality.google", "https://ep2.adtrafficquality.google"],
-            frameSrc: ["'self'", "https://googleads.g.doubleclick.net", "https://pagead2.googlesyndication.com"],
+            frameSrc: ["'self'", "https://googleads.g.doubleclick.net", "https://pagead2.googlesyndication.com", "https://ep2.adtrafficquality.google", "https://www.google.com"],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],
             formAction: ["'self'"]
