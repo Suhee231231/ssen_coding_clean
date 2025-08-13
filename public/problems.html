@@ -85,9 +85,14 @@
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
             const idParam = urlParams.get('id');
+            console.log('URL 파라미터 확인:', {
+                subject: urlParams.get('subject'),
+                idParam: idParam,
+                parsedId: idParam ? parseInt(idParam) : null
+            });
             return {
                 subject: urlParams.get('subject'),
-                id: idParam ? parseInt(idParam) : null
+                id: idParam ? parseInt(idParam) : 1 // 기본값을 1로 설정
             };
         }
 
@@ -140,11 +145,11 @@
             console.log(`문제 로드 시도: 과목=${currentSubject}, ID=${currentProblemId}`);
 
             try {
-                const url = currentProblemId 
-                    ? `/api/problems/${encodeURIComponent(currentSubject)}?id=${currentProblemId}`
-                    : `/api/problems/${encodeURIComponent(currentSubject)}`;
+                const url = `/api/problems/${encodeURIComponent(currentSubject)}?id=${currentProblemId}`;
+                console.log('API 호출 URL:', url);
                 const response = await fetch(url);
                 const data = await response.json();
+                console.log('API 응답:', data);
 
                 if (data.success) {
                     currentProblem = data.problem;
