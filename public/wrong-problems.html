@@ -89,6 +89,8 @@
         let currentProblemIndex = 0;
         let currentProblem = null;
         let newWrongProblems = []; // 이번 라운드에서 틀린 문제들
+        let isRetryRound = false; // 재도전 라운드 여부 (두 번째 라운드)
+        let originalWrongProblems = []; // 원본 틀린 문제 목록 (첫 번째 라운드용)
 
         // URL에서 과목과 모드 파싱
         function getUrlParams() {
@@ -217,21 +219,37 @@
             // 새로운 라운드 시작 - 틀린 문제 배열 초기화
             newWrongProblems = [];
             
+            // 원본 틀린 문제 목록 저장 (첫 번째 라운드용)
+            if (!isRetryRound) {
+                originalWrongProblems = [...wrongProblems];
+            }
+            
             // 저장된 진행상황 복원
             const savedProgress = loadWrongProblemProgress();
-            if (savedProgress && savedProgress.currentIndex < wrongProblems.length && savedProgress.totalProblems === wrongProblems.length) {
-                currentProblemIndex = savedProgress.currentIndex;
-                // 저장된 새로운 틀린 문제들도 복원
-                if (savedProgress.newWrongProblems && Array.isArray(savedProgress.newWrongProblems)) {
-                    newWrongProblems = savedProgress.newWrongProblems;
+            if (savedProgress) {
+                // 재도전 라운드인지 확인
+                if (savedProgress.isRetryRound) {
+                    isRetryRound = true;
+                    // 재도전 라운드의 경우 줄어든 틀린 문제들로 복원
+                    if (savedProgress.retryWrongProblems && Array.isArray(savedProgress.retryWrongProblems)) {
+                        wrongProblems = savedProgress.retryWrongProblems;
+                    }
                 }
-                console.log(`틀린 문제 진행상황 복원: ${currentProblemIndex + 1}번째 문제부터 시작`);
-            } else {
-                currentProblemIndex = 0;
-                // 진행상황이 유효하지 않으면 기존 진행상황 삭제
-                if (savedProgress) {
+                
+                if (savedProgress.currentIndex < wrongProblems.length && savedProgress.totalProblems === wrongProblems.length) {
+                    currentProblemIndex = savedProgress.currentIndex;
+                    // 저장된 새로운 틀린 문제들도 복원
+                    if (savedProgress.newWrongProblems && Array.isArray(savedProgress.newWrongProblems)) {
+                        newWrongProblems = savedProgress.newWrongProblems;
+                    }
+                    console.log(`틀린 문제 진행상황 복원: ${currentProblemIndex + 1}번째 문제부터 시작 (재도전: ${isRetryRound})`);
+                } else {
+                    currentProblemIndex = 0;
+                    // 진행상황이 유효하지 않으면 기존 진행상황 삭제
                     clearWrongProblemProgress();
                 }
+            } else {
+                currentProblemIndex = 0;
             }
             
             // 문제 번호 즉시 업데이트
@@ -246,7 +264,10 @@
                 // 모든 틀린 문제를 다 풀었을 때
                 if (newWrongProblems.length > 0) {
                     // 이번 라운드에서 틀린 문제가 있으면 다시 풀기 옵션 제공
-                    clearWrongProblemProgress(); // 현재 진행상황 삭제
+                    if (!isRetryRound) {
+                        // 첫 번째 라운드인 경우에만 진행상황 삭제
+                        clearWrongProblemProgress();
+                    }
                     document.getElementById('problemContainer').innerHTML = `
                         <div class="completion-message">
                             <h3>🎯 이번 라운드 완료!</h3>
@@ -407,7 +428,10 @@
                 // 모든 문제를 다 풀었을 때
                 if (newWrongProblems.length > 0) {
                     // 이번 라운드에서 틀린 문제가 있으면 다시 풀기 옵션 제공
-                    clearWrongProblemProgress(); // 현재 진행상황 삭제
+                    if (!isRetryRound) {
+                        // 첫 번째 라운드인 경우에만 진행상황 삭제
+                        clearWrongProblemProgress();
+                    }
                     document.getElementById('problemContainer').innerHTML = `
                         <div class="completion-message">
                             <h3>🎯 이번 라운드 완료!</h3>
@@ -443,12 +467,14 @@
                     totalProblems: wrongProblems.length,
                     newWrongProblems: newWrongProblems, // 새로운 틀린 문제들도 저장
                     timestamp: Date.now(),
-                    subject: currentSubject // 과목 정보도 저장
+                    subject: currentSubject, // 과목 정보도 저장
+                    isRetryRound: isRetryRound, // 재도전 라운드 여부
+                    retryWrongProblems: isRetryRound ? wrongProblems : null // 재도전 라운드인 경우 현재 틀린 문제 목록 저장
                 };
                 
                 try {
                     localStorage.setItem(progressKey, JSON.stringify(progressData));
-                    console.log(`틀린 문제 진행상황 저장: ${currentProblemIndex + 1}/${wrongProblems.length}, 새로 틀린 문제: ${newWrongProblems.length}개`);
+                    console.log(`틀린 문제 진행상황 저장: ${currentProblemIndex + 1}/${wrongProblems.length}, 새로 틀린 문제: ${newWrongProblems.length}개, 재도전: ${isRetryRound}`);
                 } catch (error) {
                     console.error('틀린 문제 진행상황 저장 오류:', error);
                 }
@@ -507,12 +533,14 @@
             if (newWrongProblems.length > 0) {
                 console.log('새 라운드 시작 준비 중...');
                 
+                isRetryRound = true; // 재도전 라운드로 설정
                 wrongProblems = [...newWrongProblems]; // 틀린 문제들을 새 문제 목록으로 설정
                 newWrongProblems = []; // 새로운 틀린 문제 배열 초기화
                 currentProblemIndex = 0;
                 
                 console.log('새로운 wrongProblems:', wrongProblems);
                 console.log('currentProblemIndex:', currentProblemIndex);
+                console.log('재도전 라운드 시작:', isRetryRound);
                 
                 // 문제 컨테이너를 원래 상태로 복원
                 const problemContainer = document.getElementById('problemContainer');
@@ -523,7 +551,7 @@
                 
                 problemContainer.innerHTML = `
                     <div class="problem-header">
-                        <h2 id="subjectName">${currentSubject} 틀린 문제 (재도전)</h2>
+                        <h2 id="subjectName">${currentSubject} 틀린 문제 ${isRetryRound ? '(재도전)' : ''}</h2>
                         <div class="problem-info-row">
                             <p id="problemInfo">문제 ${currentProblemIndex + 1} / ${wrongProblems.length}</p>
                         </div>
@@ -570,8 +598,10 @@
             const params = getUrlParams();
             // 바로 풀기 모드인 경우 대시보드로, 아니면 이전 페이지로
             if (params.mode === 'solve') {
-                // 틀린 문제풀이 완료 시 진행상황 정리
-                clearWrongProblemProgress();
+                // 틀린 문제풀이 완료 시 진행상황 정리 (재도전 라운드가 아닌 경우에만)
+                if (!isRetryRound) {
+                    clearWrongProblemProgress();
+                }
                 window.location.href = '/profile.html';
             } else {
                 window.history.back();
