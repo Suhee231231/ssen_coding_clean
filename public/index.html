@@ -209,6 +209,16 @@
 
         // 페이지 로드 시 실행 (안정적인 순차 처리)
         document.addEventListener('DOMContentLoaded', () => {
+            // 로그인 성공 상태 확인
+            const urlParams = new URLSearchParams(window.location.search);
+            const loginStatus = urlParams.get('login');
+            
+            if (loginStatus === 'success') {
+                console.log('Google 로그인 성공 확인됨');
+                // URL에서 파라미터 제거
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
             // 즉시 실행할 작업
             checkAuthStatus();
             

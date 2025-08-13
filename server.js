@@ -24,7 +24,7 @@ const PORT = process.env.PORT || 3001;
 // Rate Limiting 설정
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15분
-    max: 100, // IP당 최대 요청 수
+    max: 200, // IP당 최대 요청 수 (100에서 200으로 증가)
     message: {
         success: false,
         message: '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
@@ -33,13 +33,25 @@ const limiter = rateLimit({
     legacyHeaders: false,
 });
 
-// 로그인/회원가입 전용 rate limiter (더 엄격)
+// 로그인/회원가입 전용 rate limiter (더 관대하게 조정)
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15분
-    max: 5, // IP당 최대 5번 시도
+    max: 20, // IP당 최대 20번 시도 (5에서 20으로 증가)
     message: {
         success: false,
         message: '로그인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Google OAuth 전용 rate limiter (더 관대하게)
+const googleAuthLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15분
+    max: 30, // IP당 최대 30번 시도
+    message: {
+        success: false,
+        message: 'Google 로그인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.'
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -88,13 +100,13 @@ app.get('/favicon.ico', (req, res) => {
 // 세션 설정 (Railway 호환 버전)
 app.use(session({
     secret: process.env.SESSION_SECRET || 'coding-problems-secret-key',
-    resave: false, // 보안을 위해 false로 변경
-    saveUninitialized: false, // 보안을 위해 false로 변경
+    resave: true, // Google OAuth를 위해 true로 변경
+    saveUninitialized: true, // Google OAuth를 위해 true로 변경
     cookie: { 
         secure: process.env.NODE_ENV === 'production', // 프로덕션에서만 HTTPS 강제
         httpOnly: true, // XSS 공격 방지
         maxAge: 3 * 24 * 60 * 60 * 1000, // 3일 (적당한 세션)
-        sameSite: 'strict' // CSRF 공격 방지 강화
+        sameSite: 'lax' // Google OAuth를 위해 lax로 변경
     },
     name: 'ssen-coding-session', // 세션 쿠키 이름 명시
     rolling: true, // 세션 갱신
@@ -110,7 +122,7 @@ app.use('/api/auth', authLimiter, authRoutes); // 인증 라우트에 엄격한 
 app.use('/api/problems', problemRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/auth', authLimiter, googleAuthRoutes); // Google 인증에도 rate limiting 적용
+app.use('/auth', googleAuthLimiter, googleAuthRoutes); // Google 인증에도 rate limiting 적용
 app.use('/api/email-verification', authLimiter, emailVerificationRoutes); // 이메일 인증에도 rate limiting 적용
 app.use('/rss', rssRoutes);
 app.use('/sitemap.xml', sitemapRoutes);

@@ -112,27 +112,41 @@ router.get('/google', (req, res) => {
 router.get('/google/callback', (req, res) => {
     if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
         passport.authenticate('google', { 
-            failureRedirect: '/login.html',
+            failureRedirect: '/login.html?error=auth_failed',
             failureFlash: true 
-        })(req, res, () => {
-            // req.user가 존재하는지 확인
-            if (!req.user) {
-                console.error('Google OAuth: req.user가 undefined');
-                return res.redirect('/login.html?error=user_not_found');
-            }
-            
-            // 세션 저장을 명시적으로 처리
-            req.session.save((err) => {
-                if (err) {
-                    console.error('Google OAuth: 세션 저장 오류:', err);
-                    return res.redirect('/login.html?error=session_error');
+        })(req, res, async () => {
+            try {
+                // req.user가 존재하는지 확인
+                if (!req.user) {
+                    console.error('Google OAuth: req.user가 undefined');
+                    return res.redirect('/login.html?error=user_not_found');
                 }
                 
-                console.log('Google OAuth: 로그인 성공');
+                console.log('Google OAuth: 사용자 인증 성공 -', req.user.email);
                 
-                // 성공적으로 로그인되면 메인 페이지로 리디렉션
-                res.redirect('/');
-            });
+                // 세션 저장을 명시적으로 처리
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('Google OAuth: 세션 저장 오류:', err);
+                        return res.redirect('/login.html?error=session_error');
+                    }
+                    
+                    console.log('Google OAuth: 세션 저장 완료');
+                    
+                    // 세션이 제대로 저장되었는지 확인
+                    if (req.isAuthenticated()) {
+                        console.log('Google OAuth: 로그인 성공 - 메인 페이지로 리디렉션');
+                        res.redirect('/?login=success');
+                    } else {
+                        console.error('Google OAuth: 인증 상태 확인 실패');
+                        res.redirect('/login.html?error=auth_verification_failed');
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Google OAuth 콜백 처리 오류:', error);
+                res.redirect('/login.html?error=callback_error');
+            }
         });
     } else {
         res.status(400).json({ error: 'Google OAuth가 설정되지 않았습니다.' });
