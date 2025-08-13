@@ -1,32 +1,20 @@
 User-agent: *
 Allow: /
 
-# 메인 페이지들
-Allow: /index.html
-Allow: /problems.html
-Allow: /login.html
-Allow: /register.html
-Allow: /profile.html
-Allow: /verify-email.html
+# 사이트맵 위치
+Sitemap: https://ssencoding.com/sitemap.xml
 
-# RSS 피드
-Allow: /rss
-
-# Sitemap
-Allow: /sitemap.xml
-
-# CSS 및 이미지 파일
+# CSS, JS, 이미지 파일 허용
 Allow: /css/
+Allow: /js/
+Allow: /images/
 Allow: /favicon.ico
 
-# 관리자 페이지는 크롤링 제한
+# 관리자 페이지 제한 (선택사항)
 Disallow: /admin.html
 
-# API 엔드포인트는 크롤링 제한
+# API 엔드포인트 제한
 Disallow: /api/
 
-# 인증 관련 경로는 크롤링 제한
-Disallow: /auth/
-
-# Sitemap 위치 알림
-Sitemap: http://localhost:3001/sitemap.xml
+# 크롤링 지연 (선택사항)
+Crawl-delay: 1
