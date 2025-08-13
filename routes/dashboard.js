@@ -145,7 +145,13 @@ router.get('/wrong-problems/:subject', requireAuth, async (req, res) => {
         
         console.log(`조회된 틀린 문제 ${wrongProblems.length}개:`);
         wrongProblems.forEach((problem, index) => {
-            console.log(`  ${index + 1}. ID: ${problem.id}, 문제: ${problem.question.substring(0, 50)}...`);
+            console.log(`  ${index + 1}. ID: ${problem.id}`);
+            console.log(`     - question: ${problem.question || 'NULL'}`);
+            console.log(`     - content: ${problem.content || 'NULL'}`);
+            console.log(`     - title: ${problem.title || 'NULL'}`);
+            console.log(`     - subject_id: ${problem.subject_id}`);
+            const questionText = problem.question || problem.content || problem.title || '내용 없음';
+            console.log(`     - 문제 내용: ${questionText.substring(0, 50)}...`);
         });
 
         res.json({
@@ -156,9 +162,12 @@ router.get('/wrong-problems/:subject', requireAuth, async (req, res) => {
                 const answerMap = { 'A': '1', 'B': '2', 'C': '3', 'D': '4' };
                 const displayCorrectAnswer = answerMap[problem.correct_answer] || problem.correct_answer;
                 
+                // 문제 내용 필드 확인 (question, content, title 순서로 확인)
+                const questionText = problem.question || problem.content || problem.title || '문제 내용을 찾을 수 없습니다.';
+                
                 return {
                     id: problem.id,
-                    question: problem.question,
+                    question: questionText,
                     option_a: problem.option_a,
                     option_b: problem.option_b,
                     option_c: problem.option_c,
