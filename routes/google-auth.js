@@ -60,7 +60,7 @@ if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
                 
                 console.log('데이터베이스에 새 사용자 삽입 시도:', { finalUsername, email, googleId, picture });
                 const [result] = await pool.query(
-                    'INSERT INTO users (username, email, google_id, google_picture, created_at) VALUES (?, ?, ?, ?, NOW())',
+                    'INSERT INTO users (username, email, password, google_id, google_picture, created_at) VALUES (?, ?, NULL, ?, ?, NOW())',
                     [finalUsername, email, googleId, picture]
                 );
                 console.log('삽입 결과:', result);
