@@ -67,8 +67,8 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://use.typekit.net", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https://use.typekit.net", "https://p.typekit.net", "https://*.google.com", "https://*.googlesyndication.com", "https://*.gstatic.com", "https://*.doubleclick.net", "https://*.adtrafficquality.google", "https://ep1.adtrafficquality.google", "https://ep2.adtrafficquality.google"],
-            frameSrc: ["'self'", "https://*.google.com", "https://*.googlesyndication.com", "https://*.doubleclick.net", "https://*.adtrafficquality.google", "https://ep1.adtrafficquality.google", "https://ep2.adtrafficquality.google"],
+            connectSrc: ["'self'", "https://use.typekit.net", "https://p.typekit.net", "https://*.google.com", "https://*.googleapis.com", "https://*.googlesyndication.com", "https://*.gstatic.com", "https://*.doubleclick.net", "https://*.adtrafficquality.google", "https://*.googleadservices.com", "https://*.google-analytics.com"],
+            frameSrc: ["'self'", "https://*.google.com", "https://*.googleapis.com", "https://*.googlesyndication.com", "https://*.doubleclick.net", "https://*.adtrafficquality.google", "https://*.googleadservices.com"],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],
             formAction: ["'self'"]
