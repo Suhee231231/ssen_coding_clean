@@ -85,11 +85,6 @@
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
             const idParam = urlParams.get('id');
-            console.log('URL 파라미터 확인:', {
-                subject: urlParams.get('subject'),
-                idParam: idParam,
-                parsedId: idParam ? parseInt(idParam) : null
-            });
             return {
                 subject: urlParams.get('subject'),
                 id: idParam ? parseInt(idParam) : null // id가 없으면 null로 설정하여 서버에서 진행상황 복원
@@ -142,14 +137,10 @@
             currentSubject = params.subject;
             currentProblemId = params.id;
 
-            console.log(`문제 로드 시도: 과목=${currentSubject}, ID=${currentProblemId}`);
-
             try {
                 const url = `/api/problems/${encodeURIComponent(currentSubject)}?id=${currentProblemId}`;
-                console.log('API 호출 URL:', url);
                 const response = await fetch(url);
                 const data = await response.json();
-                console.log('API 응답:', data);
 
                 if (data.success) {
                     currentProblem = data.problem;
@@ -158,15 +149,11 @@
                     // 진행 상황 복원 후 currentProblemId 업데이트
                     if (!currentProblemId) {
                         currentProblemId = data.problemNumber;
-                        console.log(`진행 상황 복원 후 currentProblemId 업데이트: ${currentProblemId}`);
                         
                         // URL 업데이트 (새로고침 시에도 같은 문제가 로드되도록)
                         const newUrl = `/problems.html?subject=${encodeURIComponent(currentSubject)}&id=${currentProblemId}`;
                         window.history.replaceState({}, '', newUrl);
-                        console.log(`URL 업데이트: ${newUrl}`);
                     }
-                    
-                    console.log(`문제 로드 성공: 문제 ID=${data.problem.id}, 전체 문제 수=${totalProblems}, 현재 문제 번호=${currentProblemId}`);
                     
                     // 페이지 제목 업데이트
                     document.getElementById('subjectName').textContent = `${data.subject.name} 문제`;
@@ -362,9 +349,7 @@
                     
                     // 해설이 있으면 표시
                     if (data.explanation) {
-                        console.log('원본 해설:', data.explanation);
                         const formattedExplanation = formatCodeBlocks(data.explanation);
-                        console.log('포맷된 해설:', formattedExplanation);
                         explanation.innerHTML = `<strong>해설:</strong> ${formattedExplanation}`;
                         explanation.style.display = 'block';
                     }
@@ -453,9 +438,7 @@
                         })
                     });
                     
-                    if (response.ok) {
-                        console.log(`진행상황 저장 완료: ${currentSubject} 과목, 문제 ID ${currentProblem.id}`);
-                    } else {
+                    if (!response.ok) {
                         console.error('진행상황 저장 실패:', response.status);
                     }
                 } catch (error) {
@@ -468,7 +451,6 @@
         window.addEventListener('beforeunload', (event) => {
             // 틀린 문제풀이 페이지로 이동하는 경우 진행상황 저장 건너뛰기
             if (isNavigatingToWrongProblems) {
-                console.log('틀린 문제풀이 페이지로 이동하므로 진행상황 저장 건너뛰기');
                 return;
             }
             
