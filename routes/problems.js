@@ -576,11 +576,34 @@ router.post('/:subject/remove-wrong-problems', async (req, res) => {
             });
         }
 
-        // 틀린 문제들을 정답으로 변경
-        await pool.execute(
-            'UPDATE user_progress SET is_correct = TRUE WHERE user_id = ? AND problem_id IN (?)',
+        // user_progress 테이블에 해당 문제들의 기록이 있는지 확인
+        const [existingProgress] = await pool.execute(
+            'SELECT problem_id FROM user_progress WHERE user_id = ? AND problem_id IN (?)',
             [req.user.id, validProblemIds]
         );
+
+        const existingProblemIds = existingProgress.map(p => p.problem_id);
+        const newProblemIds = validProblemIds.filter(id => !existingProblemIds.includes(id));
+
+        console.log(`기존 기록: ${existingProblemIds.length}개, 새로 추가할 문제: ${newProblemIds.length}개`);
+
+        // 기존 기록이 있는 문제들은 정답으로 업데이트
+        if (existingProblemIds.length > 0) {
+            await pool.execute(
+                'UPDATE user_progress SET is_correct = TRUE WHERE user_id = ? AND problem_id IN (?)',
+                [req.user.id, existingProblemIds]
+            );
+        }
+
+        // 새로 추가할 문제들은 정답으로 INSERT
+        if (newProblemIds.length > 0) {
+            for (const problemId of newProblemIds) {
+                await pool.execute(
+                    'INSERT INTO user_progress (user_id, problem_id, is_correct, answered_at) VALUES (?, ?, TRUE, NOW())',
+                    [req.user.id, problemId]
+                );
+            }
+        }
 
         console.log(`틀린 문제 제거 완료: 사용자 ${req.user.id}, 과목 ${subject}, 문제 ${validProblemIds.length}개`);
 

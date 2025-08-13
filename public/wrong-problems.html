@@ -568,6 +568,11 @@
                 console.log('제거할 문제 ID들:', problemIds);
                 
                 // 서버에 틀린 문제 제거 요청
+                console.log('API 요청 전송:', {
+                    url: `/api/problems/${encodeURIComponent(currentSubject)}/remove-wrong-problems`,
+                    problemIds: problemIds
+                });
+                
                 const response = await fetch(`/api/problems/${encodeURIComponent(currentSubject)}/remove-wrong-problems`, {
                     method: 'POST',
                     headers: {
@@ -578,7 +583,9 @@
                     })
                 });
                 
+                console.log('API 응답 상태:', response.status);
                 const data = await response.json();
+                console.log('API 응답 데이터:', data);
                 
                 if (data.success) {
                     console.log('틀린 문제 제거 및 정답률 업데이트 성공');
