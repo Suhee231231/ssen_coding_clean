@@ -106,8 +106,20 @@ router.get('/google/callback', (req, res) => {
             failureFlash: true 
         })(req, res, () => {
             console.log('Google OAuth 로그인 성공:', req.user);
-            // 성공적으로 로그인되면 메인 페이지로 리디렉션
-            res.redirect('/');
+            
+            // 세션 저장을 명시적으로 처리
+            req.session.save((err) => {
+                if (err) {
+                    console.error('세션 저장 오류:', err);
+                    return res.redirect('/login.html?error=session_error');
+                }
+                
+                console.log('세션 저장 완료, 사용자 ID:', req.user.id);
+                console.log('세션 정보:', req.session);
+                
+                // 성공적으로 로그인되면 메인 페이지로 리디렉션
+                res.redirect('/');
+            });
         });
     } else {
         res.status(400).json({ error: 'Google OAuth가 설정되지 않았습니다.' });

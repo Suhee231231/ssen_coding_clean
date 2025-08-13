@@ -34,15 +34,18 @@ app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
 });
 
-// 세션 설정
+// 세션 설정 (강화된 버전)
 app.use(session({
     secret: process.env.SESSION_SECRET || 'coding-problems-secret-key',
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Railway 환경에서 세션 유지를 위해 true로 변경
+    saveUninitialized: true, // 세션 초기화를 위해 true로 변경
     cookie: { 
         secure: false, // Railway 환경에서는 false로 설정
-        maxAge: 24 * 60 * 60 * 1000 // 24시간
-    }
+        httpOnly: true, // XSS 공격 방지
+        maxAge: 24 * 60 * 60 * 1000, // 24시간
+        sameSite: 'lax' // CSRF 공격 방지
+    },
+    name: 'ssen-coding-session' // 세션 쿠키 이름 명시
 }));
 
 // Passport 초기화
