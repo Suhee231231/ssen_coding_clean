@@ -306,8 +306,7 @@ router.post('/:subject/submit', async (req, res) => {
                     `INSERT INTO user_subject_progress (user_id, subject_id, last_problem_id) 
                      VALUES (?, ?, ?) 
                      ON DUPLICATE KEY UPDATE 
-                     last_problem_id = VALUES(last_problem_id),
-                     last_visited_at = CURRENT_TIMESTAMP`,
+                     last_problem_id = VALUES(last_problem_id)`,
                     [req.user.id, problem.subject_id, problemId]
                 );
             } catch (error) {
@@ -428,8 +427,7 @@ router.post('/save-progress', async (req, res) => {
                 `INSERT INTO user_subject_progress (user_id, subject_id, last_problem_id) 
                  VALUES (?, ?, ?) 
                  ON DUPLICATE KEY UPDATE 
-                 last_problem_id = VALUES(last_problem_id),
-                 last_visited_at = CURRENT_TIMESTAMP`,
+                 last_problem_id = VALUES(last_problem_id)`,
                 [req.user.id, problems[0].subject_id, problemId]
             );
         }
