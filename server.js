@@ -23,7 +23,11 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: '1d', // 1일간 캐싱
+    etag: true,
+    lastModified: true
+}));
 
 // favicon 명시적 라우트
 app.get('/favicon.ico', (req, res) => {

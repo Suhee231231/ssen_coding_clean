@@ -3,42 +3,34 @@ const { pool } = require('../config/database');
 
 const router = express.Router();
 
-// 과목별 문제 목록 조회
+// 과목별 문제 목록 조회 (최적화된 버전)
 router.get('/subjects', async (req, res) => {
     try {
-        const [subjects] = await pool.execute(
-            'SELECT * FROM subjects WHERE is_public = TRUE ORDER BY sort_order ASC, name ASC'
-        );
+        // 단일 쿼리로 모든 데이터를 한 번에 가져오기
+        const [results] = await pool.execute(`
+            SELECT 
+                s.*,
+                COUNT(p.id) as problem_count
+            FROM subjects s
+            LEFT JOIN problems p ON s.id = p.subject_id
+            WHERE s.is_public = TRUE
+            GROUP BY s.id
+            ORDER BY s.sort_order ASC, s.name ASC
+        `);
         
-        // 각 과목별 문제 수 계산
-        const subjectsWithCounts = await Promise.all(
-            subjects.map(async (subject) => {
-                const [countResult] = await pool.execute(
-                    'SELECT COUNT(*) as count FROM problems WHERE subject_id = ?',
-                    [subject.id]
-                );
-                return {
-                    ...subject,
-                    problem_count: countResult[0].count
-                };
-            })
-        );
-        
-        // 최신 수정일 조회 (problems 테이블의 created_at 중 가장 최신)
-        const [latestUpdate] = await pool.execute(
-            'SELECT MAX(created_at) as latest_update FROM problems'
-        );
-        
-        // 전체 문제 수 계산
-        const [totalProblems] = await pool.execute(
-            'SELECT COUNT(*) as count FROM problems'
-        );
+        // 전체 문제 수와 최신 수정일을 별도 쿼리로 가져오기
+        const [stats] = await pool.execute(`
+            SELECT 
+                COUNT(*) as total_count,
+                MAX(created_at) as latest_update
+            FROM problems
+        `);
         
         res.json({ 
             success: true, 
-            subjects: subjectsWithCounts,
-            totalProblems: totalProblems[0].count,
-            latestUpdate: latestUpdate[0].latest_update
+            subjects: results,
+            totalProblems: stats[0].total_count,
+            latestUpdate: stats[0].latest_update
         });
     } catch (error) {
         console.error('과목 조회 오류:', error);

@@ -9,12 +9,16 @@ const dbConfig = {
     charset: process.env.DB_CHARSET || 'utf8mb4'
 };
 
-// 연결 풀 생성
+// 연결 풀 생성 (최적화된 설정)
 const pool = mysql.createPool({
     ...dbConfig,
     waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+    connectionLimit: 20, // Railway 환경에 맞게 증가
+    queueLimit: 0,
+    acquireTimeout: 60000, // 연결 획득 타임아웃 60초
+    timeout: 60000, // 쿼리 타임아웃 60초
+    reconnect: true, // 자동 재연결
+    charset: 'utf8mb4'
 });
 
 // 연결 테스트
