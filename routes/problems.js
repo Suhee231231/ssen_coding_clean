@@ -84,7 +84,7 @@ router.get('/:subject', async (req, res) => {
         const { subject } = req.params;
         const { id } = req.query;
 
-        console.log(`[DEBUG] 과목 문제 조회 요청: subject=${subject}, id=${id}, id type=${typeof id}, isNaN=${isNaN(parseInt(id))}`);
+
 
         // 과목 정보 조회 (공개된 과목만)
         const [subjects] = await pool.execute(
@@ -146,20 +146,16 @@ router.get('/:subject', async (req, res) => {
                                     const nextIndex = lastProblemIndex + 1;
                                     if (nextIndex < problems.length) {
                                         problemIndex = nextIndex;
-                                        console.log(`마지막 문제 완료됨, 다음 문제로 이동: 사용자 ${req.user.id}, 과목 ${subjectInfo.id}, 문제 ${progress[0].last_problem_id} → 다음 문제 (인덱스: ${problemIndex})`);
                                     } else {
                                         // 모든 문제를 다 풀었으므로 마지막 문제를 표시
                                         problemIndex = problems.length - 1;
-                                        console.log(`모든 문제 완료됨, 마지막 문제 표시: 사용자 ${req.user.id}, 과목 ${subjectInfo.id} (인덱스: ${problemIndex})`);
                                     }
                                 } else {
                                     // 마지막 문제가 아직 완료되지 않았으므로 해당 문제부터 시작
                                     problemIndex = lastProblemIndex;
-                                    console.log(`진행 상황 복원: 사용자 ${req.user.id}, 과목 ${subjectInfo.id}, 문제 ${progress[0].last_problem_id} (인덱스: ${problemIndex})`);
                                 }
                             } else {
                                 // 저장된 문제가 현재 문제 목록에 없음 (삭제된 문제일 수 있음)
-                                console.log(`저장된 문제 ${progress[0].last_problem_id}가 현재 문제 목록에 없음. 지능적 복원 시도...`);
                                 
                                 // 사용자가 이미 푼 문제들 조회 (성능 최적화)
                                 if (problems.length > 0) {
@@ -182,7 +178,6 @@ router.get('/:subject', async (req, res) => {
                                     
                                     if (foundUnsolvedIndex !== -1) {
                                         problemIndex = foundUnsolvedIndex;
-                                        console.log(`첫 번째 미해결 문제로 복원: 인덱스 ${problemIndex}, 문제 ID ${problems[problemIndex].id}`);
                                         
                                         // 진행상황 업데이트
                                         await pool.execute(
@@ -192,7 +187,6 @@ router.get('/:subject', async (req, res) => {
                                     } else {
                                         // 모든 문제를 다 풀었다면 마지막 문제로
                                         problemIndex = problems.length - 1;
-                                        console.log(`모든 문제 완료됨, 마지막 문제로 설정: 인덱스 ${problemIndex}`);
                                         
                                         // 진행상황 업데이트
                                         await pool.execute(
@@ -206,15 +200,12 @@ router.get('/:subject', async (req, res) => {
                             }
                         } else {
                             // last_problem_id가 NULL인 경우 (문제 삭제로 인해 NULL이 된 경우)
-                            console.log(`진행상황이 NULL로 설정됨, 첫 번째 문제부터 시작: 사용자 ${req.user.id}, 과목 ${subjectInfo.id}`);
                             problemIndex = 0; // 첫 번째 문제부터 시작
                         }
                     }
                 } catch (error) {
                     console.error('진행 상황 조회 오류:', error);
                 }
-            } else {
-                console.log(`[DEBUG] 로그인되지 않은 사용자. 첫 번째 문제부터 시작.`);
             }
         }
         
@@ -222,11 +213,9 @@ router.get('/:subject', async (req, res) => {
         if (problemIndex >= problems.length) {
             // 모든 문제를 다 풀었으므로 마지막 문제를 표시
             problemIndex = problems.length - 1;
-            console.log(`problemIndex가 범위를 벗어남, 마지막 문제로 조정: ${problemIndex}`);
         } else if (problemIndex < 0) {
             // 인덱스가 음수인 경우 첫 번째 문제로
             problemIndex = 0;
-            console.log(`problemIndex가 음수, 첫 번째 문제로 조정: ${problemIndex}`);
         }
         
         const problem = problems[problemIndex];
@@ -584,14 +573,10 @@ router.post('/:subject/remove-wrong-problems', async (req, res) => {
         const subjectInfo = subjects[0];
 
         // 해당 과목의 문제들만 필터링
-        console.log(`틀린 문제 제거 요청: 과목=${subject}, 요청된 문제 ID들=${problemIds}`);
-        
-        // 먼저 해당 과목의 모든 문제 ID를 확인
         const [allProblems] = await pool.execute(
             'SELECT id FROM problems WHERE subject_id = ?',
             [subjectInfo.id]
         );
-        console.log(`과목 ${subject}의 모든 문제 ID들:`, allProblems.map(p => p.id));
         
         // MySQL에서 IN (?) 구문이 배열을 제대로 처리하지 못할 수 있으므로 수동으로 처리
         const placeholders = problemIds.map(() => '?').join(',');
@@ -601,11 +586,8 @@ router.post('/:subject/remove-wrong-problems', async (req, res) => {
         );
 
         const validProblemIds = problems.map(p => p.id);
-        
-        console.log(`과목 ID=${subjectInfo.id}, 찾은 문제들=${validProblemIds}, 요청된 문제들=${problemIds}`);
 
         if (validProblemIds.length === 0) {
-            console.log(`유효한 문제가 없음: 과목=${subject}, 요청된 문제 ID들=${problemIds}`);
             // 유효한 문제가 없어도 성공으로 처리 (이미 정답이거나 문제가 없는 경우)
             return res.json({ 
                 success: true, 
@@ -623,8 +605,6 @@ router.post('/:subject/remove-wrong-problems', async (req, res) => {
 
         const existingProblemIds = existingProgress.map(p => p.problem_id);
         const newProblemIds = validProblemIds.filter(id => !existingProblemIds.includes(id));
-
-        console.log(`기존 기록: ${existingProblemIds.length}개, 새로 추가할 문제: ${newProblemIds.length}개`);
 
         // 기존 기록이 있는 문제들은 정답으로 업데이트
         if (existingProblemIds.length > 0) {
@@ -644,8 +624,6 @@ router.post('/:subject/remove-wrong-problems', async (req, res) => {
                 );
             }
         }
-
-        console.log(`틀린 문제 제거 완료: 사용자 ${req.user.id}, 과목 ${subject}, 문제 ${validProblemIds.length}개`);
 
         res.json({ 
             success: true, 
