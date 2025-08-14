@@ -22,9 +22,22 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Rate Limiting 설정
-const limiter = rateLimit({
+// 문제 풀이 전용 rate limiter (관대하게)
+const problemLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15분
-    max: 500, // IP당 최대 요청 수 (200에서 500으로 증가)
+    max: 2000, // 문제 풀이용 2000회 (1000문제 풀이 가능)
+    message: {
+        success: false,
+        message: '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// API 전용 rate limiter (보수적으로)
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15분
+    max: 500, // API용 500회
     message: {
         success: false,
         message: '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
@@ -81,7 +94,36 @@ app.use(helmet({
 app.set('trust proxy', 1);
 
 app.use(cors());
-app.use(limiter); // 전역 rate limiting 적용
+
+// 세밀한 Rate Limiting 적용
+app.use((req, res, next) => {
+    // 정적 파일은 rate limiting 제외
+    if (req.path.startsWith('/css/') || 
+        req.path.startsWith('/js/') || 
+        req.path.startsWith('/images/') ||
+        req.path === '/favicon.ico') {
+        return next();
+    }
+    
+    // 문제 풀이 관련 API는 관대한 제한 적용
+    if (req.path.startsWith('/api/problems/') && 
+        (req.path.includes('/save-progress') || req.path.includes('/wrong-submit'))) {
+        return problemLimiter(req, res, next);
+    }
+    
+    // 그 외 API는 보수적인 제한 적용
+    if (req.path.startsWith('/api/')) {
+        return apiLimiter(req, res, next);
+    }
+    
+    // 문제 풀이 페이지는 제외
+    if (req.path.startsWith('/problems.html')) {
+        return next();
+    }
+    
+    // 기본적으로는 API 제한 적용
+    return apiLimiter(req, res, next);
+});
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
