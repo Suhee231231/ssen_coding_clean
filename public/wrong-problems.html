@@ -88,6 +88,8 @@
         let wrongProblems = [];
         let currentProblemIndex = 0;
         let currentProblem = null;
+        let newWrongProblems = []; // 새로운 틀린 문제들을 저장할 배열
+        let isRetryRound = false; // 재도전 라운드 여부
 
         // URL에서 과목과 모드 파싱
         function getUrlParams() {
@@ -154,7 +156,17 @@
                     } else {
                         // 바로 풀기 모드인 경우 즉시 문제 풀이 시작
                         if (solveMode) {
-                            startWrongProblems();
+                            // 진행상황이 있으면 불러오기
+                            const hasProgress = loadWrongProblemProgress();
+                            if (hasProgress) {
+                                // 진행상황이 있으면 이어서 풀기
+                                document.getElementById('wrongProblemsList').style.display = 'none';
+                                document.getElementById('problemContainer').style.display = 'block';
+                                loadCurrentProblem();
+                            } else {
+                                // 진행상황이 없으면 처음부터 시작
+                                startWrongProblems();
+                            }
                         } else {
                             displayWrongProblemsList();
                         }
@@ -468,6 +480,49 @@
         // 돌아가기 (단순화)
         function goBack() {
             window.location.href = '/profile.html';
+        }
+
+        // 틀린 문제 진행상황 저장
+        function saveWrongProblemProgress() {
+            const progress = {
+                currentIndex: currentProblemIndex,
+                newWrongProblems: newWrongProblems,
+                isRetryRound: isRetryRound
+            };
+            localStorage.setItem(`wrongProblemProgress_${currentSubject}`, JSON.stringify(progress));
+        }
+
+        // 틀린 문제 진행상황 불러오기
+        function loadWrongProblemProgress() {
+            const saved = localStorage.getItem(`wrongProblemProgress_${currentSubject}`);
+            if (saved) {
+                const progress = JSON.parse(saved);
+                currentProblemIndex = progress.currentIndex || 0;
+                newWrongProblems = progress.newWrongProblems || [];
+                isRetryRound = progress.isRetryRound || false;
+                return true;
+            }
+            return false;
+        }
+
+        // 틀린 문제 진행상황 삭제
+        function clearWrongProblemProgress() {
+            localStorage.removeItem(`wrongProblemProgress_${currentSubject}`);
+        }
+
+        // 새로운 라운드 시작 (틀린 문제들로 재도전)
+        function startNewRound() {
+            // 현재 틀린 문제들을 새로운 문제 목록으로 설정
+            wrongProblems = [...newWrongProblems];
+            newWrongProblems = []; // 새로운 틀린 문제 배열 초기화
+            currentProblemIndex = 0;
+            isRetryRound = true;
+            
+            // 진행상황 저장
+            saveWrongProblemProgress();
+            
+            // 문제 풀이 시작
+            loadCurrentProblem();
         }
 
         // 선택지 클릭 이벤트
