@@ -1,6 +1,28 @@
 const express = require('express');
 const { pool } = require('../config/database');
 
+// 인증 미들웨어 함수
+function requireAuth(req, res, next) {
+    if (req.isAuthenticated() && req.user) {
+        return next();
+    }
+    return res.status(401).json({ 
+        success: false, 
+        message: '로그인이 필요합니다.' 
+    });
+}
+
+// 인증 미들웨어 함수
+function requireAuth(req, res, next) {
+    if (req.isAuthenticated() && req.user) {
+        return next();
+    }
+    return res.status(401).json({ 
+        success: false, 
+        message: '로그인이 필요합니다.' 
+    });
+}
+
 const router = express.Router();
 
 // 통계 데이터만 조회 (단일 쿼리 최적화)
@@ -342,7 +364,7 @@ router.post('/:subject/submit', async (req, res) => {
 });
 
 // 틀린 문제풀이용 답안 제출 (진행상황 업데이트 없음)
-router.post('/:subject/wrong-submit', async (req, res) => {
+router.post('/:subject/wrong-submit', requireAuth, async (req, res) => {
     try {
         const { subject } = req.params;
         const { problemId, answer } = req.body;
