@@ -30,16 +30,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200..900&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200..900&display=swap" rel="stylesheet">
+    <script src="/js/common.js"></script>
 </head>
 <body>
     <header>
         <nav>
             <div class="nav-container">
                 <h1 class="logo"><a href="/" style="text-decoration: none; color: inherit;"><span class="logo-highlight">SSEN</span><span class="logo-underline">C</span>ODING</a></h1>
-                <div class="nav-links" id="navLinks">
+                <div class="nav-links">
                     <a href="/">홈</a>
-                    <!-- JavaScript로 동적 생성 -->
+                    <a href="#" onclick="showLoginPrompt()">내 학습</a>
+                    <a href="/login.html">로그인</a>
+                    <a href="/register.html">회원가입</a>
                 </div>
             </div>
         </nav>

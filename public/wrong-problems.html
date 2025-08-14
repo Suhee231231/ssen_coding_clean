@@ -31,6 +31,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+    <script src="/js/common.js"></script>
 </head>
 <body>
     <header>
@@ -658,6 +659,9 @@
 
         // 페이지 로드 시 실행
         document.addEventListener('DOMContentLoaded', () => {
+            // 인증 상태 확인 및 네비게이션 업데이트
+            checkAuthStatus();
+            
             loadWrongProblems();
         });
 
