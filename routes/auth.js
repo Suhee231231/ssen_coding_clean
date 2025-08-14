@@ -101,18 +101,29 @@ router.post('/login', async (req, res) => {
                 });
             }
             
-            res.json({ 
-                success: true, 
-                message: '로그인 성공',
-                user: {
-                    id: user.id,
-                    username: user.username,
-                    is_admin: user.is_admin
+            // 세션을 명시적으로 저장
+            req.session.save((saveErr) => {
+                if (saveErr) {
+                    console.error('세션 저장 오류:', saveErr);
+                    return res.status(500).json({ 
+                        success: false, 
+                        message: '세션 저장 중 오류가 발생했습니다.' 
+                    });
                 }
+                
+                console.log('로그인 성공 - 사용자 ID:', user.id, '세션 ID:', req.sessionID);
+                
+                res.json({ 
+                    success: true, 
+                    message: '로그인 성공',
+                    user: {
+                        id: user.id,
+                        username: user.username,
+                        is_admin: user.is_admin
+                    }
+                });
             });
         });
-        
-        return; // req.login 콜백에서 응답을 보내므로 여기서 종료
 
     } catch (error) {
         console.error('로그인 오류:', error);

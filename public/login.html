@@ -89,8 +89,12 @@
                 const data = await response.json();
                 
                 if (data.success) {
+                    // 로그인 성공 시 세션 스토리지 초기화
+                    sessionStorage.removeItem('authStatus');
+                    sessionStorage.removeItem('authCheckTime');
+                    
                     // 로그인 성공 시 메인 페이지로 이동
-                    window.location.href = '/';
+                    window.location.href = '/?login=success';
                 } else {
                     // 에러 메시지 표시
                     errorMessage.textContent = data.message;

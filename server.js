@@ -148,12 +148,12 @@ app.get('/favicon.ico', (req, res) => {
 // 세션 설정 (Railway 호환 버전)
 app.use(session({
     secret: process.env.SESSION_SECRET || 'coding-problems-secret-key',
-    resave: true, // Google OAuth를 위해 true로 변경
-    saveUninitialized: true, // Google OAuth를 위해 true로 변경
+    resave: false, // 성능 최적화를 위해 false로 변경
+    saveUninitialized: false, // 성능 최적화를 위해 false로 변경
     cookie: { 
         secure: process.env.NODE_ENV === 'production', // 프로덕션에서만 HTTPS 강제
         httpOnly: true, // XSS 공격 방지
-        maxAge: 3 * 24 * 60 * 60 * 1000, // 3일 (적당한 세션)
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7일로 연장
         sameSite: 'lax' // Google OAuth를 위해 lax로 변경
     },
     name: 'ssen-coding-session', // 세션 쿠키 이름 명시
@@ -164,6 +164,27 @@ app.use(session({
 // Passport 초기화
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Passport serialize/deserialize 설정 (일반 로그인용)
+const { pool } = require('./config/database');
+
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+    try {
+        const [users] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
+        if (users.length > 0) {
+            done(null, users[0]);
+        } else {
+            done(null, false);
+        }
+    } catch (error) {
+        console.error('Passport 역직렬화 오류:', error);
+        done(error, null);
+    }
+});
 
 // 라우터 설정
 app.use('/api/auth', authLimiter, authRoutes); // 인증 라우트에 엄격한 rate limiting 적용

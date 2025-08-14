@@ -9,6 +9,18 @@ const AUTH_CACHE_DURATION = 30 * 60 * 1000; // 30분 캐시 (rate limit 절약)
 async function checkAuthStatus() {
     const now = Date.now();
     
+    // URL에서 로그인 성공 파라미터 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    const loginStatus = urlParams.get('login');
+    
+    // 로그인 성공이면 캐시 초기화
+    if (loginStatus === 'success') {
+        sessionStorage.removeItem('authStatus');
+        sessionStorage.removeItem('authCheckTime');
+        authStatus = null;
+        lastAuthCheck = 0;
+    }
+    
     // 세션 스토리지에서 인증 상태 확인
     const sessionAuth = sessionStorage.getItem('authStatus');
     const sessionTime = sessionStorage.getItem('authCheckTime');
@@ -29,8 +41,13 @@ async function checkAuthStatus() {
     
     // 실제 API 호출
     try {
+        console.log('인증 상태 확인 중...');
         const response = await fetch('/api/auth/check');
-        authStatus = await response.json();
+        const data = await response.json();
+        
+        console.log('인증 상태 응답:', data);
+        
+        authStatus = data;
         lastAuthCheck = now;
         
         // 세션 스토리지에 저장
