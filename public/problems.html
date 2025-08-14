@@ -448,9 +448,6 @@
 
         // 페이지 로드 시 실행 (최적화된 버전)
         document.addEventListener('DOMContentLoaded', () => {
-            // 즉시 실행할 작업
-            checkAuthStatus();
-            
             // 문제 로딩을 지연시켜 초기 렌더링 속도 향상
             setTimeout(() => {
                 loadProblem();
