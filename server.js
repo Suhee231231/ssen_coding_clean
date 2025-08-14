@@ -75,7 +75,7 @@ app.use(helmet({
             contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'", "https://pagead2.googlesyndication.com", "https://use.typekit.net", "https://cdnjs.cloudflare.com", "https://developers.google.com", "https://ep2.adtrafficquality.google"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "https://pagead2.googlesyndication.com", "https://use.typekit.net", "https://cdnjs.cloudflare.com", "https://developers.google.com", "https://ep2.adtrafficquality.google", "https://www.googletagmanager.com"],
                 scriptSrcAttr: ["'unsafe-inline'"],
                 styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
                 fontSrc: ["'self'", "https://fonts.gstatic.com", "https://use.typekit.net", "https://cdnjs.cloudflare.com"],
