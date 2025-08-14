@@ -88,8 +88,6 @@
         let wrongProblems = [];
         let currentProblemIndex = 0;
         let currentProblem = null;
-        let newWrongProblems = []; // 새로운 틀린 문제들을 저장할 배열
-        let isRetryRound = false; // 재도전 라운드 여부
 
         // URL에서 과목과 모드 파싱
         function getUrlParams() {
@@ -221,8 +219,18 @@
         // 현재 문제 로드 (단순화)
         async function loadCurrentProblem() {
             if (currentProblemIndex >= wrongProblems.length) {
-                // 모든 틀린 문제를 다 풀었을 때
-                handleAllProblemsCorrect();
+                // 모든 틀린 문제를 다 풀었을 때 - 단순한 완료 메시지
+                clearWrongProblemProgress();
+                document.getElementById('problemContainer').innerHTML = `
+                    <div class="completion-message">
+                        <h3>🎉 틀린 문제 풀이 완료!</h3>
+                        <p>모든 틀린 문제를 다시 풀어보았습니다.</p>
+                        <p>계속해서 학습을 진행해보세요!</p>
+                        <div style="margin-top: 20px;">
+                            <button class="btn-primary" onclick="goToProfile()">학습현황으로</button>
+                        </div>
+                    </div>
+                `;
                 return;
             }
 
@@ -351,35 +359,18 @@
                 saveWrongProblemProgress();
                 loadCurrentProblem();
             } else if (newIndex >= wrongProblems.length) {
-                // 모든 문제를 다 풀었을 때
-                if (newWrongProblems.length > 0) {
-                    // 이번 라운드에서 틀린 문제가 있으면 다시 풀기 옵션 제공
-                    if (!isRetryRound) {
-                        // 첫 번째 라운드인 경우에만 진행상황 삭제
-                        clearWrongProblemProgress();
-                    }
-                    document.getElementById('problemContainer').innerHTML = `
-                        <div class="completion-message">
-                            <h3>🎯 이번 라운드 완료!</h3>
-                            <p>총 ${wrongProblems.length}문제 중 ${newWrongProblems.length}문제를 틀렸습니다.</p>
-                            <p>틀린 문제들을 다시 풀어서 완전히 마스터해보세요!</p>
-                            <div style="margin-top: 20px;">
-                                <button class="btn-primary" onclick="startNewRound()" style="margin-right: 10px;">틀린 문제 다시 풀기 (${newWrongProblems.length}문제)</button>
-                                <button class="btn-secondary" onclick="goBack()">돌아가기</button>
-                            </div>
+                // 모든 문제를 다 풀었을 때 - 단순한 완료 메시지
+                clearWrongProblemProgress();
+                document.getElementById('problemContainer').innerHTML = `
+                    <div class="completion-message">
+                        <h3>🎉 틀린 문제 풀이 완료!</h3>
+                        <p>모든 틀린 문제를 다시 풀어보았습니다.</p>
+                        <p>계속해서 학습을 진행해보세요!</p>
+                        <div style="margin-top: 20px;">
+                            <button class="btn-primary" onclick="goToProfile()">학습현황으로</button>
                         </div>
-                    `;
-                } else {
-                    // 모든 문제를 맞췄을 때
-                    if (isRetryRound) {
-                        // 재도전 라운드에서 모든 문제를 맞춘 경우
-                        handleAllProblemsCorrect();
-                    } else {
-                        // 첫 번째 라운드에서 모든 문제를 맞춘 경우
-                        // 틀린 문제가 없으므로 서버에서 틀린 문제 제거 요청
-                        handleAllProblemsCorrect();
-                    }
-                }
+                    </div>
+                `;
             }
         }
 
@@ -397,78 +388,7 @@
             loadCurrentProblem();
         }
 
-        // 모든 문제를 맞췄을 때 처리 (재도전 또는 첫 번째 라운드)
-        async function handleAllProblemsCorrect() {
-            try {
-                // 모든 틀린 문제를 맞춤 - 처리 시작
-                
-                // currentSubject가 없으면 재설정 시도
-                if (!currentSubject) {
-                    const params = getUrlParams();
-                    currentSubject = params.subject;
-                    // currentSubject 재설정 완료
-                    
-                    if (!currentSubject) {
-                        console.error('currentSubject를 찾을 수 없습니다.');
-                        alert('과목 정보를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
-                        return;
-                    }
-                }
-                
-                // URL 파라미터가 없으면 재설정
-                const params = getUrlParams();
-                if (!params.subject || !params.mode) {
-                    if (currentSubject) {
-                        const newUrl = `/wrong-problems.html?subject=${encodeURIComponent(currentSubject)}&mode=solve`;
-                        window.history.replaceState({}, '', newUrl);
-                        // URL 파라미터 재설정 완료
-                    }
-                }
-                
-                // 현재 재도전 라운드의 문제 ID들을 수집
-                const problemIds = wrongProblems.map(problem => problem.id);
-                // 틀린 문제 제거 준비 완료
-                
-                // 서버에 틀린 문제 제거 요청
-                // API 요청 전송 중
-                
-                const response = await fetch(`/api/problems/${encodeURIComponent(currentSubject)}/remove-wrong-problems`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        problemIds: problemIds
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // 틀린 문제 제거 및 정답률 업데이트 성공
-                    
-                    // 진행상황 삭제 (성공한 경우에만)
-                    clearWrongProblemProgress();
-                    
-                    // 완료 메시지 표시
-                    document.getElementById('problemContainer').innerHTML = `
-                        <div class="completion-message">
-                            <h3>🎉 완벽하게 마스터했습니다!</h3>
-                            <p>재도전에서 모든 문제를 정답으로 완료했습니다!</p>
-                            <p>이제 이 과목의 틀린 문제가 없습니다.</p>
-                            <button class="btn-primary" onclick="goToProfile()">내 학습현황으로</button>
-                        </div>
-                    `;
-                } else {
-                    console.error('틀린 문제 제거 실패:', data.message);
-                    console.error('실패 응답:', data);
-                    alert(`틀린 문제 제거 중 오류가 발생했습니다: ${data.message}`);
-                }
-            } catch (error) {
-                console.error('틀린 문제 제거 오류:', error);
-                alert('틀린 문제 제거 중 오류가 발생했습니다.');
-            }
-        }
+
 
         // 내 학습현황 페이지로 이동
         function goToProfile() {
@@ -485,9 +405,7 @@
         // 틀린 문제 진행상황 저장
         function saveWrongProblemProgress() {
             const progress = {
-                currentIndex: currentProblemIndex,
-                newWrongProblems: newWrongProblems,
-                isRetryRound: isRetryRound
+                currentIndex: currentProblemIndex
             };
             localStorage.setItem(`wrongProblemProgress_${currentSubject}`, JSON.stringify(progress));
         }
@@ -498,8 +416,6 @@
             if (saved) {
                 const progress = JSON.parse(saved);
                 currentProblemIndex = progress.currentIndex || 0;
-                newWrongProblems = progress.newWrongProblems || [];
-                isRetryRound = progress.isRetryRound || false;
                 return true;
             }
             return false;
@@ -508,21 +424,6 @@
         // 틀린 문제 진행상황 삭제
         function clearWrongProblemProgress() {
             localStorage.removeItem(`wrongProblemProgress_${currentSubject}`);
-        }
-
-        // 새로운 라운드 시작 (틀린 문제들로 재도전)
-        function startNewRound() {
-            // 현재 틀린 문제들을 새로운 문제 목록으로 설정
-            wrongProblems = [...newWrongProblems];
-            newWrongProblems = []; // 새로운 틀린 문제 배열 초기화
-            currentProblemIndex = 0;
-            isRetryRound = true;
-            
-            // 진행상황 저장
-            saveWrongProblemProgress();
-            
-            // 문제 풀이 시작
-            loadCurrentProblem();
         }
 
         // 선택지 클릭 이벤트
@@ -617,24 +518,6 @@
                         const correctOption = document.querySelector(`[data-option="${displayCorrectAnswer}"]`);
                         if (correctOption) {
                                                     correctOption.classList.add('correct-answer-show');
-                        }
-                        
-                        // 틀린 문제를 새로운 틀린 문제 배열에 추가
-                        const wrongProblem = {
-                            id: currentProblem.id,
-                            question: currentProblem.question,
-                            option_a: currentProblem.option_a,
-                            option_b: currentProblem.option_b,
-                            option_c: currentProblem.option_c,
-                            option_d: currentProblem.option_d,
-                            correct_answer: data.correctAnswer
-                        };
-                        
-                        // 중복 확인 후 추가
-                        const isDuplicate = newWrongProblems.some(problem => problem.id === wrongProblem.id);
-                        if (!isDuplicate) {
-                            newWrongProblems.push(wrongProblem);
-                            // 틀린 문제 추가 완료
                         }
                         
                         // 틀렸어도 현재 진행상황은 저장 (같은 문제 다시 시도 가능)
