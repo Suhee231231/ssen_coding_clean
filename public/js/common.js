@@ -3,13 +3,25 @@
 // 인증 상태 캐싱 변수
 let authStatus = null;
 let lastAuthCheck = 0;
-const AUTH_CACHE_DURATION = 5 * 60 * 1000; // 5분 캐시
+const AUTH_CACHE_DURATION = 30 * 60 * 1000; // 30분 캐시 (rate limit 절약)
 
 // 인증 상태 확인 (최적화된 버전)
 async function checkAuthStatus() {
     const now = Date.now();
     
-    // 캐시된 상태가 있고 5분 이내면 캐시 사용
+    // 세션 스토리지에서 인증 상태 확인
+    const sessionAuth = sessionStorage.getItem('authStatus');
+    const sessionTime = sessionStorage.getItem('authCheckTime');
+    
+    if (sessionAuth && sessionTime && (now - parseInt(sessionTime)) < AUTH_CACHE_DURATION) {
+        // 세션에 유효한 인증 상태가 있으면 사용
+        authStatus = JSON.parse(sessionAuth);
+        lastAuthCheck = parseInt(sessionTime);
+        updateNavigation(authStatus);
+        return authStatus;
+    }
+    
+    // 메모리 캐시 확인
     if (authStatus && (now - lastAuthCheck) < AUTH_CACHE_DURATION) {
         updateNavigation(authStatus);
         return authStatus;
@@ -20,6 +32,11 @@ async function checkAuthStatus() {
         const response = await fetch('/api/auth/check');
         authStatus = await response.json();
         lastAuthCheck = now;
+        
+        // 세션 스토리지에 저장
+        sessionStorage.setItem('authStatus', JSON.stringify(authStatus));
+        sessionStorage.setItem('authCheckTime', now.toString());
+        
         updateNavigation(authStatus);
         return authStatus;
     } catch (error) {
@@ -61,6 +78,8 @@ async function logout() {
             // 인증 캐시 초기화
             authStatus = null;
             lastAuthCheck = 0;
+            sessionStorage.removeItem('authStatus');
+            sessionStorage.removeItem('authCheckTime');
             window.location.href = '/';
         }
     } catch (error) {

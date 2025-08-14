@@ -38,11 +38,9 @@
         <nav>
             <div class="nav-container">
                 <h1 class="logo"><a href="/" style="text-decoration: none; color: inherit;"><span class="logo-highlight">SSEN</span><span class="logo-underline">C</span>ODING</a></h1>
-                <div class="nav-links">
+                <div class="nav-links" id="navLinks">
                     <a href="/">홈</a>
-                    <a href="#" onclick="showLoginPrompt()">내 학습</a>
-                    <a href="/login.html">로그인</a>
-                    <a href="/register.html">회원가입</a>
+                    <!-- JavaScript로 동적 생성 -->
                 </div>
             </div>
         </nav>
@@ -451,6 +449,9 @@
 
         // 페이지 로드 시 실행 (최적화된 버전)
         document.addEventListener('DOMContentLoaded', () => {
+            // 인증 상태 확인 및 네비게이션 업데이트 (rate limit 고려하여 한 번만 호출)
+            checkAuthStatus();
+            
             // 문제 로딩을 지연시켜 초기 렌더링 속도 향상
             setTimeout(() => {
                 loadProblem();
