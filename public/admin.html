@@ -1087,12 +1087,11 @@
         // 문제 목록 로드
         async function loadProblems() {
             try {
-                console.log('문제 목록 로드 시작...');
                 const response = await fetch('/api/admin/problems');
                 const data = await response.json();
                 
                 if (data.success) {
-                    console.log(`문제 목록 로드 성공: ${data.problems.length}개`);
+                    console.log(`📊 문제 목록 로드: ${data.problems.length}개`);
                     
                     // 전역 변수에 모든 문제 저장
                     allProblems = data.problems;
@@ -1108,8 +1107,6 @@
                     
                     // 페이지네이션과 함께 문제 표시
                     displayProblemsWithPagination();
-                    
-                    console.log('✅ 문제 목록 렌더링 완료');
                 } else {
                     console.error('❌ API 응답 실패:', data.message);
                     showMessage(data.message || '문제 목록을 불러올 수 없습니다.', 'error');
@@ -1122,11 +1119,6 @@
         
         // 페이지네이션과 함께 문제 표시
         function displayProblemsWithPagination() {
-            console.log('📊 displayProblemsWithPagination 함수 시작');
-            console.log('📊 filteredProblems.length:', filteredProblems.length);
-            console.log('📊 pageSize:', pageSize);
-            console.log('📊 currentPage:', currentPage);
-            
             const totalProblems = filteredProblems.length;
             const totalPages = Math.ceil(totalProblems / pageSize);
             
@@ -1134,11 +1126,6 @@
             const startIndex = (currentPage - 1) * pageSize;
             const endIndex = Math.min(startIndex + pageSize, totalProblems);
             const currentPageProblems = filteredProblems.slice(startIndex, endIndex);
-            
-            console.log('totalPages:', totalPages);
-            console.log('startIndex:', startIndex);
-            console.log('endIndex:', endIndex);
-            console.log('currentPageProblems.length:', currentPageProblems.length);
             
             // 헤더 텍스트 생성
             const headerText = `페이지 ${currentPage}/${totalPages} (${startIndex + 1}-${endIndex}번째 문제, 총 ${totalProblems}개)`;
@@ -1148,18 +1135,11 @@
             
             // 페이지네이션 UI 업데이트
             updatePagination(totalPages);
-            
-            console.log('displayProblemsWithPagination 함수 완료');
         }
         
         // 문제 표시 함수
         function displayProblems(problems, headerText) {
-            console.log('displayProblems 함수 시작');
-            console.log('problems.length:', problems.length);
-            console.log('headerText:', headerText);
-            
             const problemsList = document.getElementById('problemsList');
-            console.log('problemsList 엘리먼트:', problemsList);
             
             if (!problemsList) {
                 console.error('problemsList 엘리먼트를 찾을 수 없습니다!');
@@ -1176,12 +1156,8 @@
                 </div>
             `;
             
-            console.log('문제 HTML 생성 시작...');
             const problemsHTML = problems.map((problem, index) => {
                 try {
-                    if (index < 3) { // 처음 3개만 로그
-                        console.log(`문제 ${index + 1}:`, problem.id, problem.content ? problem.content.substring(0, 50) : 'No content');
-                    }
                     
                     // 안전한 데이터 처리
                     const safeId = problem.id || 'unknown';
@@ -1229,67 +1205,42 @@
                 }
             }).join('');
             
-            console.log('HTML 생성 완료, DOM에 적용 중...');
             problemsList.innerHTML = headerHTML + problemsHTML;
-            console.log('DOM 업데이트 완료');
-            console.log('최종 problemsList.innerHTML 길이:', problemsList.innerHTML.length);
-            
-            // DOM이 실제로 업데이트되었는지 확인
-            setTimeout(() => {
-                const items = problemsList.querySelectorAll('.problem-item');
-                console.log('실제 DOM에 렌더링된 problem-item 개수:', items.length);
-            }, 100);
         }
         
         // 페이지네이션 UI 업데이트
         function updatePagination(totalPages) {
-            console.log('페이지네이션 업데이트 시작, totalPages:', totalPages);
-            
             const pagination = document.getElementById('pagination');
             const pageInfo = document.getElementById('pageInfo');
             const prevButton = document.getElementById('prevPage');
             const nextButton = document.getElementById('nextPage');
             const gotoPageInput = document.getElementById('gotoPage');
             
-            console.log('페이지네이션 엘리먼트들:', {
-                pagination: !!pagination,
-                pageInfo: !!pageInfo,
-                prevButton: !!prevButton,
-                nextButton: !!nextButton,
-                gotoPageInput: !!gotoPageInput
-            });
-            
             if (totalPages <= 1) {
-                console.log('totalPages <= 1, 페이지네이션 숨김');
                 if (pagination) pagination.style.display = 'none';
                 return;
             }
             
             if (pagination) {
                 pagination.style.display = 'block';
-                console.log('페이지네이션 표시됨');
             }
             
             if (pageInfo) {
                 pageInfo.textContent = `${currentPage} / ${totalPages} 페이지`;
-                console.log('페이지 정보 업데이트:', pageInfo.textContent);
             }
             
             // 이전/다음 버튼 활성화/비활성화
             if (prevButton) {
                 prevButton.disabled = currentPage <= 1;
-                console.log('이전 버튼 상태:', prevButton.disabled ? 'disabled' : 'enabled');
             }
             if (nextButton) {
                 nextButton.disabled = currentPage >= totalPages;
-                console.log('다음 버튼 상태:', nextButton.disabled ? 'disabled' : 'enabled');
             }
             
             // 페이지 이동 input 설정
             if (gotoPageInput) {
                 gotoPageInput.max = totalPages;
                 gotoPageInput.value = '';
-                console.log('페이지 이동 input 설정 완료, max:', totalPages);
             }
         }
         
