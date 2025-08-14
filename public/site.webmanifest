@@ -1,0 +1,21 @@
+{
+    "name": "SSEN CODING",
+    "short_name": "SSEN CODING",
+    "description": "4지 선다형 문제로 익히는 코딩 학습 플랫폼",
+    "icons": [
+        {
+            "src": "/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "theme_color": "#00d4aa",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "start_url": "/"
+}
