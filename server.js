@@ -168,6 +168,55 @@ app.use(passport.session());
 // Passport serialize/deserialize 설정 (일반 로그인용)
 const { pool } = require('./config/database');
 
+// 데이터베이스 테이블 자동 업데이트 함수
+async function updateDatabaseTables() {
+    try {
+        console.log('🔧 데이터베이스 테이블 업데이트 중...');
+        
+        // subjects 테이블에 필요한 컬럼들 추가
+        const alterQueries = [
+            "ALTER TABLE subjects ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT '프로그래밍' AFTER description",
+            "ALTER TABLE subjects ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT true AFTER category",
+            "ALTER TABLE subjects ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 0 AFTER is_public"
+        ];
+        
+        for (const query of alterQueries) {
+            try {
+                await pool.execute(query);
+                console.log('✅ 테이블 업데이트 완료:', query.split(' ')[5]);
+            } catch (error) {
+                if (error.code === 'ER_DUP_FIELDNAME') {
+                    console.log('ℹ️  컬럼이 이미 존재합니다:', query.split(' ')[5]);
+                } else {
+                    console.error('❌ 테이블 업데이트 오류:', error.message);
+                }
+            }
+        }
+        
+        // 기존 과목들에 기본 카테고리 설정
+        const categoryMappings = {
+            'JavaScript': '웹 개발',
+            'Python': '프로그래밍 언어',
+            'Java': '프로그래밍 언어',
+            'HTML/CSS': '웹 개발',
+            'SQL': '데이터베이스',
+            '알고리즘': '알고리즘'
+        };
+        
+        for (const [subjectName, category] of Object.entries(categoryMappings)) {
+            await pool.execute(`
+                UPDATE subjects 
+                SET category = ? 
+                WHERE name = ? AND (category IS NULL OR category = '프로그래밍')
+            `, [category, subjectName]);
+        }
+        
+        console.log('✅ 데이터베이스 테이블 업데이트 완료!');
+    } catch (error) {
+        console.error('❌ 데이터베이스 업데이트 중 오류:', error);
+    }
+}
+
 passport.serializeUser((user, done) => {
     done(null, user.id);
 });
@@ -217,7 +266,10 @@ app.get('/dashboard.html', (req, res) => {
 });
 
 // 서버 시작
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`);
     console.log(`http://localhost:${PORT}`);
+    
+    // 데이터베이스 테이블 자동 업데이트 실행
+    await updateDatabaseTables();
 }); 
