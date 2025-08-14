@@ -173,42 +173,75 @@ async function updateDatabaseTables() {
     try {
         console.log('🔧 데이터베이스 테이블 업데이트 중...');
         
-        // subjects 테이블에 필요한 컬럼들 추가
-        const alterQueries = [
-            "ALTER TABLE subjects ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT '프로그래밍' AFTER description",
-            "ALTER TABLE subjects ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT true AFTER category",
-            "ALTER TABLE subjects ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 0 AFTER is_public"
-        ];
+        // 먼저 테이블 구조 확인
+        const [columns] = await pool.execute('DESCRIBE subjects');
+        const existingColumns = columns.map(col => col.Field);
         
-        for (const query of alterQueries) {
+        console.log('현재 subjects 테이블 컬럼:', existingColumns);
+        
+        // category 컬럼 추가 (없는 경우에만)
+        if (!existingColumns.includes('category')) {
             try {
-                await pool.execute(query);
-                console.log('✅ 테이블 업데이트 완료:', query.split(' ')[5]);
+                await pool.execute('ALTER TABLE subjects ADD COLUMN category VARCHAR(50) DEFAULT "프로그래밍" AFTER description');
+                console.log('✅ category 컬럼 추가 완료');
             } catch (error) {
-                if (error.code === 'ER_DUP_FIELDNAME') {
-                    console.log('ℹ️  컬럼이 이미 존재합니다:', query.split(' ')[5]);
-                } else {
-                    console.error('❌ 테이블 업데이트 오류:', error.message);
-                }
+                console.error('❌ category 컬럼 추가 오류:', error.message);
             }
+        } else {
+            console.log('ℹ️  category 컬럼이 이미 존재합니다');
         }
         
-        // 기존 과목들에 기본 카테고리 설정
-        const categoryMappings = {
-            'JavaScript': '웹 개발',
-            'Python': '프로그래밍 언어',
-            'Java': '프로그래밍 언어',
-            'HTML/CSS': '웹 개발',
-            'SQL': '데이터베이스',
-            '알고리즘': '알고리즘'
-        };
+        // is_public 컬럼 추가 (없는 경우에만)
+        if (!existingColumns.includes('is_public')) {
+            try {
+                await pool.execute('ALTER TABLE subjects ADD COLUMN is_public BOOLEAN DEFAULT true AFTER category');
+                console.log('✅ is_public 컬럼 추가 완료');
+            } catch (error) {
+                console.error('❌ is_public 컬럼 추가 오류:', error.message);
+            }
+        } else {
+            console.log('ℹ️  is_public 컬럼이 이미 존재합니다');
+        }
         
-        for (const [subjectName, category] of Object.entries(categoryMappings)) {
-            await pool.execute(`
-                UPDATE subjects 
-                SET category = ? 
-                WHERE name = ? AND (category IS NULL OR category = '프로그래밍')
-            `, [category, subjectName]);
+        // sort_order 컬럼 추가 (없는 경우에만)
+        if (!existingColumns.includes('sort_order')) {
+            try {
+                await pool.execute('ALTER TABLE subjects ADD COLUMN sort_order INT DEFAULT 0 AFTER is_public');
+                console.log('✅ sort_order 컬럼 추가 완료');
+            } catch (error) {
+                console.error('❌ sort_order 컬럼 추가 오류:', error.message);
+            }
+        } else {
+            console.log('ℹ️  sort_order 컬럼이 이미 존재합니다');
+        }
+        
+        // 컬럼 추가 후 다시 확인
+        const [updatedColumns] = await pool.execute('DESCRIBE subjects');
+        const hasCategory = updatedColumns.some(col => col.Field === 'category');
+        
+        // 기존 과목들에 기본 카테고리 설정 (category 컬럼이 있는 경우에만)
+        if (hasCategory) {
+            const categoryMappings = {
+                'JavaScript': '웹 개발',
+                'Python': '프로그래밍 언어',
+                'Java': '프로그래밍 언어',
+                'HTML/CSS': '웹 개발',
+                'SQL': '데이터베이스',
+                '알고리즘': '알고리즘'
+            };
+            
+            for (const [subjectName, category] of Object.entries(categoryMappings)) {
+                try {
+                    await pool.execute(`
+                        UPDATE subjects 
+                        SET category = ? 
+                        WHERE name = ? AND (category IS NULL OR category = '프로그래밍')
+                    `, [category, subjectName]);
+                } catch (error) {
+                    console.error(`❌ ${subjectName} 카테고리 업데이트 오류:`, error.message);
+                }
+            }
+            console.log('✅ 기본 카테고리 설정 완료');
         }
         
         console.log('✅ 데이터베이스 테이블 업데이트 완료!');
