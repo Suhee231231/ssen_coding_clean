@@ -32,9 +32,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
         const [usersResult] = await connection.execute('SELECT COUNT(*) as count FROM users');
         const totalUsers = usersResult[0].count;
         
-        // 총 풀이 시도 수
-        const [attemptsResult] = await connection.execute('SELECT COUNT(*) as count FROM user_progress');
-        const totalAttempts = attemptsResult[0].count;
+
         
         connection.release();
         
@@ -43,8 +41,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
             stats: {
                 totalProblems,
                 totalSubjects,
-                totalUsers,
-                totalAttempts
+                totalUsers
             }
         });
     } catch (error) {
