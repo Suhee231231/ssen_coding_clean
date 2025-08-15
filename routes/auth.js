@@ -152,7 +152,18 @@ router.post('/logout', (req, res) => {
 
 // 세션 확인 (성능 최적화)
 router.get('/check', (req, res) => {
+    console.log('🔍 인증 상태 확인 요청');
+    console.log('📋 세션 정보:', {
+        isAuthenticated: req.isAuthenticated(),
+        user: req.user ? {
+            id: req.user.id,
+            username: req.user.username,
+            email: req.user.email
+        } : null
+    });
+    
     if (req.isAuthenticated()) {
+        console.log('✅ 인증된 사용자 확인됨');
         res.json({ 
             success: true, 
             isLoggedIn: true,
@@ -160,14 +171,17 @@ router.get('/check', (req, res) => {
             user: {
                 id: req.user.id,
                 username: req.user.username,
+                email: req.user.email,
                 is_admin: req.user.is_admin || false
             }
         });
     } else {
+        console.log('❌ 인증되지 않은 사용자');
         res.json({ 
             success: true, 
             isLoggedIn: false,
-            isAdmin: false
+            isAdmin: false,
+            user: null
         });
     }
 });
