@@ -158,7 +158,6 @@ app.use(session({
         name: 'ssen-coding-session' // 쿠키 이름을 cookie 객체 내부에 설정
     },
     name: 'ssen-coding-session', // 세션 쿠키 이름 명시
-    rolling: true, // 세션 갱신
     unset: 'destroy' // 세션 삭제 시 완전히 제거
 }));
 

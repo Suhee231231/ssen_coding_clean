@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const { pool } = require('../config/database');
+const { authenticateJWT } = require('../middleware/jwt-auth');
 
 const router = express.Router();
 
@@ -92,37 +93,42 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Passport 세션에 사용자 정보 저장
-        req.login(user, (err) => {
-            if (err) {
-                return res.status(500).json({ 
-                    success: false, 
-                    message: '로그인 중 오류가 발생했습니다.' 
-                });
-            }
-            
-            // 세션을 명시적으로 저장
-            req.session.save((saveErr) => {
-                if (saveErr) {
-                    console.error('세션 저장 오류:', saveErr);
-                    return res.status(500).json({ 
-                        success: false, 
-                        message: '세션 저장 중 오류가 발생했습니다.' 
-                    });
-                }
-                
-                console.log('로그인 성공 - 사용자 ID:', user.id, '세션 ID:', req.sessionID);
-                
-                res.json({ 
-                    success: true, 
-                    message: '로그인 성공',
-                    user: {
-                        id: user.id,
-                        username: user.username,
-                        is_admin: user.is_admin
-                    }
-                });
+        // JWT 토큰 생성
+        const jwtConfig = require('../config/jwt');
+        const tokenPayload = {
+            userId: user.id,
+            username: user.username,
+            email: user.email,
+            isAdmin: user.is_admin || false
+        };
+        
+        const token = jwtConfig.generateToken(tokenPayload);
+        
+        if (!token) {
+            return res.status(500).json({ 
+                success: false, 
+                message: '토큰 생성 중 오류가 발생했습니다.' 
             });
+        }
+        
+        // JWT 토큰을 쿠키에 저장
+        res.cookie('auth_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
+            sameSite: 'lax'
+        });
+        
+        console.log('로그인 성공 - 사용자 ID:', user.id);
+        
+        res.json({ 
+            success: true, 
+            message: '로그인 성공',
+            user: {
+                id: user.id,
+                username: user.username,
+                is_admin: user.is_admin
+            }
         });
 
     } catch (error) {
@@ -134,57 +140,18 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// 로그아웃
+// JWT 로그아웃
 router.post('/logout', (req, res) => {
-    req.logout((err) => {
-        if (err) {
-            return res.status(500).json({ 
-                success: false, 
-                message: '로그아웃 중 오류가 발생했습니다.' 
-            });
-        }
-        res.json({ 
-            success: true, 
-            message: '로그아웃되었습니다.' 
-        });
+    // JWT 토큰 쿠키 삭제
+    res.clearCookie('auth_token');
+    res.json({ 
+        success: true, 
+        message: '로그아웃되었습니다.' 
     });
 });
 
-// 세션 확인 (성능 최적화)
-router.get('/check', (req, res) => {
-    console.log('🔍 인증 상태 확인 요청');
-    console.log('📋 세션 정보:', {
-        isAuthenticated: req.isAuthenticated(),
-        user: req.user ? {
-            id: req.user.id,
-            username: req.user.username,
-            email: req.user.email
-        } : null
-    });
-    
-    if (req.isAuthenticated()) {
-        console.log('✅ 인증된 사용자 확인됨');
-        res.json({ 
-            success: true, 
-            isLoggedIn: true,
-            isAdmin: req.user.is_admin || false,
-            user: {
-                id: req.user.id,
-                username: req.user.username,
-                email: req.user.email,
-                is_admin: req.user.is_admin || false
-            }
-        });
-    } else {
-        console.log('❌ 인증되지 않은 사용자');
-        res.json({ 
-            success: true, 
-            isLoggedIn: false,
-            isAdmin: false,
-            user: null
-        });
-    }
-});
+// JWT 인증 확인
+router.get('/check', authenticateJWT);
 
 // 비밀번호 변경
 router.post('/change-password', async (req, res) => {

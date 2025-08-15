@@ -5,6 +5,7 @@ const { pool } = require('../config/database');
 
 // Google OAuth 설정
 const googleConfig = require('../config/google-oauth');
+const jwtConfig = require('../config/jwt');
 
 // Google OAuth 환경 변수가 설정된 경우에만 Strategy 로드
 if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
@@ -82,20 +83,7 @@ if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
     console.log('Google OAuth 환경 변수가 설정되지 않아 Google 로그인이 비활성화됩니다.');
 }
 
-// Passport serialize/deserialize 설정
-passport.serializeUser((user, done) => {
-    done(null, user.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-    try {
-        const [users] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
-        done(null, users[0]);
-    } catch (error) {
-        console.error('Passport 역직렬화 오류:', error);
-        done(error, null);
-    }
-});
+// Passport serialize/deserialize 설정은 server.js에서만 관리
 
 // Google 로그인 시작 (환경 변수가 설정된 경우에만 작동)
 router.get('/google', (req, res) => {
@@ -117,7 +105,7 @@ router.get('/google', (req, res) => {
     }
 });
 
-// Google 로그인 콜백 (환경 변수가 설정된 경우에만 작동)
+// Google 로그인 콜백 (JWT 방식)
 router.get('/google/callback', (req, res) => {
     if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
         passport.authenticate('google', { 
@@ -133,43 +121,36 @@ router.get('/google/callback', (req, res) => {
                 
                 console.log('Google OAuth: 사용자 인증 성공 -', req.user.email);
                 
-                // Google OAuth에서만 명시적으로 세션 저장
-                req.session.userId = req.user.id; // 세션에 사용자 ID 저장
-                req.session.save((err) => {
-                    if (err) {
-                        console.error('Google OAuth: 세션 저장 오류:', err);
-                        return res.redirect('/login.html?error=session_error');
-                    }
-                    
-                    console.log('Google OAuth: 세션 저장 완료');
-                    console.log('📋 세션 정보:', {
-                        sessionID: req.sessionID,
-                        isAuthenticated: req.isAuthenticated(),
-                        user: req.user ? {
-                            id: req.user.id,
-                            username: req.user.username,
-                            email: req.user.email
-                        } : null
-                    });
-                    
-                    // 세션이 제대로 저장되었는지 확인
-                    if (req.isAuthenticated()) {
-                        console.log('Google OAuth: 로그인 성공 - 메인 페이지로 리디렉션');
-                        
-                        // 세션 쿠키 설정 확인
-                        console.log('🍪 쿠키 정보:', {
-                            sessionName: req.session.cookie.name,
-                            sessionExpires: req.session.cookie.expires,
-                            sessionMaxAge: req.session.cookie.maxAge
-                        });
-                        
-                        // URL 파라미터로 로그인 성공 표시
-                        res.redirect('/?login=success&auth=google');
-                    } else {
-                        console.error('Google OAuth: 인증 상태 확인 실패');
-                        res.redirect('/login.html?error=auth_verification_failed');
-                    }
+                // JWT 토큰 생성
+                const tokenPayload = {
+                    userId: req.user.id,
+                    username: req.user.username,
+                    email: req.user.email,
+                    isAdmin: req.user.is_admin || false
+                };
+                
+                const token = jwtConfig.generateToken(tokenPayload);
+                
+                if (!token) {
+                    console.error('Google OAuth: JWT 토큰 생성 실패');
+                    return res.redirect('/login.html?error=token_generation_failed');
+                }
+                
+                console.log('Google OAuth: JWT 토큰 생성 완료');
+                
+                // JWT 토큰을 쿠키에 저장
+                res.cookie('auth_token', token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
+                    sameSite: 'lax'
                 });
+                
+                console.log('Google OAuth: JWT 토큰 쿠키 설정 완료');
+                console.log('Google OAuth: 로그인 성공 - 메인 페이지로 리디렉션');
+                
+                // 성공적으로 리디렉션
+                res.redirect('/?login=success&auth=google');
                 
             } catch (error) {
                 console.error('Google OAuth 콜백 처리 오류:', error);
@@ -200,15 +181,11 @@ router.get('/status', (req, res) => {
     }
 });
 
-// 로그아웃
+// JWT 로그아웃
 router.get('/logout', (req, res) => {
-    req.logout((err) => {
-        if (err) {
-            console.error('로그아웃 오류:', err);
-            return res.status(500).json({ error: '로그아웃 중 오류가 발생했습니다.' });
-        }
-        res.redirect('/');
-    });
+    // JWT 토큰 쿠키 삭제
+    res.clearCookie('auth_token');
+    res.redirect('/');
 });
 
 module.exports = router; 
