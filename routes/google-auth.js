@@ -99,11 +99,20 @@ passport.deserializeUser(async (id, done) => {
 
 // Google 로그인 시작 (환경 변수가 설정된 경우에만 작동)
 router.get('/google', (req, res) => {
+    console.log('🔍 Google OAuth 시작 요청');
+    console.log('📋 환경 변수 확인:', {
+        clientID: googleConfig.google.clientID ? '설정됨' : '설정되지 않음',
+        clientSecret: googleConfig.google.clientSecret ? '설정됨' : '설정되지 않음',
+        callbackURL: googleConfig.google.callbackURL
+    });
+    
     if (googleConfig.google.clientID && googleConfig.google.clientSecret) {
+        console.log('✅ Google OAuth 인증 시작');
         passport.authenticate('google', {
             scope: ['profile', 'email']
         })(req, res);
     } else {
+        console.error('❌ Google OAuth 환경 변수 누락');
         res.status(400).json({ error: 'Google OAuth가 설정되지 않았습니다.' });
     }
 });
