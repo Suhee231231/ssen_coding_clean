@@ -298,14 +298,25 @@ router.post('/:subject/submit', async (req, res) => {
                     [req.user.id, problemId, dbAnswer, isCorrect]
                 );
                 
-                // 과목별 마지막 진행 상황 저장
-                await pool.execute(
-                    `INSERT INTO user_subject_progress (user_id, subject_id, last_problem_id) 
-                     VALUES (?, ?, ?) 
-                     ON DUPLICATE KEY UPDATE 
-                     last_problem_id = VALUES(last_problem_id)`,
-                    [req.user.id, problem.subject_id, problemId]
+                // 과목별 마지막 진행 상황 저장 (제약조건 문제 해결)
+                const [existingProgress] = await pool.execute(
+                    'SELECT id FROM user_subject_progress WHERE user_id = ? AND subject_id = ?',
+                    [req.user.id, problem.subject_id]
                 );
+
+                if (existingProgress.length > 0) {
+                    // 기존 레코드가 있으면 업데이트
+                    await pool.execute(
+                        'UPDATE user_subject_progress SET last_problem_id = ?, last_visited_at = CURRENT_TIMESTAMP WHERE user_id = ? AND subject_id = ?',
+                        [problemId, req.user.id, problem.subject_id]
+                    );
+                } else {
+                    // 기존 레코드가 없으면 새로 생성
+                    await pool.execute(
+                        'INSERT INTO user_subject_progress (user_id, subject_id, last_problem_id) VALUES (?, ?, ?)',
+                        [req.user.id, problem.subject_id, problemId]
+                    );
+                }
             } catch (error) {
                 console.error('진행상황 저장 오류:', error);
             }
@@ -419,14 +430,25 @@ router.post('/save-progress', async (req, res) => {
         );
         
         if (problems.length > 0) {
-            // 과목별 마지막 진행 상황 저장
-            await connection.execute(
-                `INSERT INTO user_subject_progress (user_id, subject_id, last_problem_id) 
-                 VALUES (?, ?, ?) 
-                 ON DUPLICATE KEY UPDATE 
-                 last_problem_id = VALUES(last_problem_id)`,
-                [req.user.id, problems[0].subject_id, problemId]
+            // 과목별 마지막 진행 상황 저장 (제약조건 문제 해결)
+            const [existingProgress] = await connection.execute(
+                'SELECT id FROM user_subject_progress WHERE user_id = ? AND subject_id = ?',
+                [req.user.id, problems[0].subject_id]
             );
+
+            if (existingProgress.length > 0) {
+                // 기존 레코드가 있으면 업데이트
+                await connection.execute(
+                    'UPDATE user_subject_progress SET last_problem_id = ?, last_visited_at = CURRENT_TIMESTAMP WHERE user_id = ? AND subject_id = ?',
+                    [problemId, req.user.id, problems[0].subject_id]
+                );
+            } else {
+                // 기존 레코드가 없으면 새로 생성
+                await connection.execute(
+                    'INSERT INTO user_subject_progress (user_id, subject_id, last_problem_id) VALUES (?, ?, ?)',
+                    [req.user.id, problems[0].subject_id, problemId]
+                );
+            }
         }
         
         connection.release();
