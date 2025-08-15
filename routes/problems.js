@@ -1,27 +1,6 @@
 const express = require('express');
 const { pool } = require('../config/database');
-
-// 인증 미들웨어 함수
-function requireAuth(req, res, next) {
-    if (req.isAuthenticated() && req.user) {
-        return next();
-    }
-    return res.status(401).json({ 
-        success: false, 
-        message: '로그인이 필요합니다.' 
-    });
-}
-
-// 인증 미들웨어 함수
-function requireAuth(req, res, next) {
-    if (req.isAuthenticated() && req.user) {
-        return next();
-    }
-    return res.status(401).json({ 
-        success: false, 
-        message: '로그인이 필요합니다.' 
-    });
-}
+const { requireAuth } = require('../middleware/jwt-auth');
 
 const router = express.Router();
 

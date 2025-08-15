@@ -1,18 +1,8 @@
 const express = require('express');
 const { pool } = require('../config/database');
+const { requireAuth } = require('../middleware/jwt-auth');
 
 const router = express.Router();
-
-// 로그인 확인 미들웨어
-const requireAuth = (req, res, next) => {
-    if (!req.isAuthenticated()) {
-        return res.status(401).json({ 
-            success: false, 
-            message: '로그인이 필요합니다.' 
-        });
-    }
-    next();
-};
 
 // 전체 대시보드 정보 조회
 router.get('/', requireAuth, async (req, res) => {
