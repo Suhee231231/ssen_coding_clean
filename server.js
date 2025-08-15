@@ -154,7 +154,8 @@ app.use(session({
         secure: process.env.NODE_ENV === 'production', // 프로덕션에서만 HTTPS 강제
         httpOnly: true, // XSS 공격 방지
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7일로 연장
-        sameSite: 'lax' // Google OAuth를 위해 lax로 변경
+        sameSite: 'lax', // Google OAuth를 위해 lax로 변경
+        name: 'ssen-coding-session' // 쿠키 이름을 cookie 객체 내부에 설정
     },
     name: 'ssen-coding-session', // 세션 쿠키 이름 명시
     rolling: true, // 세션 갱신
