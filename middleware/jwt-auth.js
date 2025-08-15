@@ -4,8 +4,8 @@ const { pool } = require('../config/database');
 // JWT 토큰 검증 미들웨어
 const authenticateJWT = async (req, res, next) => {
     try {
-        // 쿠키에서 JWT 토큰 추출
-        const token = req.cookies.auth_token;
+        // 쿠키에서 JWT 토큰 추출 (안전장치 추가)
+        const token = req.cookies && req.cookies.auth_token;
         
         if (!token) {
             return res.json({ 
@@ -78,7 +78,7 @@ const authenticateJWT = async (req, res, next) => {
 // JWT 토큰 검증 (API 보호용)
 const requireAuth = async (req, res, next) => {
     try {
-        const token = req.cookies.auth_token;
+        const token = req.cookies && req.cookies.auth_token;
         
         if (!token) {
             return res.status(401).json({ 

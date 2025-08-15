@@ -7,6 +7,7 @@ const path = require('path');
 const passport = require('passport');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 
 // 라우터들 import
 const authRoutes = require('./routes/auth');
@@ -71,6 +72,8 @@ const googleAuthLimiter = rateLimit({
 });
 
 // 미들웨어 설정
+app.use(cookieParser());
+
 app.use(helmet({
             contentSecurityPolicy: {
             directives: {
