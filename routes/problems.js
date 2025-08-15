@@ -1,6 +1,6 @@
 const express = require('express');
 const { pool } = require('../config/database');
-const { requireAuth } = require('../middleware/jwt-auth');
+const { requireAuth, optionalAuth } = require('../middleware/jwt-auth');
 
 const router = express.Router();
 
@@ -57,8 +57,8 @@ router.get('/subjects', async (req, res) => {
     }
 });
 
-// 특정 과목의 문제 조회
-router.get('/:subject', async (req, res) => {
+// 특정 과목의 문제 조회 (로그인하지 않은 사용자도 접근 가능)
+router.get('/:subject', optionalAuth, async (req, res) => {
     try {
         const { subject } = req.params;
         const { id } = req.query;
@@ -213,9 +213,9 @@ router.get('/:subject', async (req, res) => {
         );
         const totalProblems = countResult[0].total;
 
-        // 사용자 진행상황 조회 (로그인된 경우)
+        // 사용자 진행상황 조회 (JWT 토큰으로 인증된 경우)
         let userProgress = null;
-        if (req.isAuthenticated() && req.user && req.user.id) {
+        if (req.user && req.user.id) {
             const [progress] = await pool.execute(
                 'SELECT * FROM user_progress WHERE user_id = ? AND problem_id = ?',
                 [req.user.id, problem.id]
@@ -249,8 +249,8 @@ router.get('/:subject', async (req, res) => {
     }
 });
 
-// 답안 제출
-router.post('/:subject/submit', async (req, res) => {
+// 답안 제출 (로그인하지 않은 사용자도 접근 가능)
+router.post('/:subject/submit', optionalAuth, async (req, res) => {
     try {
         const { subject } = req.params;
         const { problemId, answer } = req.body;
@@ -284,8 +284,8 @@ router.post('/:subject/submit', async (req, res) => {
         
         console.log(`답안 검증: 받은 답안=${answer}, 변환된 답안=${dbAnswer}, 정답=${problem.correct_answer}, 결과=${isCorrect}`);
 
-        // 사용자 진행상황 저장 (로그인된 경우)
-        if (req.isAuthenticated() && req.user && req.user.id) {
+        // 사용자 진행상황 저장 (JWT 토큰으로 인증된 경우)
+        if (req.user && req.user.id) {
             try {
                 // 문제 풀이 기록 저장
                 await pool.execute(
@@ -401,12 +401,12 @@ router.post('/:subject/wrong-submit', requireAuth, async (req, res) => {
     }
 });
 
-// 진행 상황 저장 (페이지 벗어날 때)
-router.post('/save-progress', async (req, res) => {
+// 진행 상황 저장 (페이지 벗어날 때, 로그인한 사용자만)
+router.post('/save-progress', requireAuth, async (req, res) => {
     try {
         const { problemId, subject } = req.body;
         
-        if (!req.isAuthenticated() || !req.user || !req.user.id || !problemId) {
+        if (!req.user || !req.user.id || !problemId) {
             return res.status(200).json({ success: true });
         }
         
@@ -519,7 +519,7 @@ router.get('/:subject/progress', async (req, res) => {
 // 틀린 문제 제거 및 정답률 업데이트
 router.post('/:subject/remove-wrong-problems', async (req, res) => {
     try {
-        if (!req.isAuthenticated() || !req.user || !req.user.id) {
+        if (!req.user || !req.user.id) {
             return res.status(401).json({ 
                 success: false, 
                 message: '로그인이 필요합니다.' 

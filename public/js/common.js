@@ -13,12 +13,34 @@ async function checkAuthStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     const loginStatus = urlParams.get('login');
     
-    // 로그인 성공이면 캐시 초기화
+    // 로그인 성공이면 캐시 초기화하고 즉시 인증 상태 확인
     if (loginStatus === 'success') {
         sessionStorage.removeItem('authStatus');
         sessionStorage.removeItem('authCheckTime');
         authStatus = null;
         lastAuthCheck = 0;
+        console.log('로그인 성공 - 인증 캐시 초기화됨');
+        
+        // 즉시 인증 상태 확인 (캐시 무시)
+        try {
+            console.log('로그인 후 즉시 인증 상태 확인 중...');
+            const response = await fetch('/api/auth/check');
+            const data = await response.json();
+            
+            console.log('로그인 후 인증 상태 응답:', data);
+            
+            authStatus = data;
+            lastAuthCheck = Date.now();
+            
+            // 세션 스토리지에 저장
+            sessionStorage.setItem('authStatus', JSON.stringify(authStatus));
+            sessionStorage.setItem('authCheckTime', lastAuthCheck.toString());
+            
+            updateNavigation(authStatus);
+            return authStatus;
+        } catch (error) {
+            console.error('로그인 후 인증 상태 확인 오류:', error);
+        }
     }
     
     // 세션 스토리지에서 인증 상태 확인

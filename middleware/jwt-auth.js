@@ -135,7 +135,51 @@ const requireAuth = async (req, res, next) => {
     }
 };
 
+// JWT 토큰 선택적 검증 (토큰이 있으면 사용자 정보 설정, 없으면 익명)
+const optionalAuth = async (req, res, next) => {
+    try {
+        const token = req.cookies && req.cookies.auth_token;
+        
+        if (!token) {
+            // 토큰이 없으면 익명 사용자로 처리
+            req.user = null;
+            return next();
+        }
+        
+        const decoded = jwtConfig.verifyToken(token);
+        
+        if (!decoded) {
+            // 토큰이 유효하지 않으면 쿠키 삭제하고 익명 사용자로 처리
+            res.clearCookie('auth_token');
+            req.user = null;
+            return next();
+        }
+        
+        // 데이터베이스에서 사용자 정보 조회
+        const [users] = await pool.execute(
+            'SELECT id, username, email, is_admin FROM users WHERE id = ?',
+            [decoded.userId]
+        );
+        
+        if (users.length === 0) {
+            // 사용자가 존재하지 않으면 쿠키 삭제하고 익명 사용자로 처리
+            res.clearCookie('auth_token');
+            req.user = null;
+            return next();
+        }
+        
+        req.user = users[0];
+        next();
+        
+    } catch (error) {
+        console.error('JWT 선택적 인증 오류:', error);
+        req.user = null;
+        next();
+    }
+};
+
 module.exports = {
     authenticateJWT,
-    requireAuth
+    requireAuth,
+    optionalAuth
 };
