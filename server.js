@@ -82,7 +82,7 @@ app.use(helmet({
                 imgSrc: ["'self'", "data:", "https:"],
                 connectSrc: ["'self'", "https://use.typekit.net", "https://p.typekit.net", "https://*.google.com", "https://*.googleapis.com", "https://*.googlesyndication.com", "https://*.gstatic.com", "https://*.doubleclick.net", "https://*.adtrafficquality.google", "https://*.googleadservices.com", "https://*.google-analytics.com"],
                 frameSrc: ["'self'", "https://*.google.com", "https://*.googleapis.com", "https://*.googlesyndication.com", "https://*.doubleclick.net", "https://*.adtrafficquality.google", "https://*.googleadservices.com"],
-                frameAncestors: ["'self'"],
+                frameAncestors: ["'self'", "https://*.google.com", "https://*.googleapis.com", "https://*.googlesyndication.com"],
                 objectSrc: ["'none'"],
                 baseUri: ["'self'"],
                 formAction: ["'self'"]
