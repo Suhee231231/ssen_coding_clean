@@ -148,13 +148,14 @@ app.get('/favicon.ico', (req, res) => {
 // 세션 설정 (Railway 호환 버전)
 app.use(session({
     secret: process.env.SESSION_SECRET || 'coding-problems-secret-key',
-    resave: false, // 성능 최적화를 위해 false로 변경
-    saveUninitialized: false, // 성능 최적화를 위해 false로 변경
+    resave: true, // Railway 환경에서 세션 저장 보장
+    saveUninitialized: true, // 초기화되지 않은 세션도 저장
     cookie: { 
         secure: process.env.NODE_ENV === 'production', // 프로덕션에서만 HTTPS 강제
         httpOnly: true, // XSS 공격 방지
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7일로 연장
-        sameSite: 'lax' // Google OAuth를 위해 lax로 변경
+        sameSite: 'lax', // Google OAuth를 위해 lax로 변경
+        domain: process.env.NODE_ENV === 'production' ? '.ssencoding.com' : undefined // 프로덕션에서 도메인 설정
     },
     name: 'ssen-coding-session', // 세션 쿠키 이름 명시
     rolling: true, // 세션 갱신

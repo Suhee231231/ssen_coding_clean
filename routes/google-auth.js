@@ -154,6 +154,14 @@ router.get('/google/callback', (req, res) => {
                     // 세션이 제대로 저장되었는지 확인
                     if (req.isAuthenticated()) {
                         console.log('Google OAuth: 로그인 성공 - 메인 페이지로 리디렉션');
+                        
+                        // 세션 쿠키 설정 확인
+                        console.log('🍪 쿠키 정보:', {
+                            sessionName: req.session.cookie.name,
+                            sessionExpires: req.session.cookie.expires,
+                            sessionMaxAge: req.session.cookie.maxAge
+                        });
+                        
                         // URL 파라미터로 로그인 성공 표시
                         res.redirect('/?login=success&auth=google');
                     } else {
