@@ -4,10 +4,14 @@ const { pool } = require('../config/database');
 // JWT 토큰 검증 미들웨어
 const authenticateJWT = async (req, res, next) => {
     try {
+        console.log('🔍 JWT 인증 요청');
+        console.log('📋 쿠키 정보:', req.cookies);
+        
         // 쿠키에서 JWT 토큰 추출 (안전장치 추가)
         const token = req.cookies && req.cookies.auth_token;
         
         if (!token) {
+            console.log('❌ JWT 토큰 없음');
             return res.json({ 
                 success: true, 
                 isLoggedIn: false,
@@ -20,6 +24,7 @@ const authenticateJWT = async (req, res, next) => {
         const decoded = jwtConfig.verifyToken(token);
         
         if (!decoded) {
+            console.log('❌ JWT 토큰 검증 실패');
             // 토큰이 유효하지 않으면 쿠키 삭제
             res.clearCookie('auth_token');
             return res.json({ 
@@ -29,6 +34,8 @@ const authenticateJWT = async (req, res, next) => {
                 user: null
             });
         }
+        
+        console.log('✅ JWT 토큰 검증 성공:', decoded);
         
         // 데이터베이스에서 최신 사용자 정보 조회
         const [users] = await pool.execute(
@@ -49,10 +56,12 @@ const authenticateJWT = async (req, res, next) => {
         
         const user = users[0];
         
+        console.log('✅ 사용자 정보 조회 성공:', user);
+        
         // req.user에 사용자 정보 설정 (기존 코드와 호환성 유지)
         req.user = user;
         
-        res.json({ 
+        const response = { 
             success: true, 
             isLoggedIn: true,
             isAdmin: user.is_admin || false,
@@ -62,7 +71,10 @@ const authenticateJWT = async (req, res, next) => {
                 email: user.email,
                 is_admin: user.is_admin || false
             }
-        });
+        };
+        
+        console.log('📤 응답 데이터:', response);
+        res.json(response);
         
     } catch (error) {
         console.error('JWT 인증 오류:', error);
