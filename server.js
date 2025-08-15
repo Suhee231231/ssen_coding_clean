@@ -148,8 +148,8 @@ app.get('/favicon.ico', (req, res) => {
 // 세션 설정 (Railway 호환 버전)
 app.use(session({
     secret: process.env.SESSION_SECRET || 'coding-problems-secret-key',
-    resave: true, // Railway 환경에서 세션 저장 보장
-    saveUninitialized: true, // 초기화되지 않은 세션도 저장
+    resave: false, // 성능 최적화 유지
+    saveUninitialized: false, // 성능 최적화 유지
     cookie: { 
         secure: process.env.NODE_ENV === 'production', // 프로덕션에서만 HTTPS 강제
         httpOnly: true, // XSS 공격 방지

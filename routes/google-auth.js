@@ -133,7 +133,8 @@ router.get('/google/callback', (req, res) => {
                 
                 console.log('Google OAuth: 사용자 인증 성공 -', req.user.email);
                 
-                // 세션 저장을 명시적으로 처리
+                // Google OAuth에서만 명시적으로 세션 저장
+                req.session.userId = req.user.id; // 세션에 사용자 ID 저장
                 req.session.save((err) => {
                     if (err) {
                         console.error('Google OAuth: 세션 저장 오류:', err);
