@@ -1,18 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
+const { requireAuth } = require('../middleware/jwt-auth');
 
-// 관리자 권한 확인 미들웨어
+// 관리자 권한 확인 미들웨어 (JWT 기반)
 function requireAdmin(req, res, next) {
-    if (!req.isAuthenticated()) {
-        return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
-    }
-    
-    if (!req.user || !req.user.is_admin) {
-        return res.status(403).json({ success: false, message: '관리자 권한이 필요합니다.' });
-    }
-    
-    next();
+    // JWT 인증 먼저 확인
+    requireAuth(req, res, (err) => {
+        if (err) {
+            return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+        }
+        
+        // 관리자 권한 확인
+        if (!req.user || !req.user.is_admin) {
+            return res.status(403).json({ success: false, message: '관리자 권한이 필요합니다.' });
+        }
+        
+        next();
+    });
 }
 
 // 관리자 통계 조회
