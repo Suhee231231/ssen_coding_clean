@@ -3,8 +3,17 @@ const router = express.Router();
 const { pool } = require('../config/database');
 
 // RSS 피드 생성 함수
-function generateRSSFeed(problems) {
-    const baseUrl = 'http://localhost:3001';
+function generateRSSFeed(problems, req) {
+    // 환경 변수에서 도메인 가져오기, 없으면 요청 헤더에서 추출
+    let baseUrl = process.env.DOMAIN_URL || 'https://ssencoding.com';
+    
+    // 개발 환경에서는 요청 헤더에서 호스트 추출
+    if (process.env.NODE_ENV === 'development') {
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+        const host = req.headers.host;
+        baseUrl = `${protocol}://${host}`;
+    }
+    
     const currentDate = new Date().toUTCString();
     
     let rssContent = `<?xml version="1.0" encoding="UTF-8"?>
@@ -52,8 +61,8 @@ router.get('/', async (req, res) => {
             LIMIT 20
         `);
         
-        // RSS 피드 생성
-        const rssFeed = generateRSSFeed(problems);
+        // RSS 피드 생성 (req 객체 전달)
+        const rssFeed = generateRSSFeed(problems, req);
         
         // RSS 컨텐츠 타입 설정
         res.set('Content-Type', 'application/rss+xml; charset=utf-8');
