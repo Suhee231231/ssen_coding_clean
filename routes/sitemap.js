@@ -56,6 +56,12 @@ router.get('/', (req, res) => {
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
+    <url>
+        <loc>${baseUrl}/rss</loc>
+        <lastmod>${currentDate}</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
 </urlset>`;
 
     res.header('Content-Type', 'application/xml');
