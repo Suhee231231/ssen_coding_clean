@@ -370,6 +370,116 @@ async function createDatabaseIndexes() {
     }
 }
 
+// 통계 테이블 자동 생성 함수
+async function createStatsTables() {
+    try {
+        console.log('🚀 데이터베이스 통계 테이블 생성 중...');
+        
+        // 1. 과목별 사용자 통계 테이블 생성
+        console.log('📊 user_subject_stats 테이블 생성 중...');
+        
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS user_subject_stats (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                subject_id INT NOT NULL,
+                total_answered INT DEFAULT 0,
+                total_correct INT DEFAULT 0,
+                accuracy DECIMAL(5,2) DEFAULT 0.00,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_user_subject (user_id, subject_id),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
+        console.log('✅ user_subject_stats 테이블 생성 완료');
+        
+        // 2. 틀린 문제만 저장하는 테이블 생성
+        console.log('📊 user_wrong_problems 테이블 생성 중...');
+        
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS user_wrong_problems (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                problem_id INT NOT NULL,
+                selected_answer VARCHAR(10) NOT NULL,
+                answered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_user_problem (user_id, problem_id),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (problem_id) REFERENCES problems(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
+        console.log('✅ user_wrong_problems 테이블 생성 완료');
+        
+        // 3. 기존 user_progress 데이터를 통계 테이블로 마이그레이션 (기존 데이터가 있는 경우에만)
+        console.log('📊 기존 데이터 마이그레이션 중...');
+        
+        // user_progress 테이블이 존재하는지 확인
+        const [tables] = await pool.execute("SHOW TABLES LIKE 'user_progress'");
+        
+        if (tables.length > 0) {
+            // 과목별 통계 계산 및 저장
+            await pool.execute(`
+                INSERT INTO user_subject_stats (user_id, subject_id, total_answered, total_correct, accuracy)
+                SELECT 
+                    up.user_id,
+                    p.subject_id,
+                    COUNT(*) as total_answered,
+                    SUM(CASE WHEN up.is_correct = 1 THEN 1 ELSE 0 END) as total_correct,
+                    ROUND((SUM(CASE WHEN up.is_correct = 1 THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2) as accuracy
+                FROM user_progress up
+                JOIN problems p ON up.problem_id = p.id
+                GROUP BY up.user_id, p.subject_id
+                ON DUPLICATE KEY UPDATE
+                    total_answered = VALUES(total_answered),
+                    total_correct = VALUES(total_correct),
+                    accuracy = VALUES(accuracy)
+            `);
+            console.log('✅ 과목별 통계 마이그레이션 완료');
+            
+            // 틀린 문제만 별도 테이블로 이동
+            await pool.execute(`
+                INSERT INTO user_wrong_problems (user_id, problem_id, selected_answer, answered_at)
+                SELECT user_id, problem_id, selected_answer, answered_at
+                FROM user_progress
+                WHERE is_correct = 0
+                ON DUPLICATE KEY UPDATE
+                    selected_answer = VALUES(selected_answer),
+                    answered_at = VALUES(answered_at)
+            `);
+            console.log('✅ 틀린 문제 마이그레이션 완료');
+        } else {
+            console.log('ℹ️  user_progress 테이블이 없어서 마이그레이션을 건너뜁니다');
+        }
+        
+        // 4. 인덱스 생성
+        console.log('📊 통계 테이블 인덱스 생성 중...');
+        
+        try {
+            await pool.execute('CREATE INDEX idx_user_subject_stats_user ON user_subject_stats(user_id)');
+            console.log('✅ user_subject_stats.user_id 인덱스 생성 완료');
+        } catch (error) {
+            if (error.code === 'ER_DUP_KEYNAME') {
+                console.log('ℹ️  user_subject_stats.user_id 인덱스가 이미 존재합니다');
+            }
+        }
+        
+        try {
+            await pool.execute('CREATE INDEX idx_user_wrong_problems_user ON user_wrong_problems(user_id)');
+            console.log('✅ user_wrong_problems.user_id 인덱스 생성 완료');
+        } catch (error) {
+            if (error.code === 'ER_DUP_KEYNAME') {
+                console.log('ℹ️  user_wrong_problems.user_id 인덱스가 이미 존재합니다');
+            }
+        }
+        
+        console.log('🎉 데이터베이스 통계 테이블 생성 완료!');
+        
+    } catch (error) {
+        console.error('❌ 통계 테이블 생성 중 오류:', error);
+    }
+}
+
 passport.serializeUser((user, done) => {
     done(null, user.id);
 });
@@ -426,4 +536,5 @@ app.listen(PORT, async () => {
     // 데이터베이스 테이블 자동 업데이트 실행
     await updateDatabaseTables();
     await createDatabaseIndexes(); // 데이터베이스 인덱스 자동 생성 실행
+    await createStatsTables(); // 통계 테이블 자동 생성 실행
 }); 
