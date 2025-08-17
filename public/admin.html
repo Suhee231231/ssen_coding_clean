@@ -1123,8 +1123,8 @@
                 tbody.insertBefore(newRow, tbody.firstChild); // 맨 위에 추가
             }
             
-            // 통계 업데이트
-            updateStats();
+            // 통계는 문제 목록 새로고침 시 자동으로 업데이트되므로 별도 호출 불필요
+            console.log('✅ 새 문제가 목록에 추가되었습니다:', problem.id);
         }
         
         // 문제 목록 로드
