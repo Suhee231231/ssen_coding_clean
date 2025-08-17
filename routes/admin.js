@@ -110,7 +110,7 @@ router.get('/problems', requireAdmin, async (req, res) => {
     }
 });
 
-// 새 문제 추가
+// 새 문제 추가 - 최적화된 버전
 router.post('/problems', requireAdmin, async (req, res) => {
     try {
         const {
@@ -142,22 +142,25 @@ router.post('/problems', requireAdmin, async (req, res) => {
             return res.status(400).json({ success: false, message: '올바른 난이도를 선택해주세요.' });
         }
         
-        const connection = await pool.getConnection();
-        
-        // 문제 추가
-        const [result] = await connection.execute(`
-            INSERT INTO problems (subject_id, title, content, option_a, option_b, option_c, option_d, correct_answer, explanation, difficulty)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        // 문제 추가 - 최적화된 쿼리
+        const [result] = await pool.execute(`
+            INSERT INTO problems (subject_id, title, content, option_a, option_b, option_c, option_d, correct_answer, explanation, difficulty, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         `, [subject_id, question, question, option_a, option_b, option_c, option_d, dbCorrectAnswer, explanation, difficulty]);
         
-        // 과목의 총 문제 수는 실시간으로 계산되므로 업데이트 불필요
-        
-        connection.release();
+        // 새로 추가된 문제 정보만 반환 (전체 목록 로드 대신)
+        const [newProblem] = await pool.execute(`
+            SELECT p.*, s.name as subject_name
+            FROM problems p 
+            JOIN subjects s ON p.subject_id = s.id 
+            WHERE p.id = ?
+        `, [result.insertId]);
         
         res.json({
             success: true,
             message: '문제가 성공적으로 추가되었습니다.',
-            problemId: result.insertId
+            problemId: result.insertId,
+            problem: newProblem[0] // 새로 추가된 문제 정보 반환
         });
     } catch (error) {
         console.error('문제 추가 오류:', error);

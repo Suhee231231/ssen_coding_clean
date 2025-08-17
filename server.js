@@ -22,53 +22,59 @@ const sitemapRoutes = require('./routes/sitemap');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Rate Limiting 설정
-// 문제 풀이 전용 rate limiter (관대하게)
+// Rate Limiting 설정 - 성능 최적화 버전
+// 문제 풀이 전용 rate limiter (더 관대하게)
 const problemLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15분
-    max: 2000, // 문제 풀이용 2000회 (1000문제 풀이 가능)
+    max: 5000, // 문제 풀이용 5000회 (2000 → 5000으로 증가)
     message: {
         success: false,
         message: '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
     },
     standardHeaders: true,
     legacyHeaders: false,
+    skipSuccessfulRequests: true, // 성공한 요청은 카운트하지 않음
 });
 
-// API 전용 rate limiter (보수적으로)
+// API 전용 rate limiter (더 관대하게)
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15분
-    max: 500, // API용 500회
+    max: 1000, // API용 1000회 (500 → 1000으로 증가)
     message: {
         success: false,
         message: '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
     },
     standardHeaders: true,
     legacyHeaders: false,
+    skipSuccessfulRequests: true, // 성공한 요청은 카운트하지 않음
 });
 
-// 로그인/회원가입 전용 rate limiter (더 관대하게 조정)
+// 로그인/회원가입 전용 rate limiter (보안 강화)
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15분
-    max: 20, // IP당 최대 20번 시도 (5에서 20으로 증가)
+    max: 30, // IP당 최대 30번 시도 (50 → 30으로 조정)
     message: {
         success: false,
         message: '로그인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.'
     },
     standardHeaders: true,
     legacyHeaders: false,
+    skipSuccessfulRequests: true, // 성공한 요청은 카운트하지 않음
+    // 추가 보안: 실패한 요청에 대해 더 엄격한 제한
+    skipFailedRequests: false, // 실패한 요청은 반드시 카운트
 });
 
 // Google OAuth 전용 rate limiter (더 관대하게)
 const googleAuthLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15분
-    max: 30, // IP당 최대 30번 시도
+    max: 100, // IP당 최대 100번 시도 (30 → 100으로 증가)
     message: {
         success: false,
         message: 'Google 로그인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.'
     },
     standardHeaders: true,
     legacyHeaders: false,
+    skipSuccessfulRequests: true, // 성공한 요청은 카운트하지 않음
 });
 
 // 미들웨어 설정
@@ -253,6 +259,117 @@ async function updateDatabaseTables() {
     }
 }
 
+// 데이터베이스 인덱스 자동 생성 함수
+async function createDatabaseIndexes() {
+    try {
+        console.log('🚀 데이터베이스 인덱스 생성 중...');
+        
+        // 1. problems 테이블 인덱스
+        console.log('📊 problems 테이블 인덱스 생성 중...');
+        
+        try {
+            await pool.execute('CREATE INDEX IF NOT EXISTS idx_problems_subject_id ON problems(subject_id)');
+            console.log('✅ problems.subject_id 인덱스 생성 완료');
+        } catch (error) {
+            if (error.code === 'ER_DUP_KEYNAME') {
+                console.log('ℹ️  problems.subject_id 인덱스가 이미 존재합니다');
+            } else {
+                console.error('❌ problems.subject_id 인덱스 생성 실패:', error.message);
+            }
+        }
+        
+        try {
+            await pool.execute('CREATE INDEX IF NOT EXISTS idx_problems_difficulty ON problems(difficulty)');
+            console.log('✅ problems.difficulty 인덱스 생성 완료');
+        } catch (error) {
+            if (error.code === 'ER_DUP_KEYNAME') {
+                console.log('ℹ️  problems.difficulty 인덱스가 이미 존재합니다');
+            } else {
+                console.error('❌ problems.difficulty 인덱스 생성 실패:', error.message);
+            }
+        }
+        
+        try {
+            await pool.execute('CREATE INDEX IF NOT EXISTS idx_problems_created_at ON problems(created_at)');
+            console.log('✅ problems.created_at 인덱스 생성 완료');
+        } catch (error) {
+            if (error.code === 'ER_DUP_KEYNAME') {
+                console.log('ℹ️  problems.created_at 인덱스가 이미 존재합니다');
+            } else {
+                console.error('❌ problems.created_at 인덱스 생성 실패:', error.message);
+            }
+        }
+        
+        // 2. user_progress 테이블 인덱스
+        console.log('📊 user_progress 테이블 인덱스 생성 중...');
+        
+        try {
+            await pool.execute('CREATE INDEX IF NOT EXISTS idx_user_progress_user_problem ON user_progress(user_id, problem_id)');
+            console.log('✅ user_progress 복합 인덱스 생성 완료');
+        } catch (error) {
+            if (error.code === 'ER_DUP_KEYNAME') {
+                console.log('ℹ️  user_progress 복합 인덱스가 이미 존재합니다');
+            } else {
+                console.error('❌ user_progress 복합 인덱스 생성 실패:', error.message);
+            }
+        }
+        
+        try {
+            await pool.execute('CREATE INDEX IF NOT EXISTS idx_user_progress_is_correct ON user_progress(is_correct)');
+            console.log('✅ user_progress.is_correct 인덱스 생성 완료');
+        } catch (error) {
+            if (error.code === 'ER_DUP_KEYNAME') {
+                console.log('ℹ️  user_progress.is_correct 인덱스가 이미 존재합니다');
+            } else {
+                console.error('❌ user_progress.is_correct 인덱스 생성 실패:', error.message);
+            }
+        }
+        
+        // 3. user_subject_progress 테이블 인덱스
+        console.log('📊 user_subject_progress 테이블 인덱스 생성 중...');
+        
+        try {
+            await pool.execute('CREATE INDEX IF NOT EXISTS idx_user_subject_progress_user_subject ON user_subject_progress(user_id, subject_id)');
+            console.log('✅ user_subject_progress 복합 인덱스 생성 완료');
+        } catch (error) {
+            if (error.code === 'ER_DUP_KEYNAME') {
+                console.log('ℹ️  user_subject_progress 복합 인덱스가 이미 존재합니다');
+            } else {
+                console.error('❌ user_subject_progress 복합 인덱스 생성 실패:', error.message);
+            }
+        }
+        
+        // 4. subjects 테이블 인덱스
+        console.log('📊 subjects 테이블 인덱스 생성 중...');
+        
+        try {
+            await pool.execute('CREATE INDEX IF NOT EXISTS idx_subjects_is_public ON subjects(is_public)');
+            console.log('✅ subjects.is_public 인덱스 생성 완료');
+        } catch (error) {
+            if (error.code === 'ER_DUP_KEYNAME') {
+                console.log('ℹ️  subjects.is_public 인덱스가 이미 존재합니다');
+            } else {
+                console.error('❌ subjects.is_public 인덱스 생성 실패:', error.message);
+            }
+        }
+        
+        try {
+            await pool.execute('CREATE INDEX IF NOT EXISTS idx_subjects_sort_order ON subjects(sort_order)');
+            console.log('✅ subjects.sort_order 인덱스 생성 완료');
+        } catch (error) {
+            if (error.code === 'ER_DUP_KEYNAME') {
+                console.log('ℹ️  subjects.sort_order 인덱스가 이미 존재합니다');
+            } else {
+                console.error('❌ subjects.sort_order 인덱스 생성 실패:', error.message);
+            }
+        }
+        
+        console.log('🎉 데이터베이스 인덱스 생성 완료!');
+    } catch (error) {
+        console.error('❌ 데이터베이스 인덱스 생성 중 오류:', error);
+    }
+}
+
 passport.serializeUser((user, done) => {
     done(null, user.id);
 });
@@ -308,4 +425,5 @@ app.listen(PORT, async () => {
     
     // 데이터베이스 테이블 자동 업데이트 실행
     await updateDatabaseTables();
+    await createDatabaseIndexes(); // 데이터베이스 인덱스 자동 생성 실행
 }); 

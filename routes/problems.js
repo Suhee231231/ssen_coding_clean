@@ -57,36 +57,62 @@ router.get('/subjects', async (req, res) => {
     }
 });
 
-// 특정 과목의 문제 조회 (로그인하지 않은 사용자도 접근 가능)
+// 특정 과목의 문제 조회 (로그인하지 않은 사용자도 접근 가능) - 최적화된 버전
 router.get('/:subject', optionalAuth, async (req, res) => {
     try {
         const { subject } = req.params;
         const { id } = req.query;
 
+        // 단일 쿼리로 과목 정보와 문제 목록을 한 번에 가져오기
+        const [results] = await pool.execute(`
+            SELECT 
+                s.*,
+                p.id as problem_id,
+                p.content,
+                p.option_a,
+                p.option_b,
+                p.option_c,
+                p.option_d,
+                p.difficulty,
+                p.correct_answer,
+                p.explanation,
+                COUNT(*) OVER (PARTITION BY s.id) as total_problems
+            FROM subjects s
+            LEFT JOIN problems p ON s.id = p.subject_id
+            WHERE s.name = ? AND s.is_public = TRUE
+            ORDER BY p.id
+        `, [subject]);
 
-
-        // 과목 정보 조회 (공개된 과목만)
-        const [subjects] = await pool.execute(
-            'SELECT * FROM subjects WHERE name = ? AND is_public = TRUE',
-            [subject]
-        );
-
-        if (subjects.length === 0) {
+        if (results.length === 0) {
             return res.status(404).json({ 
                 success: false, 
                 message: '과목을 찾을 수 없습니다.' 
             });
         }
 
-        const subjectInfo = subjects[0];
+        const subjectInfo = {
+            id: results[0].id,
+            name: results[0].name,
+            description: results[0].description,
+            category: results[0].category,
+            is_public: results[0].is_public,
+            sort_order: results[0].sort_order
+        };
 
-        // 모든 문제를 가져와서 순서로 선택
-        const [problems] = await pool.execute(
-            'SELECT * FROM problems WHERE subject_id = ? ORDER BY id',
-            [subjectInfo.id]
-        );
+        const problems = results.filter(r => r.problem_id).map(r => ({
+            id: r.problem_id,
+            content: r.content,
+            option_a: r.option_a,
+            option_b: r.option_b,
+            option_c: r.option_c,
+            option_d: r.option_d,
+            difficulty: r.difficulty,
+            correct_answer: r.correct_answer,
+            explanation: r.explanation
+        }));
+
+        const totalProblems = results[0].total_problems || 0;
         
-        // 해당 과목에 문제가 없는 경우
         if (problems.length === 0) {
             return res.status(404).json({ 
                 success: false, 
@@ -99,125 +125,69 @@ router.get('/:subject', optionalAuth, async (req, res) => {
         if (id && id !== 'null' && !isNaN(parseInt(id))) {
             // 특정 순서의 문제 조회
             problemIndex = parseInt(id) - 1;
-        } else {
-            // 로그인한 사용자의 경우 마지막 진행 상황 확인
-            console.log(`[DEBUG] id가 null이거나 유효하지 않음. 진행상황 복원 시도...`);
-            if (req.isAuthenticated() && req.user && req.user.id) {
-                try {
-                    const [progress] = await pool.execute(
-                        'SELECT last_problem_id FROM user_subject_progress WHERE user_id = ? AND subject_id = ?',
-                        [req.user.id, subjectInfo.id]
-                    );
+        } else if (req.user && req.user.id) {
+            // 로그인한 사용자의 경우 진행상황 확인 - 최적화된 쿼리
+            try {
+                const [progressData] = await pool.execute(`
+                    SELECT 
+                        usp.last_problem_id,
+                        up.is_correct,
+                        up.answered_at
+                    FROM user_subject_progress usp
+                    LEFT JOIN user_progress up ON usp.last_problem_id = up.problem_id AND up.user_id = ?
+                    WHERE usp.user_id = ? AND usp.subject_id = ?
+                `, [req.user.id, req.user.id, subjectInfo.id]);
+                
+                if (progressData.length > 0 && progressData[0].last_problem_id) {
+                    const lastProblemIndex = problems.findIndex(p => p.id === progressData[0].last_problem_id);
                     
-                    if (progress.length > 0) {
-                        if (progress[0].last_problem_id) {
-                            // 마지막으로 풀던 문제의 인덱스 찾기
-                            const lastProblemIndex = problems.findIndex(p => p.id === progress[0].last_problem_id);
-                            if (lastProblemIndex !== -1) {
-                                // 마지막 문제가 이미 완료되었는지 확인
-                                const [userProgress] = await pool.execute(
-                                    'SELECT * FROM user_progress WHERE user_id = ? AND problem_id = ?',
-                                    [req.user.id, progress[0].last_problem_id]
-                                );
-                                
-                                if (userProgress.length > 0) {
-                                    // 마지막 문제가 이미 완료되었으므로 다음 문제로 이동
-                                    const nextIndex = lastProblemIndex + 1;
-                                    if (nextIndex < problems.length) {
-                                        problemIndex = nextIndex;
-                                    } else {
-                                        // 모든 문제를 다 풀었으므로 마지막 문제를 표시
-                                        problemIndex = problems.length - 1;
-                                    }
-                                } else {
-                                    // 마지막 문제가 아직 완료되지 않았으므로 해당 문제부터 시작
-                                    problemIndex = lastProblemIndex;
-                                }
-                            } else {
-                                // 저장된 문제가 현재 문제 목록에 없음 (삭제된 문제일 수 있음)
-                                
-                                // 사용자가 이미 푼 문제들 조회 (성능 최적화)
-                                if (problems.length > 0) {
-                                    const [solvedProblems] = await pool.execute(
-                                        'SELECT problem_id FROM user_progress WHERE user_id = ? AND problem_id IN (' + 
-                                        problems.map(() => '?').join(',') + ')',
-                                        [req.user.id, ...problems.map(p => p.id)]
-                                    );
-                                    
-                                    const solvedIds = new Set(solvedProblems.map(p => p.problem_id));
-                                    
-                                    // 아직 풀지 않은 첫 번째 문제 찾기
-                                    let foundUnsolvedIndex = -1;
-                                    for (let i = 0; i < problems.length; i++) {
-                                        if (!solvedIds.has(problems[i].id)) {
-                                            foundUnsolvedIndex = i;
-                                            break;
-                                        }
-                                    }
-                                    
-                                    if (foundUnsolvedIndex !== -1) {
-                                        problemIndex = foundUnsolvedIndex;
-                                        
-                                        // 진행상황 업데이트
-                                        await pool.execute(
-                                            'UPDATE user_subject_progress SET last_problem_id = ? WHERE user_id = ? AND subject_id = ?',
-                                            [problems[problemIndex].id, req.user.id, subjectInfo.id]
-                                        );
-                                    } else {
-                                        // 모든 문제를 다 풀었다면 마지막 문제로
-                                        problemIndex = problems.length - 1;
-                                        
-                                        // 진행상황 업데이트
-                                        await pool.execute(
-                                            'UPDATE user_subject_progress SET last_problem_id = ? WHERE user_id = ? AND subject_id = ?',
-                                            [problems[problemIndex].id, req.user.id, subjectInfo.id]
-                                        );
-                                    }
-                                } else {
-                                    problemIndex = 0;
-                                }
-                            }
+                    if (lastProblemIndex !== -1) {
+                        if (progressData[0].is_correct) {
+                            // 마지막 문제가 이미 완료되었으므로 다음 문제로 이동
+                            const nextIndex = lastProblemIndex + 1;
+                            problemIndex = nextIndex < problems.length ? nextIndex : problems.length - 1;
                         } else {
-                            // last_problem_id가 NULL인 경우 (문제 삭제로 인해 NULL이 된 경우)
-                            problemIndex = 0; // 첫 번째 문제부터 시작
+                            // 마지막 문제가 아직 완료되지 않았으므로 해당 문제부터 시작
+                            problemIndex = lastProblemIndex;
                         }
+                    } else {
+                        // 저장된 문제가 현재 문제 목록에 없음 - 다음 문제 찾기
+                        const [solvedProblems] = await pool.execute(`
+                            SELECT problem_id 
+                            FROM user_progress 
+                            WHERE user_id = ? AND problem_id IN (${problems.map(() => '?').join(',')})
+                        `, [req.user.id, ...problems.map(p => p.id)]);
+                        
+                        const solvedIds = new Set(solvedProblems.map(p => p.problem_id));
+                        const unsolvedIndex = problems.findIndex(p => !solvedIds.has(p.id));
+                        problemIndex = unsolvedIndex !== -1 ? unsolvedIndex : problems.length - 1;
+                        
+                        // 진행상황 업데이트
+                        await pool.execute(
+                            'UPDATE user_subject_progress SET last_problem_id = ? WHERE user_id = ? AND subject_id = ?',
+                            [problems[problemIndex].id, req.user.id, subjectInfo.id]
+                        );
                     }
-                } catch (error) {
-                    console.error('진행 상황 조회 오류:', error);
                 }
+            } catch (error) {
+                console.error('진행 상황 조회 오류:', error);
             }
         }
         
-        // problemIndex가 배열 범위를 벗어나는 경우 처리
+        // problemIndex 범위 검증
         if (problemIndex >= problems.length) {
-            // 모든 문제를 다 풀었으므로 마지막 문제를 표시
             problemIndex = problems.length - 1;
         } else if (problemIndex < 0) {
-            // 인덱스가 음수인 경우 첫 번째 문제로
             problemIndex = 0;
         }
         
         const problem = problems[problemIndex];
 
-        if (!problem) {
-            return res.status(404).json({ 
-                success: false, 
-                message: '문제를 찾을 수 없습니다.' 
-            });
-        }
-
-        // 전체 문제 수 조회
-        const [countResult] = await pool.execute(
-            'SELECT COUNT(*) as total FROM problems WHERE subject_id = ?',
-            [subjectInfo.id]
-        );
-        const totalProblems = countResult[0].total;
-
-        // 사용자 진행상황 조회 (JWT 토큰으로 인증된 경우)
+        // 사용자 진행상황 조회 - 최적화된 쿼리
         let userProgress = null;
         if (req.user && req.user.id) {
             const [progress] = await pool.execute(
-                'SELECT * FROM user_progress WHERE user_id = ? AND problem_id = ?',
+                'SELECT selected_answer, is_correct, answered_at FROM user_progress WHERE user_id = ? AND problem_id = ?',
                 [req.user.id, problem.id]
             );
             userProgress = progress[0];
@@ -235,7 +205,7 @@ router.get('/:subject', optionalAuth, async (req, res) => {
                 option_d: problem.option_d,
                 difficulty: problem.difficulty
             },
-            problemNumber: problemIndex + 1, // 1-based index
+            problemNumber: problemIndex + 1,
             totalProblems,
             userProgress
         });
@@ -249,7 +219,7 @@ router.get('/:subject', optionalAuth, async (req, res) => {
     }
 });
 
-// 답안 제출 (로그인하지 않은 사용자도 접근 가능)
+// 답안 제출 (로그인하지 않은 사용자도 접근 가능) - 최적화된 버전
 router.post('/:subject/submit', optionalAuth, async (req, res) => {
     try {
         const { subject } = req.params;
@@ -262,9 +232,9 @@ router.post('/:subject/submit', optionalAuth, async (req, res) => {
             });
         }
 
-        // 문제 조회
+        // 문제 조회 - 필요한 필드만 선택
         const [problems] = await pool.execute(
-            'SELECT * FROM problems WHERE id = ?',
+            'SELECT id, subject_id, correct_answer, explanation FROM problems WHERE id = ?',
             [problemId]
         );
 
@@ -277,37 +247,49 @@ router.post('/:subject/submit', optionalAuth, async (req, res) => {
 
         const problem = problems[0];
         
-        // 프론트엔드에서 1,2,3,4 형식으로 보내므로 A,B,C,D로 변환해서 비교
+        // 답안 검증
         const answerMap = { '1': 'A', '2': 'B', '3': 'C', '4': 'D' };
         const dbAnswer = answerMap[answer] || answer.toUpperCase();
         const isCorrect = dbAnswer === problem.correct_answer;
-        
-        console.log(`답안 검증: 받은 답안=${answer}, 변환된 답안=${dbAnswer}, 정답=${problem.correct_answer}, 결과=${isCorrect}`);
 
-        // 사용자 진행상황 저장 (JWT 토큰으로 인증된 경우)
+        // 사용자 진행상황 저장 (JWT 토큰으로 인증된 경우) - 최적화된 버전
         if (req.user && req.user.id) {
             try {
-                // 문제 풀이 기록 저장
-                await pool.execute(
-                    `INSERT INTO user_progress (user_id, problem_id, selected_answer, is_correct) 
-                     VALUES (?, ?, ?, ?) 
-                     ON DUPLICATE KEY UPDATE 
-                     selected_answer = VALUES(selected_answer), 
-                     is_correct = VALUES(is_correct),
-                     answered_at = CURRENT_TIMESTAMP`,
-                    [req.user.id, problemId, dbAnswer, isCorrect]
-                );
+                // 트랜잭션으로 두 작업을 한 번에 처리
+                const connection = await pool.getConnection();
+                await connection.beginTransaction();
                 
-                // 과목별 마지막 진행 상황 저장
-                await pool.execute(
-                    `INSERT INTO user_subject_progress (user_id, subject_id, last_problem_id) 
-                     VALUES (?, ?, ?) 
-                     ON DUPLICATE KEY UPDATE 
-                     last_problem_id = VALUES(last_problem_id)`,
-                    [req.user.id, problem.subject_id, problemId]
-                );
+                try {
+                    // 문제 풀이 기록 저장
+                    await connection.execute(
+                        `INSERT INTO user_progress (user_id, problem_id, selected_answer, is_correct, answered_at) 
+                         VALUES (?, ?, ?, ?, NOW()) 
+                         ON DUPLICATE KEY UPDATE 
+                         selected_answer = VALUES(selected_answer), 
+                         is_correct = VALUES(is_correct),
+                         answered_at = NOW()`,
+                        [req.user.id, problemId, dbAnswer, isCorrect]
+                    );
+                    
+                    // 과목별 마지막 진행 상황 저장
+                    await connection.execute(
+                        `INSERT INTO user_subject_progress (user_id, subject_id, last_problem_id) 
+                         VALUES (?, ?, ?) 
+                         ON DUPLICATE KEY UPDATE 
+                         last_problem_id = VALUES(last_problem_id)`,
+                        [req.user.id, problem.subject_id, problemId]
+                    );
+                    
+                    await connection.commit();
+                } catch (error) {
+                    await connection.rollback();
+                    throw error;
+                } finally {
+                    connection.release();
+                }
             } catch (error) {
                 console.error('진행상황 저장 오류:', error);
+                // 진행상황 저장 실패해도 답안 검증 결과는 반환
             }
         }
 

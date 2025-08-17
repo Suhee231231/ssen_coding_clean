@@ -998,7 +998,7 @@
             }
         }
 
-        // 문제 추가
+        // 문제 추가 - 최적화된 버전
         async function addProblem(formData) {
             try {
                 // 폼 유효성 검사
@@ -1036,8 +1036,11 @@
                     difficulty: formData.get('difficulty')
                 };
                 
-                // 디버깅을 위한 로그
-                console.log('전송할 데이터:', problemData);
+                // 로딩 상태 표시
+                const submitBtn = document.querySelector('#addProblemForm button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = '추가 중...';
+                submitBtn.disabled = true;
                 
                 const response = await fetch('/api/admin/problems', {
                     method: 'POST',
@@ -1051,28 +1054,40 @@
                 
                 if (data.success) {
                     showMessage('문제가 성공적으로 추가되었습니다.', 'success');
-                    document.getElementById('addProblemForm').reset();
                     
-                    // 코드 에디터 초기화
-                    if (questionEditor) {
-                        questionEditor.setValue('');
-                    }
-                    if (explanationEditor) {
-                        explanationEditor.setValue('');
-                    }
-                    Object.values(optionEditors).forEach(editor => {
-                        if (editor) {
-                            editor.setValue('');
+                    // 폼 초기화 (최적화된 버전)
+                    form.reset();
+                    
+                    // 코드 에디터 초기화 (비동기로 처리하여 UI 블로킹 방지)
+                    setTimeout(() => {
+                        if (questionEditor) {
+                            questionEditor.setValue('');
                         }
-                    });
+                        if (explanationEditor) {
+                            explanationEditor.setValue('');
+                        }
+                        Object.values(optionEditors).forEach(editor => {
+                            if (editor) {
+                                editor.setValue('');
+                            }
+                        });
+                    }, 100);
                     
-                    loadProblems(); // 문제 목록 새로고침
+                    // 새로 추가된 문제를 목록에 추가 (전체 새로고침 대신)
+                    if (data.problem) {
+                        addProblemToList(data.problem);
+                    }
                 } else {
                     showMessage(data.message || '문제 추가에 실패했습니다.', 'error');
                 }
             } catch (error) {
                 console.error('문제 추가 오류:', error);
                 showMessage('문제 추가 중 오류가 발생했습니다.', 'error');
+            } finally {
+                // 버튼 상태 복원
+                const submitBtn = document.querySelector('#addProblemForm button[type="submit"]');
+                submitBtn.textContent = '문제 추가';
+                submitBtn.disabled = false;
             }
         }
 
@@ -1088,6 +1103,28 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+        
+        // 새 문제를 목록에 추가하는 함수
+        function addProblemToList(problem) {
+            // 문제 목록 테이블에 새 행 추가
+            const tbody = document.querySelector('#problemsTable tbody');
+            if (tbody) {
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td>${escapeHtml(problem.subject_name)}</td>
+                    <td>${escapeHtml(problem.content || problem.title)}</td>
+                    <td>${escapeHtml(problem.difficulty)}</td>
+                    <td>
+                        <button onclick="editProblem(${problem.id})" class="edit-btn">수정</button>
+                        <button onclick="deleteProblem(${problem.id})" class="delete-btn">삭제</button>
+                    </td>
+                `;
+                tbody.insertBefore(newRow, tbody.firstChild); // 맨 위에 추가
+            }
+            
+            // 통계 업데이트
+            updateStats();
         }
         
         // 문제 목록 로드
