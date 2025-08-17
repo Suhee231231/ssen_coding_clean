@@ -147,10 +147,21 @@ router.get('/google/callback', (req, res) => {
                 });
                 
                 console.log('Google OAuth: JWT 토큰 쿠키 설정 완료');
-                console.log('Google OAuth: 로그인 성공 - 메인 페이지로 리디렉션');
                 
-                // 성공적으로 리디렉션
-                res.redirect('/?login=success&auth=google');
+                // 세션에도 사용자 정보 저장 (기존 세션 기반 인증과 호환성 유지)
+                req.login(req.user, (err) => {
+                    if (err) {
+                        console.error('Google OAuth: 세션 설정 실패:', err);
+                        // 세션 설정 실패해도 JWT는 있으므로 계속 진행
+                    } else {
+                        console.log('Google OAuth: 세션 설정 완료');
+                    }
+                    
+                    console.log('Google OAuth: 로그인 성공 - 메인 페이지로 리디렉션');
+                    
+                    // 성공적으로 리디렉션
+                    res.redirect('/?login=success&auth=google');
+                });
                 
             } catch (error) {
                 console.error('Google OAuth 콜백 처리 오류:', error);

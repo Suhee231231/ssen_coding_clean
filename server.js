@@ -268,7 +268,7 @@ async function createDatabaseIndexes() {
         console.log('📊 problems 테이블 인덱스 생성 중...');
         
         try {
-            await pool.execute('CREATE INDEX IF NOT EXISTS idx_problems_subject_id ON problems(subject_id)');
+            await pool.execute('CREATE INDEX idx_problems_subject_id ON problems(subject_id)');
             console.log('✅ problems.subject_id 인덱스 생성 완료');
         } catch (error) {
             if (error.code === 'ER_DUP_KEYNAME') {
@@ -279,7 +279,7 @@ async function createDatabaseIndexes() {
         }
         
         try {
-            await pool.execute('CREATE INDEX IF NOT EXISTS idx_problems_difficulty ON problems(difficulty)');
+            await pool.execute('CREATE INDEX idx_problems_difficulty ON problems(difficulty)');
             console.log('✅ problems.difficulty 인덱스 생성 완료');
         } catch (error) {
             if (error.code === 'ER_DUP_KEYNAME') {
@@ -290,7 +290,7 @@ async function createDatabaseIndexes() {
         }
         
         try {
-            await pool.execute('CREATE INDEX IF NOT EXISTS idx_problems_created_at ON problems(created_at)');
+            await pool.execute('CREATE INDEX idx_problems_created_at ON problems(created_at)');
             console.log('✅ problems.created_at 인덱스 생성 완료');
         } catch (error) {
             if (error.code === 'ER_DUP_KEYNAME') {
@@ -304,7 +304,7 @@ async function createDatabaseIndexes() {
         console.log('📊 user_progress 테이블 인덱스 생성 중...');
         
         try {
-            await pool.execute('CREATE INDEX IF NOT EXISTS idx_user_progress_user_problem ON user_progress(user_id, problem_id)');
+            await pool.execute('CREATE INDEX idx_user_progress_user_problem ON user_progress(user_id, problem_id)');
             console.log('✅ user_progress 복합 인덱스 생성 완료');
         } catch (error) {
             if (error.code === 'ER_DUP_KEYNAME') {
@@ -315,7 +315,7 @@ async function createDatabaseIndexes() {
         }
         
         try {
-            await pool.execute('CREATE INDEX IF NOT EXISTS idx_user_progress_is_correct ON user_progress(is_correct)');
+            await pool.execute('CREATE INDEX idx_user_progress_is_correct ON user_progress(is_correct)');
             console.log('✅ user_progress.is_correct 인덱스 생성 완료');
         } catch (error) {
             if (error.code === 'ER_DUP_KEYNAME') {
@@ -329,7 +329,7 @@ async function createDatabaseIndexes() {
         console.log('📊 user_subject_progress 테이블 인덱스 생성 중...');
         
         try {
-            await pool.execute('CREATE INDEX IF NOT EXISTS idx_user_subject_progress_user_subject ON user_subject_progress(user_id, subject_id)');
+            await pool.execute('CREATE INDEX idx_user_subject_progress_user_subject ON user_subject_progress(user_id, subject_id)');
             console.log('✅ user_subject_progress 복합 인덱스 생성 완료');
         } catch (error) {
             if (error.code === 'ER_DUP_KEYNAME') {
@@ -343,7 +343,7 @@ async function createDatabaseIndexes() {
         console.log('📊 subjects 테이블 인덱스 생성 중...');
         
         try {
-            await pool.execute('CREATE INDEX IF NOT EXISTS idx_subjects_is_public ON subjects(is_public)');
+            await pool.execute('CREATE INDEX idx_subjects_is_public ON subjects(is_public)');
             console.log('✅ subjects.is_public 인덱스 생성 완료');
         } catch (error) {
             if (error.code === 'ER_DUP_KEYNAME') {
@@ -354,7 +354,7 @@ async function createDatabaseIndexes() {
         }
         
         try {
-            await pool.execute('CREATE INDEX IF NOT EXISTS idx_subjects_sort_order ON subjects(sort_order)');
+            await pool.execute('CREATE INDEX idx_subjects_sort_order ON subjects(sort_order)');
             console.log('✅ subjects.sort_order 인덱스 생성 완료');
         } catch (error) {
             if (error.code === 'ER_DUP_KEYNAME') {

@@ -150,8 +150,87 @@ router.post('/logout', (req, res) => {
     });
 });
 
-// JWT 인증 확인
-router.get('/check', authenticateJWT);
+// JWT 인증 확인 - 개선된 버전
+router.get('/check', async (req, res) => {
+    try {
+        console.log('🔍 인증 상태 확인 요청');
+        console.log('📋 쿠키 정보:', req.cookies);
+        console.log('📋 세션 정보:', req.session);
+        
+        // 1. JWT 토큰 확인
+        const token = req.cookies && req.cookies.auth_token;
+        
+        if (token) {
+            console.log('🔍 JWT 토큰 발견, 검증 중...');
+            const jwtConfig = require('../config/jwt');
+            const decoded = jwtConfig.verifyToken(token);
+            
+            if (decoded) {
+                console.log('✅ JWT 토큰 검증 성공');
+                
+                // 데이터베이스에서 최신 사용자 정보 조회
+                const [users] = await pool.execute(
+                    'SELECT id, username, email, is_admin FROM users WHERE id = ?',
+                    [decoded.userId]
+                );
+                
+                if (users.length > 0) {
+                    const user = users[0];
+                    console.log('✅ 사용자 정보 조회 성공:', user);
+                    
+                    return res.json({ 
+                        success: true, 
+                        isLoggedIn: true,
+                        isAdmin: user.is_admin || false,
+                        user: {
+                            id: user.id,
+                            username: user.username,
+                            email: user.email,
+                            is_admin: user.is_admin || false
+                        }
+                    });
+                }
+            } else {
+                console.log('❌ JWT 토큰 검증 실패, 쿠키 삭제');
+                res.clearCookie('auth_token');
+            }
+        }
+        
+        // 2. 세션 확인 (기존 세션 기반 인증)
+        if (req.isAuthenticated() && req.user) {
+            console.log('✅ 세션 기반 인증 성공:', req.user);
+            return res.json({ 
+                success: true, 
+                isLoggedIn: true,
+                isAdmin: req.user.is_admin || false,
+                user: {
+                    id: req.user.id,
+                    username: req.user.username,
+                    email: req.user.email,
+                    is_admin: req.user.is_admin || false
+                }
+            });
+        }
+        
+        // 3. 인증되지 않은 상태
+        console.log('❌ 인증되지 않은 상태');
+        res.json({ 
+            success: true, 
+            isLoggedIn: false,
+            isAdmin: false,
+            user: null
+        });
+        
+    } catch (error) {
+        console.error('❌ 인증 상태 확인 오류:', error);
+        res.json({ 
+            success: true, 
+            isLoggedIn: false,
+            isAdmin: false,
+            user: null
+        });
+    }
+});
 
 // 비밀번호 변경
 router.post('/change-password', async (req, res) => {
