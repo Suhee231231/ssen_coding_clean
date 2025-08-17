@@ -5,6 +5,29 @@ let authStatus = null;
 let lastAuthCheck = 0;
 const AUTH_CACHE_DURATION = 30 * 60 * 1000; // 30분 캐시 (rate limit 절약)
 
+// 페이지 로드 시 인증 상태 확인
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('페이지 로드 - 인증 상태 확인 시작');
+    
+    // URL에서 로그인 성공 파라미터 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    const loginStatus = urlParams.get('login');
+    const authType = urlParams.get('auth');
+    
+    if (loginStatus === 'success') {
+        console.log('로그인 성공 감지 - 강제 새로고침 실행');
+        
+        // 잠시 대기 후 새로고침 (쿠키 설정 완료 대기)
+        setTimeout(() => {
+            window.location.reload();
+        }, 100);
+        return;
+    }
+    
+    // 일반적인 인증 상태 확인
+    await checkAuthStatus();
+});
+
 // 인증 상태 확인 (최적화된 버전)
 async function checkAuthStatus() {
     const now = Date.now();
@@ -12,19 +35,36 @@ async function checkAuthStatus() {
     // URL에서 로그인 성공 파라미터 확인
     const urlParams = new URLSearchParams(window.location.search);
     const loginStatus = urlParams.get('login');
+    const authType = urlParams.get('auth');
     
     // 로그인 성공이면 캐시 초기화하고 즉시 인증 상태 확인
     if (loginStatus === 'success') {
+        // 모든 캐시 초기화
         sessionStorage.removeItem('authStatus');
         sessionStorage.removeItem('authCheckTime');
+        localStorage.removeItem('authStatus');
+        localStorage.removeItem('authCheckTime');
         authStatus = null;
         lastAuthCheck = 0;
-        console.log('로그인 성공 - 인증 캐시 초기화됨');
+        console.log('로그인 성공 - 모든 인증 캐시 초기화됨');
+        
+        // URL에서 파라미터 제거 (브라우저 히스토리 정리)
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.delete('login');
+        newUrl.searchParams.delete('auth');
+        window.history.replaceState({}, '', newUrl);
         
         // 즉시 인증 상태 확인 (캐시 무시)
         try {
             console.log('로그인 후 즉시 인증 상태 확인 중...');
-            const response = await fetch('/api/auth/check');
+            const response = await fetch('/api/auth/check', {
+                method: 'GET',
+                credentials: 'include', // 쿠키 포함
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
             const data = await response.json();
             
             console.log('로그인 후 인증 상태 응답:', data);
@@ -37,6 +77,12 @@ async function checkAuthStatus() {
             sessionStorage.setItem('authCheckTime', lastAuthCheck.toString());
             
             updateNavigation(authStatus);
+            
+            // Google OAuth인 경우 추가 확인
+            if (authType === 'google' && data.isLoggedIn) {
+                console.log('Google OAuth 로그인 성공 - 네비게이션 업데이트 완료');
+            }
+            
             return authStatus;
         } catch (error) {
             console.error('로그인 후 인증 상태 확인 오류:', error);
@@ -64,7 +110,14 @@ async function checkAuthStatus() {
     // 실제 API 호출
     try {
         console.log('인증 상태 확인 중...');
-        const response = await fetch('/api/auth/check');
+        const response = await fetch('/api/auth/check', {
+            method: 'GET',
+            credentials: 'include', // 쿠키 포함
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
         const data = await response.json();
         
         console.log('인증 상태 응답:', data);
