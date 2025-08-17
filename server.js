@@ -81,48 +81,22 @@ const googleAuthLimiter = rateLimit({
 app.use(cookieParser());
 
 app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", 
-                "https://*.googleadservices.com", 
-                "https://*.googlesyndication.com", 
-                "https://*.google.com", 
-                "https://*.gstatic.com",
-                "https://use.typekit.net", 
-                "https://cdnjs.cloudflare.com", 
-                "https://developers.google.com", 
-                "https://www.googletagmanager.com"
-            ],
-            scriptSrcAttr: ["'unsafe-inline'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://use.typekit.net", "https://cdnjs.cloudflare.com"],
-            imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", 
-                "https://*.google.com", 
-                "https://*.googleapis.com", 
-                "https://*.googlesyndication.com", 
-                "https://*.gstatic.com", 
-                "https://*.doubleclick.net", 
-                "https://*.googleadservices.com", 
-                "https://*.google-analytics.com",
-                "https://use.typekit.net", 
-                "https://p.typekit.net"
-            ],
-            frameSrc: ["'self'", 
-                "https://*.google.com", 
-                "https://*.googleadservices.com", 
-                "https://*.googlesyndication.com"
-            ],
-            frameAncestors: ["'self'", 
-                "https://*.google.com", 
-                "https://*.googleadservices.com"
-            ],
-            objectSrc: ["'none'"],
-            baseUri: ["'self'"],
-            formAction: ["'self'"]
+            contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "https://pagead2.googlesyndication.com", "https://use.typekit.net", "https://cdnjs.cloudflare.com", "https://developers.google.com", "https://ep2.adtrafficquality.google", "https://www.googletagmanager.com"],
+                scriptSrcAttr: ["'unsafe-inline'"],
+                styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+                fontSrc: ["'self'", "https://fonts.gstatic.com", "https://use.typekit.net", "https://cdnjs.cloudflare.com"],
+                imgSrc: ["'self'", "data:", "https:"],
+                connectSrc: ["'self'", "https://use.typekit.net", "https://p.typekit.net", "https://*.google.com", "https://*.googleapis.com", "https://*.googlesyndication.com", "https://*.gstatic.com", "https://*.doubleclick.net", "https://*.adtrafficquality.google", "https://*.googleadservices.com", "https://*.google-analytics.com"],
+                frameSrc: ["'self'", "https://*.google.com", "https://*.googleapis.com", "https://*.googlesyndication.com", "https://*.doubleclick.net", "https://*.adtrafficquality.google", "https://*.googleadservices.com"],
+                frameAncestors: ["'self'", "https://*.google.com", "https://*.googleapis.com", "https://*.googlesyndication.com", "https://*.doubleclick.net", "https://accounts.google.com", "https://www.google.com"],
+                objectSrc: ["'none'"],
+                baseUri: ["'self'"],
+                formAction: ["'self'"]
+            }
         }
-    }
 })); // 기본 보안 헤더 설정
 
 // Railway 환경에서 trust proxy 설정
