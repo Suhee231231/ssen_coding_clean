@@ -122,7 +122,8 @@ app.use(helmet({
                     "https://*.adtrafficquality.google", 
                     "https://*.googleadservices.com",
                     "https://googleads.g.doubleclick.net",
-                    "https://tpc.googlesyndication.com"
+                    "https://tpc.googlesyndication.com",
+                    "https://www.google.com"
                 ],
                 frameAncestors: [
                     "'self'", 
