@@ -22,7 +22,27 @@ async function checkAuthStatus() {
     const loginStatus = urlParams.get('login');
     const authType = urlParams.get('auth');
     
-
+    // 로그아웃 후 페이지 새로고침 감지 (현재 탭에서만)
+    const logoutRefreshTime = sessionStorage.getItem('logoutRefresh');
+    if (logoutRefreshTime) {
+        const logoutTime = parseInt(logoutRefreshTime);
+        const now = Date.now();
+        
+        // 5분 이내의 로그아웃 새로고침만 처리 (안전장치)
+        if (now - logoutTime < 5 * 60 * 1000) {
+            console.log('🔍 로그아웃 후 새로고침 감지 - 인증 캐시 초기화');
+            sessionStorage.removeItem('logoutRefresh');
+            sessionStorage.removeItem('authStatus');
+            sessionStorage.removeItem('authCheckTime');
+            localStorage.removeItem('authStatus');
+            localStorage.removeItem('authCheckTime');
+            authStatus = null;
+            lastAuthCheck = 0;
+        } else {
+            // 오래된 플래그는 제거
+            sessionStorage.removeItem('logoutRefresh');
+        }
+    }
     
     // 로그인 성공이면 캐시 초기화하고 즉시 인증 상태 확인
     if (loginStatus === 'success') {
@@ -185,9 +205,9 @@ function updateNavigation(data) {
 // 로그아웃 (캐시 초기화 포함)
 async function logout() {
     try {
-        console.log('로그아웃 시작...');
+        console.log('🔍 로그아웃 시작...');
         
-        // 먼저 모든 캐시 초기화
+        // 1. 먼저 모든 캐시 초기화
         authStatus = null;
         lastAuthCheck = 0;
         sessionStorage.removeItem('authStatus');
@@ -195,32 +215,48 @@ async function logout() {
         localStorage.removeItem('authStatus');
         localStorage.removeItem('authCheckTime');
         
-
+        // 2. 인증 관련 캐시만 정리 (다른 탭 데이터 보호)
+        // sessionStorage와 localStorage에서 인증 관련 항목만 삭제
+        const authKeys = ['authStatus', 'authCheckTime', 'logoutRefresh'];
+        authKeys.forEach(key => {
+            sessionStorage.removeItem(key);
+            localStorage.removeItem(key);
+        });
         
-        // 네비게이션 즉시 업데이트 (로그아웃 상태로)
+        // 3. 네비게이션 즉시 업데이트 (로그아웃 상태로)
         updateNavigation({ isLoggedIn: false, isAdmin: false, user: null });
         
+        // 4. 서버에 로그아웃 요청
         const response = await fetch('/api/auth/logout', {
             method: 'POST',
-            credentials: 'include' // 쿠키 포함
+            credentials: 'include', // 쿠키 포함
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
         });
         const data = await response.json();
         
         console.log('로그아웃 응답:', data);
         
         if (data.success) {
-            console.log('로그아웃 완료, 홈페이지로 이동');
-            // 강제로 홈페이지로 이동하여 상태 완전 초기화
-            window.location.href = '/';
+            console.log('✅ 로그아웃 완료, 홈페이지로 이동');
+            
+            // 5. 현재 탭에서만 로그아웃 후 새로고침 플래그 설정
+            sessionStorage.setItem('logoutRefresh', Date.now().toString());
+            
+            // 6. 강제로 페이지 새로고침하여 모든 상태 초기화
+            window.location.replace('/');
         } else {
-            console.error('로그아웃 실패:', data.message);
+            console.error('❌ 로그아웃 실패:', data.message);
             // 실패해도 홈페이지로 이동
-            window.location.href = '/';
+            sessionStorage.setItem('logoutRefresh', Date.now().toString());
+            window.location.replace('/');
         }
     } catch (error) {
-        console.error('로그아웃 오류:', error);
+        console.error('❌ 로그아웃 오류:', error);
         // 오류가 발생해도 홈페이지로 이동
-        window.location.href = '/';
+        window.location.replace('/');
     }
 }
 

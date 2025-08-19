@@ -140,15 +140,49 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// JWT 로그아웃
+// JWT 로그아웃 (JWT + 세션 모두 처리)
 router.post('/logout', (req, res) => {
-    // JWT 토큰 쿠키를 즉시 만료시켜 삭제
+    console.log('🔍 로그아웃 요청 처리 시작');
+    
+    // 1. JWT 토큰 쿠키를 즉시 만료시켜 삭제
     res.clearCookie('auth_token', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         expires: new Date(0) // 즉시 만료
     });
+    
+    // 2. 세션 쿠키도 삭제
+    res.clearCookie('ssen-coding-session', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        expires: new Date(0) // 즉시 만료
+    });
+    
+    // 3. 세션도 함께 삭제 (Google OAuth 사용자 처리)
+    if (req.session) {
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('세션 삭제 오류:', err);
+            } else {
+                console.log('✅ 세션 삭제 완료');
+            }
+        });
+    }
+    
+    // 4. Passport 세션도 정리
+    if (req.logout) {
+        req.logout((err) => {
+            if (err) {
+                console.error('Passport 로그아웃 오류:', err);
+            } else {
+                console.log('✅ Passport 로그아웃 완료');
+            }
+        });
+    }
+    
+    console.log('✅ 로그아웃 처리 완료');
     res.json({ 
         success: true, 
         message: '로그아웃되었습니다.' 
