@@ -9,21 +9,6 @@ const AUTH_CACHE_DURATION = 30 * 60 * 1000; // 30분 캐시 (rate limit 절약)
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('페이지 로드 - 인증 상태 확인 시작');
     
-    // URL에서 로그인 성공 파라미터 확인
-    const urlParams = new URLSearchParams(window.location.search);
-    const loginStatus = urlParams.get('login');
-    const authType = urlParams.get('auth');
-    
-    if (loginStatus === 'success') {
-        console.log('로그인 성공 감지 - 강제 새로고침 실행');
-        
-        // 잠시 대기 후 새로고침 (쿠키 설정 완료 대기)
-        setTimeout(() => {
-            window.location.reload();
-        }, 100);
-        return;
-    }
-    
     // 일반적인 인증 상태 확인
     await checkAuthStatus();
 });
@@ -91,6 +76,10 @@ async function checkAuthStatus() {
             if (authType === 'google' && data.isLoggedIn) {
                 console.log('Google OAuth 로그인 성공 - 네비게이션 업데이트 완료');
             }
+            
+            // 로그인 성공 후 페이지 새로고침 (상태 완전 초기화)
+            console.log('로그인 성공 - 페이지 새로고침');
+            window.location.reload();
             
             return authStatus;
         } catch (error) {
@@ -176,6 +165,7 @@ function updateNavigation(data) {
             }
             navHTML += `<a href="#" onclick="logout()">로그아웃</a>`;
             navLinks.innerHTML = navHTML;
+            console.log('로그인 상태 네비게이션 설정 완료');
         } else {
             navLinks.innerHTML = `
                 <a href="/">홈</a>
@@ -183,9 +173,10 @@ function updateNavigation(data) {
                 <a href="/login.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">로그인</a>
                 <a href="/register.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">회원가입</a>
             `;
+            console.log('로그아웃 상태 네비게이션 설정 완료');
         }
     } else {
-        console.warn('navLinks 요소를 찾을 수 없습니다.');
+        console.warn('navLinks 요소를 찾을 수 없습니다. 현재 페이지:', window.location.pathname);
     }
 }
 
@@ -193,6 +184,18 @@ function updateNavigation(data) {
 async function logout() {
     try {
         console.log('로그아웃 시작...');
+        
+        // 먼저 모든 캐시 초기화
+        authStatus = null;
+        lastAuthCheck = 0;
+        sessionStorage.removeItem('authStatus');
+        sessionStorage.removeItem('authCheckTime');
+        localStorage.removeItem('authStatus');
+        localStorage.removeItem('authCheckTime');
+        
+        // 네비게이션 즉시 업데이트 (로그아웃 상태로)
+        updateNavigation({ isLoggedIn: false, isAdmin: false, user: null });
+        
         const response = await fetch('/api/auth/logout', {
             method: 'POST',
             credentials: 'include' // 쿠키 포함
@@ -202,32 +205,17 @@ async function logout() {
         console.log('로그아웃 응답:', data);
         
         if (data.success) {
-            // 모든 인증 캐시 초기화
-            authStatus = null;
-            lastAuthCheck = 0;
-            sessionStorage.removeItem('authStatus');
-            sessionStorage.removeItem('authCheckTime');
-            localStorage.removeItem('authStatus');
-            localStorage.removeItem('authCheckTime');
-            
-            // 네비게이션 즉시 업데이트 (로그아웃 상태로)
-            updateNavigation({ isLoggedIn: false, isAdmin: false, user: null });
-            
             console.log('로그아웃 완료, 홈페이지로 이동');
+            // 강제 새로고침으로 페이지 상태 완전 초기화
             window.location.href = '/';
         } else {
             console.error('로그아웃 실패:', data.message);
+            // 실패해도 홈페이지로 이동
+            window.location.href = '/';
         }
     } catch (error) {
         console.error('로그아웃 오류:', error);
-        // 오류가 발생해도 캐시는 초기화하고 홈페이지로 이동
-        authStatus = null;
-        lastAuthCheck = 0;
-        sessionStorage.removeItem('authStatus');
-        sessionStorage.removeItem('authCheckTime');
-        localStorage.removeItem('authStatus');
-        localStorage.removeItem('authCheckTime');
-        updateNavigation({ isLoggedIn: false, isAdmin: false, user: null });
+        // 오류가 발생해도 홈페이지로 이동
         window.location.href = '/';
     }
 }
