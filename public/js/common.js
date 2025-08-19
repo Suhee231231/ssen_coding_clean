@@ -77,9 +77,9 @@ async function checkAuthStatus() {
                 console.log('Google OAuth 로그인 성공 - 네비게이션 업데이트 완료');
             }
             
-            // 로그인 성공 후 페이지 새로고침 (상태 완전 초기화)
-            console.log('로그인 성공 - 페이지 새로고침');
-            window.location.reload();
+            // 로그인 성공 후 홈페이지로 리다이렉트 (상태 완전 초기화)
+            console.log('로그인 성공 - 홈페이지로 리다이렉트');
+            window.location.href = '/';
             
             return authStatus;
         } catch (error) {
