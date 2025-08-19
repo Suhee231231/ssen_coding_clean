@@ -109,20 +109,7 @@
         }
 
         // 로그아웃 (common.js의 함수 사용)
-        async function logout() {
-            try {
-                const response = await fetch('/api/auth/logout', {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    window.location.href = '/';
-                }
-            } catch (error) {
-                console.error('로그아웃 오류:', error);
-            }
-        }
+        // logout 함수는 common.js에서 정의되어 있습니다.
 
         // 틀린 문제 목록 로드
         async function loadWrongProblems() {

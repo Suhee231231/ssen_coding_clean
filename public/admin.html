@@ -42,6 +42,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <script src="/js/common.js"></script>
     <style>
         /* 전체 관리자 페이지에 Noto Serif KR 폰트 적용 */
         body {
@@ -531,9 +532,8 @@
         <nav>
             <div class="nav-container">
                 <h2 class="logo"><a href="/" style="text-decoration: none; color: inherit;"><span class="logo-highlight">SSEN</span><span class="logo-underline">C</span>ODING</a></h2>
-                <div class="nav-links">
-                    <a href="/">홈으로</a>
-                    <a href="#" onclick="logout()">로그아웃</a>
+                <div class="nav-links" id="navLinks">
+                    <!-- 네비게이션 링크는 common.js에서 동적으로 업데이트됩니다 -->
                 </div>
             </div>
         </nav>
@@ -2129,17 +2129,8 @@
             }, 3000);
         }
 
-        // 로그아웃
-        async function logout() {
-            try {
-                const response = await fetch('/api/auth/logout', {
-                    method: 'POST'
-                });
-                window.location.href = '/';
-            } catch (error) {
-                console.error('로그아웃 오류:', error);
-            }
-        }
+        // 로그아웃 (common.js의 함수 사용)
+        // logout 함수는 common.js에서 정의되어 있습니다.
 
         // CodeMirror 에디터 인스턴스들
         let questionEditor = null;

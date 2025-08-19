@@ -65,6 +65,15 @@ async function checkAuthStatus() {
                     'Pragma': 'no-cache'
                 }
             });
+            
+            if (!response.ok) {
+                console.error('로그인 후 인증 상태 확인 실패:', response.status, response.statusText);
+                authStatus = { isLoggedIn: false, isAdmin: false, user: null };
+                lastAuthCheck = Date.now();
+                updateNavigation(authStatus);
+                return authStatus;
+            }
+            
             const data = await response.json();
             
             console.log('로그인 후 인증 상태 응답:', data);
@@ -86,6 +95,10 @@ async function checkAuthStatus() {
             return authStatus;
         } catch (error) {
             console.error('로그인 후 인증 상태 확인 오류:', error);
+            authStatus = { isLoggedIn: false, isAdmin: false, user: null };
+            lastAuthCheck = Date.now();
+            updateNavigation(authStatus);
+            return authStatus;
         }
     }
     
@@ -118,6 +131,16 @@ async function checkAuthStatus() {
                 'Pragma': 'no-cache'
             }
         });
+        
+        if (!response.ok) {
+            console.error('인증 상태 확인 실패:', response.status, response.statusText);
+            // 응답이 실패하면 로그아웃 상태로 처리
+            authStatus = { isLoggedIn: false, isAdmin: false, user: null };
+            lastAuthCheck = now;
+            updateNavigation(authStatus);
+            return authStatus;
+        }
+        
         const data = await response.json();
         
         console.log('인증 상태 응답:', data);
@@ -133,16 +156,21 @@ async function checkAuthStatus() {
         return authStatus;
     } catch (error) {
         console.error('인증 상태 확인 오류:', error);
-        return null;
+        // 오류 발생 시 로그아웃 상태로 처리
+        authStatus = { isLoggedIn: false, isAdmin: false, user: null };
+        lastAuthCheck = now;
+        updateNavigation(authStatus);
+        return authStatus;
     }
 }
 
 // 네비게이션 업데이트 함수
 function updateNavigation(data) {
+    console.log('네비게이션 업데이트:', data);
     const navLinks = document.getElementById('navLinks');
     if (navLinks) {
-        if (data.isLoggedIn) {
-            let navHTML = `<a href="/profile.html">내 학습</a>`;
+        if (data && data.isLoggedIn) {
+            let navHTML = `<a href="/">홈</a><a href="/profile.html">내 학습</a>`;
             if (data.isAdmin) {
                 navHTML += `<a href="/admin.html">관리자</a>`;
             }
@@ -150,32 +178,57 @@ function updateNavigation(data) {
             navLinks.innerHTML = navHTML;
         } else {
             navLinks.innerHTML = `
+                <a href="/">홈</a>
                 <a href="#" onclick="showLoginPrompt()">내 학습</a>
                 <a href="/login.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">로그인</a>
                 <a href="/register.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">회원가입</a>
             `;
         }
+    } else {
+        console.warn('navLinks 요소를 찾을 수 없습니다.');
     }
 }
 
 // 로그아웃 (캐시 초기화 포함)
 async function logout() {
     try {
+        console.log('로그아웃 시작...');
         const response = await fetch('/api/auth/logout', {
-            method: 'POST'
+            method: 'POST',
+            credentials: 'include' // 쿠키 포함
         });
         const data = await response.json();
         
+        console.log('로그아웃 응답:', data);
+        
         if (data.success) {
-            // 인증 캐시 초기화
+            // 모든 인증 캐시 초기화
             authStatus = null;
             lastAuthCheck = 0;
             sessionStorage.removeItem('authStatus');
             sessionStorage.removeItem('authCheckTime');
+            localStorage.removeItem('authStatus');
+            localStorage.removeItem('authCheckTime');
+            
+            // 네비게이션 즉시 업데이트 (로그아웃 상태로)
+            updateNavigation({ isLoggedIn: false, isAdmin: false, user: null });
+            
+            console.log('로그아웃 완료, 홈페이지로 이동');
             window.location.href = '/';
+        } else {
+            console.error('로그아웃 실패:', data.message);
         }
     } catch (error) {
         console.error('로그아웃 오류:', error);
+        // 오류가 발생해도 캐시는 초기화하고 홈페이지로 이동
+        authStatus = null;
+        lastAuthCheck = 0;
+        sessionStorage.removeItem('authStatus');
+        sessionStorage.removeItem('authCheckTime');
+        localStorage.removeItem('authStatus');
+        localStorage.removeItem('authCheckTime');
+        updateNavigation({ isLoggedIn: false, isAdmin: false, user: null });
+        window.location.href = '/';
     }
 }
 
