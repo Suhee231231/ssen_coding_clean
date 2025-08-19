@@ -209,18 +209,18 @@ async function logout() {
         console.log('로그아웃 응답:', data);
         
         if (data.success) {
-            console.log('로그아웃 완료, 페이지 새로고침');
-            // 페이지 새로고침으로 상태 완전 초기화
-            window.location.reload();
+            console.log('로그아웃 완료, 홈페이지로 이동');
+            // 강제로 홈페이지로 이동하여 상태 완전 초기화
+            window.location.href = '/';
         } else {
             console.error('로그아웃 실패:', data.message);
-            // 실패해도 페이지 새로고침
-            window.location.reload();
+            // 실패해도 홈페이지로 이동
+            window.location.href = '/';
         }
     } catch (error) {
         console.error('로그아웃 오류:', error);
-        // 오류가 발생해도 페이지 새로고침
-        window.location.reload();
+        // 오류가 발생해도 홈페이지로 이동
+        window.location.href = '/';
     }
 }
 

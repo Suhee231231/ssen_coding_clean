@@ -142,8 +142,13 @@ router.post('/login', async (req, res) => {
 
 // JWT 로그아웃
 router.post('/logout', (req, res) => {
-    // JWT 토큰 쿠키 삭제
-    res.clearCookie('auth_token');
+    // JWT 토큰 쿠키를 즉시 만료시켜 삭제
+    res.clearCookie('auth_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        expires: new Date(0) // 즉시 만료
+    });
     res.json({ 
         success: true, 
         message: '로그아웃되었습니다.' 
