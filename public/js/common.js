@@ -22,6 +22,8 @@ async function checkAuthStatus() {
     const loginStatus = urlParams.get('login');
     const authType = urlParams.get('auth');
     
+
+    
     // 로그인 성공이면 캐시 초기화하고 즉시 인증 상태 확인
     if (loginStatus === 'success') {
         // 모든 캐시 초기화
@@ -193,6 +195,8 @@ async function logout() {
         localStorage.removeItem('authStatus');
         localStorage.removeItem('authCheckTime');
         
+
+        
         // 네비게이션 즉시 업데이트 (로그아웃 상태로)
         updateNavigation({ isLoggedIn: false, isAdmin: false, user: null });
         
@@ -207,16 +211,16 @@ async function logout() {
         if (data.success) {
             console.log('로그아웃 완료, 홈페이지로 이동');
             // 강제 새로고침으로 페이지 상태 완전 초기화
-            window.location.href = '/';
+            window.location.replace('/');
         } else {
             console.error('로그아웃 실패:', data.message);
             // 실패해도 홈페이지로 이동
-            window.location.href = '/';
+            window.location.replace('/');
         }
     } catch (error) {
         console.error('로그아웃 오류:', error);
         // 오류가 발생해도 홈페이지로 이동
-        window.location.href = '/';
+        window.location.replace('/');
     }
 }
 
