@@ -130,7 +130,8 @@ app.use(helmet({
                     "https://accounts.google.com", 
                     "https://www.google.com",
                     "https://googleads.g.doubleclick.net",
-                    "https://tpc.googlesyndication.com"
+                    "https://tpc.googlesyndication.com",
+                    "https://pagead2.googlesyndication.com"
                 ],
                 objectSrc: ["'none'"],
                 baseUri: ["'self'"],
