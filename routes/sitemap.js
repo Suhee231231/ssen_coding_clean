@@ -4,9 +4,13 @@ const router = express.Router();
 
 // 사이트맵 생성
 router.get('/', async (req, res) => {
+    console.log('🚀 사이트맵 요청 받음!', new Date().toISOString());
+    
     try {
         const baseUrl = 'https://ssencoding.com';
         const currentDate = new Date().toISOString();
+        
+        console.log('📝 기본 사이트맵 생성 시작...');
         
         // 정적 페이지들
         let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -99,6 +103,7 @@ router.get('/', async (req, res) => {
         sitemap += `
 </urlset>`;
 
+        console.log('✅ 사이트맵 생성 완료!');
         res.header('Content-Type', 'application/xml');
         res.send(sitemap);
         
