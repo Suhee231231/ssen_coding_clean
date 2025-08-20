@@ -2,6 +2,15 @@ const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
 
+// 테스트용 엔드포인트 추가
+router.get('/test', (req, res) => {
+    res.json({
+        message: '🚀 NEW SITEMAP CODE IS WORKING!',
+        timestamp: new Date().toISOString(),
+        version: 'SEO OPTIMIZED VERSION'
+    });
+});
+
 // 사이트맵 생성
 router.get('/', async (req, res) => {
     console.log('🚀 사이트맵 요청 받음!', new Date().toISOString());
