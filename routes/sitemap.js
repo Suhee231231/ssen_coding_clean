@@ -77,7 +77,7 @@ router.get('/new', async (req, res) => {
         <priority>0.5</priority>
     </url>
     <url>
-        <loc>${baseUrl}/verify-email</loc>
+        <loc>${baseUrl}/verify-email.html</loc>
         <lastmod>${currentDate}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
