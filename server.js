@@ -544,6 +544,7 @@ passport.deserializeUser(async (id, done) => {
 // 라우터 설정
 app.use('/api/auth', authLimiter, authRoutes); // 인증 라우트에 엄격한 rate limiting 적용
 app.use('/api/problems', problemRoutes);
+app.use('/problems', problemRoutes); // 개별 문제 페이지 라우트 추가
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/auth', googleAuthLimiter, googleAuthRoutes); // Google 인증에도 rate limiting 적용
