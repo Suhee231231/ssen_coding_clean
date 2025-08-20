@@ -104,7 +104,7 @@ router.get('/new', async (req, res) => {
             console.log(`✅ NEW SITEMAP: ${problems.length}개의 문제 발견`);
             
             problems.forEach(problem => {
-                const lastmod = problem.updated_at || problem.created_at;
+                const lastmod = new Date(problem.updated_at || problem.created_at).toISOString();
                 sitemap += `
     <url>
         <loc>${baseUrl}/problems/${problem.subject_name}/problem/${problem.id}</loc>
