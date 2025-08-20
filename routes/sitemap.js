@@ -15,6 +15,15 @@ router.get('/test', (req, res) => {
 router.get('/', async (req, res) => {
     console.log('🚀 사이트맵 요청 받음!', new Date().toISOString());
     
+    // 강력한 캐시 방지 헤더 설정
+    res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Last-Modified': new Date().toUTCString(),
+        'ETag': `"${Date.now()}"`
+    });
+    
     try {
         const baseUrl = 'https://ssencoding.com';
         const currentDate = new Date().toISOString();
