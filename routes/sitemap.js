@@ -67,24 +67,34 @@ router.get('/', async (req, res) => {
     </url>`;
 
         // 개별 문제 페이지들 추가
-        const [problems] = await pool.execute(`
-            SELECT p.id, p.created_at, p.updated_at, s.name as subject_name
-            FROM problems p
-            JOIN subjects s ON p.subject_id = s.id
-            WHERE s.is_public = TRUE
-            ORDER BY p.id
-        `);
-
-        problems.forEach(problem => {
-            const lastmod = problem.updated_at || problem.created_at;
-            sitemap += `
+        try {
+            console.log('🔍 사이트맵: 문제 데이터 조회 시작...');
+            
+            const [problems] = await pool.execute(`
+                SELECT p.id, p.created_at, p.updated_at, s.name as subject_name
+                FROM problems p
+                JOIN subjects s ON p.subject_id = s.id
+                WHERE s.is_public = TRUE
+                ORDER BY p.id
+            `);
+            
+            console.log(`✅ 사이트맵: ${problems.length}개의 문제 발견`);
+            
+            problems.forEach(problem => {
+                const lastmod = problem.updated_at || problem.created_at;
+                sitemap += `
     <url>
         <loc>${baseUrl}/problems/${problem.subject_name}/problem/${problem.id}</loc>
         <lastmod>${lastmod}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>`;
-        });
+            });
+            
+        } catch (dbError) {
+            console.error('❌ 사이트맵: 데이터베이스 오류:', dbError);
+            // 데이터베이스 오류가 있어도 기본 사이트맵은 반환
+        }
 
         sitemap += `
 </urlset>`;
@@ -93,7 +103,7 @@ router.get('/', async (req, res) => {
         res.send(sitemap);
         
     } catch (error) {
-        console.error('사이트맵 생성 오류:', error);
+        console.error('❌ 사이트맵 생성 오류:', error);
         res.status(500).send('사이트맵 생성 중 오류가 발생했습니다.');
     }
 });
