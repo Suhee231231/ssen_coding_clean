@@ -601,4 +601,187 @@ router.post('/:subject/remove-wrong-problems', async (req, res) => {
     }
 });
 
+// 개별 문제 페이지를 위한 SEO 친화적인 라우트 추가 (프리뷰 형태)
+router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
+    try {
+        const { subject, id } = req.params;
+        
+        // 과목 정보 조회
+        const [subjectResults] = await pool.execute(
+            'SELECT * FROM subjects WHERE name = ? AND is_public = TRUE',
+            [subject]
+        );
+        
+        if (subjectResults.length === 0) {
+            return res.status(404).send('과목을 찾을 수 없습니다.');
+        }
+        
+        const subjectInfo = subjectResults[0];
+        
+        // 특정 문제 조회
+        const [problemResults] = await pool.execute(`
+            SELECT p.*, s.name as subject_name 
+            FROM problems p 
+            JOIN subjects s ON p.subject_id = s.id 
+            WHERE s.name = ? AND p.id = ?
+        `, [subject, id]);
+        
+        if (problemResults.length === 0) {
+            return res.status(404).send('문제를 찾을 수 없습니다.');
+        }
+        
+        const problem = problemResults[0];
+        
+        // HTML 페이지 생성 (프리뷰 형태)
+        const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${problem.content.substring(0, 50)}... | ${subjectInfo.name} | 쎈코딩</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="${problem.content.replace(/<[^>]*>/g, '').substring(0, 160)}...">
+    <meta name="keywords" content="${subjectInfo.name}, 코딩문제, 프로그래밍, ${subjectInfo.category || '코딩'}">
+    <meta name="author" content="쎈코딩">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://ssencoding.com/problems/${subject}/problem/${id}">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="${problem.content.substring(0, 50)}... | ${subjectInfo.name}">
+    <meta property="og:description" content="${problem.content.replace(/<[^>]*>/g, '').substring(0, 160)}...">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://ssencoding.com/problems/${subject}/problem/${id}">
+    <meta property="og:site_name" content="쎈코딩">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="${problem.content.substring(0, 50)}... | ${subjectInfo.name}">
+    <meta name="twitter:description" content="${problem.content.replace(/<[^>]*>/g, '').substring(0, 160)}...">
+    
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "${problem.content.substring(0, 100)}...",
+        "description": "${problem.content.replace(/<[^>]*>/g, '').substring(0, 200)}...",
+        "author": {
+            "@type": "Organization",
+            "name": "쎈코딩"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "쎈코딩",
+            "url": "https://ssencoding.com"
+        },
+        "datePublished": "${problem.created_at}",
+        "dateModified": "${problem.updated_at || problem.created_at}",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://ssencoding.com/problems/${subject}/problem/${id}"
+        },
+        "about": {
+            "@type": "Thing",
+            "name": "${subjectInfo.name}"
+        }
+    }
+    </script>
+    
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css?v=1.1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-container">
+                <h2 class="logo"><a href="/" style="text-decoration: none; color: inherit;"><span class="logo-highlight">SSEN</span><span class="logo-underline">C</span>ODING</a></h2>
+                <div class="nav-links">
+                    <a href="/">홈</a>
+                    <a href="/problems.html">문제 풀이</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <main>
+        <div class="problem-container">
+            <div class="problem-header">
+                <h2>${subjectInfo.name} - 문제 미리보기</h2>
+                <div class="problem-info-row">
+                    <p>문제 ${id}</p>
+                    <span class="difficulty-badge difficulty-${problem.difficulty}">${problem.difficulty}</span>
+                </div>
+            </div>
+            
+            <div class="problem-question">
+                ${problem.content}
+            </div>
+            
+            <div class="options-container">
+                <div class="option">
+                    <strong>A.</strong> ${problem.option_a}
+                </div>
+                <div class="option">
+                    <strong>B.</strong> ${problem.option_b}
+                </div>
+                <div class="option">
+                    <strong>C.</strong> ${problem.option_c}
+                </div>
+                <div class="option">
+                    <strong>D.</strong> ${problem.option_d}
+                </div>
+            </div>
+            
+            <div class="explanation">
+                <h3>정답: ${problem.correct_answer}</h3>
+                <div class="explanation-content">
+                    ${problem.explanation || '설명이 없습니다.'}
+                </div>
+            </div>
+            
+            <div class="navigation-buttons" style="margin-top: 2rem;">
+                <a href="/problems.html?subject=${subject}" class="nav-btn primary" style="text-decoration: none; padding: 12px 24px; background: #00d4aa; color: white; border-radius: 6px; font-weight: 500;">
+                    🎯 이 과목 문제 풀기
+                </a>
+                <a href="/" class="nav-btn" style="text-decoration: none; padding: 12px 24px; background: #f8f9fa; color: #333; border: 1px solid #ddd; border-radius: 6px; margin-left: 10px;">
+                    🏠 홈으로 가기
+                </a>
+            </div>
+            
+            <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #00d4aa;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #00d4aa;">💡 학습 팁</h4>
+                <p style="margin: 0; color: #666; font-size: 0.9rem;">
+                    이 문제를 포함한 ${subjectInfo.name} 과목의 모든 문제를 순차적으로 풀어보세요. 
+                    진행상황이 자동으로 저장되어 언제든지 이어서 학습할 수 있습니다.
+                </p>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // 코드 하이라이팅 적용
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Prism) {
+                Prism.highlightAll();
+            }
+        });
+    </script>
+</body>
+</html>`;
+        
+        res.send(html);
+        
+    } catch (error) {
+        console.error('개별 문제 페이지 생성 오류:', error);
+        res.status(500).send('서버 오류가 발생했습니다.');
+    }
+});
+
 module.exports = router; 

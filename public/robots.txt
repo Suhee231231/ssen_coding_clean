@@ -8,6 +8,9 @@ Disallow: /admin.html
 Disallow: /config/
 Disallow: /database/
 
+# 문제 페이지 경로 허용
+Allow: /problems/
+
 # 검색엔진 최적화
 Sitemap: https://ssencoding.com/sitemap.xml
 

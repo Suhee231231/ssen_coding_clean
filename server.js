@@ -175,6 +175,8 @@ app.use((req, res, next) => {
     return apiLimiter(req, res, next);
 });
 
+// 개별 문제 페이지는 정적 콘텐츠로 취급 (캐시 허용)
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public'), {
