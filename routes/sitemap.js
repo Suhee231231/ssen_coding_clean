@@ -11,9 +11,9 @@ router.get('/test', (req, res) => {
     });
 });
 
-// 사이트맵 생성
-router.get('/', async (req, res) => {
-    console.log('🚀 사이트맵 요청 받음!', new Date().toISOString());
+// 사이트맵 생성 (캐시 우회를 위한 새로운 경로)
+router.get('/new', async (req, res) => {
+    console.log('🚀 NEW SITEMAP 요청 받음!', new Date().toISOString());
     
     // 강력한 캐시 방지 헤더 설정
     res.set({
@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
         const baseUrl = 'https://ssencoding.com';
         const currentDate = new Date().toISOString();
         
-        console.log('📝 기본 사이트맵 생성 시작...');
+        console.log('📝 NEW SITEMAP 생성 시작...');
         
         // 정적 페이지들
         let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -91,7 +91,7 @@ router.get('/', async (req, res) => {
 
         // 개별 문제 페이지들 추가
         try {
-            console.log('🔍 사이트맵: 문제 데이터 조회 시작...');
+            console.log('🔍 NEW SITEMAP: 문제 데이터 조회 시작...');
             
             const [problems] = await pool.execute(`
                 SELECT p.id, p.created_at, p.updated_at, s.name as subject_name
@@ -101,7 +101,7 @@ router.get('/', async (req, res) => {
                 ORDER BY p.id
             `);
             
-            console.log(`✅ 사이트맵: ${problems.length}개의 문제 발견`);
+            console.log(`✅ NEW SITEMAP: ${problems.length}개의 문제 발견`);
             
             problems.forEach(problem => {
                 const lastmod = problem.updated_at || problem.created_at;
@@ -115,21 +115,27 @@ router.get('/', async (req, res) => {
             });
             
         } catch (dbError) {
-            console.error('❌ 사이트맵: 데이터베이스 오류:', dbError);
+            console.error('❌ NEW SITEMAP: 데이터베이스 오류:', dbError);
             // 데이터베이스 오류가 있어도 기본 사이트맵은 반환
         }
 
         sitemap += `
 </urlset>`;
 
-        console.log('✅ 사이트맵 생성 완료!');
+        console.log('✅ NEW SITEMAP 생성 완료!');
         res.header('Content-Type', 'application/xml');
         res.send(sitemap);
         
     } catch (error) {
-        console.error('❌ 사이트맵 생성 오류:', error);
+        console.error('❌ NEW SITEMAP 생성 오류:', error);
         res.status(500).send('사이트맵 생성 중 오류가 발생했습니다.');
     }
+});
+
+// 기존 사이트맵 (리다이렉트)
+router.get('/', async (req, res) => {
+    console.log('🚀 기존 사이트맵 요청 받음!', new Date().toISOString());
+    res.redirect('/sitemap.xml/new');
 });
 
 module.exports = router;
