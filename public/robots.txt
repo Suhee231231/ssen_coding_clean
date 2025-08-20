@@ -12,7 +12,7 @@ Disallow: /database/
 Allow: /problems/
 
 # 검색엔진 최적화
-Sitemap: https://ssencoding.com/sitemap.xml
+Sitemap: https://ssencoding.com/sitemap.xml/new
 
 # CSS, JS, 이미지 파일 허용
 Allow: /css/
