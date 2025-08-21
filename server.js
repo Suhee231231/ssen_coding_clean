@@ -121,17 +121,24 @@ app.use(helmet({
                     "https://*.doubleclick.net", 
                     "https://*.adtrafficquality.google", 
                     "https://*.googleadservices.com",
+                    "https://*.google.com",
                     "https://googleads.g.doubleclick.net",
                     "https://tpc.googlesyndication.com",
-                    "https://www.google.com"
+                    "https://www.google.com",
+                    "https://pagead2.googlesyndication.com"
                 ],
                 frameAncestors: [
                     "'self'", 
                     "https://accounts.google.com", 
                     "https://www.google.com",
+                    "https://*.google.com",
                     "https://googleads.g.doubleclick.net",
                     "https://tpc.googlesyndication.com",
-                    "https://pagead2.googlesyndication.com"
+                    "https://pagead2.googlesyndication.com",
+                    "https://*.googlesyndication.com",
+                    "https://*.doubleclick.net",
+                    "https://*.googleadservices.com",
+                    "https://*.adtrafficquality.google"
                 ],
                 objectSrc: ["'none'"],
                 baseUri: ["'self'"],
