@@ -80,7 +80,6 @@
             <div class="navigation-buttons">
                 <button class="nav-btn" id="prevBtn" onclick="navigateProblem(-1)">이전 문제</button>
                 <button class="nav-btn primary" id="nextBtn" onclick="navigateProblem(1)" style="display: none;">다음 문제</button>
-                <a href="#" id="shareLink" class="nav-btn" target="_blank" style="display: none;">문제 공유</a>
             </div>
         </div>
     </main>
@@ -176,13 +175,6 @@
 
                     // 네비게이션 버튼 상태 업데이트
                     updateNavigationButtons();
-                    
-                    // 공유 링크 업데이트
-                    const shareLink = document.getElementById('shareLink');
-                    if (shareLink) {
-                        shareLink.href = `/problems/${currentSubject}/problem/${currentProblem.id}`;
-                        shareLink.style.display = 'inline-block';
-                    }
                 } else {
                     alert('문제를 불러올 수 없습니다.');
                     window.location.href = '/';
