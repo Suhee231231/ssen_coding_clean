@@ -105,9 +105,10 @@ router.get('/new', async (req, res) => {
             
             problems.forEach(problem => {
                 const lastmod = new Date(problem.updated_at || problem.created_at).toISOString();
+                const encodedSubjectName = encodeURIComponent(problem.subject_name);
                 sitemap += `
     <url>
-        <loc>${baseUrl}/problems/${problem.subject_name}/problem/${problem.id}</loc>
+        <loc>${baseUrl}/problems/${encodedSubjectName}/problem/${problem.id}</loc>
         <lastmod>${lastmod}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
