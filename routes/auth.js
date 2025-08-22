@@ -1,7 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const { pool } = require('../config/database');
 const { authenticateJWT, requireAuth } = require('../middleware/jwt-auth');
+const { sendEmail } = require('../config/email');
 
 const router = express.Router();
 
@@ -387,6 +389,156 @@ router.delete('/delete-account', requireAuth, async (req, res) => {
 
     } catch (error) {
         console.error('회원탈퇴 오류:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: '서버 오류가 발생했습니다.' 
+        });
+    }
+});
+
+// 비밀번호 찾기 (재설정 링크 요청)
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        // 입력 검증
+        if (!email) {
+            return res.status(400).json({ 
+                success: false, 
+                message: '이메일 주소를 입력해주세요.' 
+            });
+        }
+
+        // 사용자 조회
+        const [users] = await pool.execute(
+            'SELECT id, email FROM users WHERE email = ?',
+            [email]
+        );
+
+        if (users.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: '해당 이메일로 가입된 계정을 찾을 수 없습니다.' 
+            });
+        }
+
+        // 기존 재설정 토큰 삭제
+        await pool.execute(
+            'DELETE FROM password_reset_tokens WHERE email = ?',
+            [email]
+        );
+
+        // 새로운 재설정 토큰 생성
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1시간 후 만료
+
+        // 토큰 저장
+        await pool.execute(
+            'INSERT INTO password_reset_tokens (email, token, expires_at) VALUES (?, ?, ?)',
+            [email, resetToken, expiresAt]
+        );
+
+        // 재설정 링크 생성
+        const resetLink = `${req.protocol}://${req.get('host')}/reset-password.html?token=${resetToken}`;
+
+        // 이메일 전송
+        const emailSubject = '[쎈코딩] 비밀번호 재설정';
+        const emailContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #00d4aa;">쎈코딩 비밀번호 재설정</h2>
+                <p>안녕하세요, 쎈코딩입니다.</p>
+                <p>비밀번호 재설정을 요청하셨습니다. 아래 링크를 클릭하여 새로운 비밀번호를 설정해주세요.</p>
+                <p><strong>이 링크는 1시간 후에 만료됩니다.</strong></p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetLink}" style="background-color: #00d4aa; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">비밀번호 재설정</a>
+                </div>
+                <p>위 링크가 작동하지 않는 경우, 아래 링크를 브라우저에 복사하여 붙여넣기 해주세요:</p>
+                <p style="word-break: break-all; color: #666;">${resetLink}</p>
+                <p>비밀번호 재설정을 요청하지 않으셨다면, 이 이메일을 무시하셔도 됩니다.</p>
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                <p style="color: #666; font-size: 12px;">이 이메일은 쎈코딩에서 발송되었습니다.</p>
+            </div>
+        `;
+
+        await sendEmail(email, emailSubject, emailContent);
+
+        res.json({ 
+            success: true, 
+            message: '비밀번호 재설정 링크가 이메일로 전송되었습니다. 이메일을 확인해주세요.' 
+        });
+
+    } catch (error) {
+        console.error('비밀번호 찾기 오류:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: '서버 오류가 발생했습니다.' 
+        });
+    }
+});
+
+// 비밀번호 재설정
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        // 입력 검증
+        if (!token || !newPassword) {
+            return res.status(400).json({ 
+                success: false, 
+                message: '모든 필드를 입력해주세요.' 
+            });
+        }
+
+        // 토큰 조회
+        const [tokens] = await pool.execute(
+            'SELECT email, expires_at FROM password_reset_tokens WHERE token = ?',
+            [token]
+        );
+
+        if (tokens.length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: '유효하지 않은 토큰입니다.' 
+            });
+        }
+
+        const resetToken = tokens[0];
+
+        // 토큰 만료 확인
+        if (new Date() > new Date(resetToken.expires_at)) {
+            // 만료된 토큰 삭제
+            await pool.execute(
+                'DELETE FROM password_reset_tokens WHERE token = ?',
+                [token]
+            );
+            return res.status(400).json({ 
+                success: false, 
+                message: '만료된 토큰입니다. 새로운 재설정 링크를 요청해주세요.' 
+            });
+        }
+
+        // 새 비밀번호 해시화
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // 비밀번호 업데이트
+        await pool.execute(
+            'UPDATE users SET password = ? WHERE email = ?',
+            [hashedPassword, resetToken.email]
+        );
+
+        // 사용된 토큰 삭제
+        await pool.execute(
+            'DELETE FROM password_reset_tokens WHERE token = ?',
+            [token]
+        );
+
+        res.json({ 
+            success: true, 
+            message: '비밀번호가 성공적으로 변경되었습니다. 3초 후 로그인 페이지로 이동합니다.' 
+        });
+
+    } catch (error) {
+        console.error('비밀번호 재설정 오류:', error);
         res.status(500).json({ 
             success: false, 
             message: '서버 오류가 발생했습니다.' 
