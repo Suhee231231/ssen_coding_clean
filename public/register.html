@@ -193,6 +193,18 @@
         
         // Google 로그인 함수
         function googleLogin() {
+            // 개인정보 처리방침 및 이용약관 동의 확인
+            const privacyAgreement = document.getElementById('privacyAgreement').checked;
+            const termsAgreement = document.getElementById('termsAgreement').checked;
+            
+            if (!privacyAgreement || !termsAgreement) {
+                const errorMessage = document.getElementById('errorMessage');
+                errorMessage.textContent = 'Google 회원가입을 위해서도 개인정보 처리방침과 이용약관에 모두 동의해주세요.';
+                errorMessage.style.display = 'block';
+                return;
+            }
+            
+            // 동의가 완료된 경우에만 Google OAuth로 이동
             window.location.href = '/auth/google';
         }
     </script>
