@@ -127,19 +127,7 @@ app.use(helmet({
                     "https://www.google.com",
                     "https://pagead2.googlesyndication.com"
                 ],
-                frameAncestors: [
-                    "'self'", 
-                    "https://accounts.google.com", 
-                    "https://www.google.com",
-                    "https://*.google.com",
-                    "https://googleads.g.doubleclick.net",
-                    "https://tpc.googlesyndication.com",
-                    "https://pagead2.googlesyndication.com",
-                    "https://*.googlesyndication.com",
-                    "https://*.doubleclick.net",
-                    "https://*.googleadservices.com",
-                    "https://*.adtrafficquality.google"
-                ],
+                frameAncestors: ["'self'"],
                 objectSrc: ["'none'"],
                 baseUri: ["'self'"],
                 formAction: ["'self'"]
