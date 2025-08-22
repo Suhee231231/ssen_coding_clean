@@ -223,8 +223,14 @@
             
             // 해설이 있으면 표시
             if (currentProblem.explanation) {
-                explanation.innerHTML = `<strong>해설:</strong> ${currentProblem.explanation}`;
+                const formattedExplanation = formatCodeBlocks(currentProblem.explanation);
+                explanation.innerHTML = `<strong>해설:</strong> ${formattedExplanation}`;
                 explanation.style.display = 'block';
+                
+                // 해설의 코드블럭 하이라이팅 적용
+                if (window.Prism) {
+                    Prism.highlightAllUnder(explanation);
+                }
             }
             
             // 다음 문제 버튼 표시
@@ -343,6 +349,11 @@
                         const formattedExplanation = formatCodeBlocks(data.explanation);
                         explanation.innerHTML = `<strong>해설:</strong> ${formattedExplanation}`;
                         explanation.style.display = 'block';
+                        
+                        // 해설의 코드블럭 하이라이팅 적용
+                        if (window.Prism) {
+                            Prism.highlightAllUnder(explanation);
+                        }
                     }
                     
                     // 다음 문제 버튼 표시
