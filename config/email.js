@@ -66,7 +66,11 @@ const generateVerificationToken = () => {
 
 // 인증 이메일 전송
 const sendVerificationEmail = async (email, token) => {
-    const verificationUrl = `http://localhost:3001/verify-email?token=${token}`;
+    // 환경에 따라 도메인 설정
+    const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://ssencoding.com' 
+        : 'http://localhost:3001';
+    const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
     
     const mailOptions = {
         from: 'ssencoding@gmail.com',
