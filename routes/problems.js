@@ -418,17 +418,36 @@ router.get('/:subject', optionalAuth, async (req, res) => {
         const currentProblem = problems[problemIndex];
         const problemNumber = problemIndex + 1;
         
+        // 현재 문제에 대한 사용자 진행상황 확인
+        let userProgress = null;
+        if (req.user && req.user.id) {
+            try {
+                const [progressData] = await pool.execute(`
+                    SELECT is_correct, selected_answer, answered_at
+                    FROM user_progress
+                    WHERE user_id = ? AND problem_id = ?
+                `, [req.user.id, currentProblem.id]);
+                
+                if (progressData.length > 0) {
+                    userProgress = {
+                        is_correct: progressData[0].is_correct,
+                        selected_answer: progressData[0].selected_answer,
+                        answered_at: progressData[0].answered_at,
+                        correct_answer: currentProblem.correct_answer
+                    };
+                }
+            } catch (progressError) {
+                console.error('현재 문제 진행상황 조회 오류:', progressError);
+            }
+        }
+        
         res.json({
             success: true,
             subject: subjectInfo,
             problem: currentProblem,
             problemNumber: problemNumber,
             totalProblems: totalProblems,
-            userProgress: req.user ? {
-                lastProblemId: currentProblem.id,
-                isCorrect: null,
-                answeredAt: null
-            } : null
+            userProgress: userProgress
         });
         
     } catch (error) {
