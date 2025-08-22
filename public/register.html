@@ -18,6 +18,34 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&display=swap" rel="stylesheet">
+    <style>
+        .checkbox-group {
+            margin: 1.5rem 0;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            gap: 0.5rem;
+        }
+        .checkbox-item input[type="checkbox"] {
+            margin-top: 0.2rem;
+            width: 16px;
+            height: 16px;
+        }
+        .checkbox-item label {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            cursor: pointer;
+        }
+        .checkbox-item a {
+            color: #00d4aa;
+            text-decoration: none;
+        }
+        .checkbox-item a:hover {
+            text-decoration: underline;
+        }
+    </style>
     
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-48M7M3KBV0"></script>
@@ -68,6 +96,22 @@
                     <label for="confirmPassword">비밀번호 확인</label>
                     <input type="password" id="confirmPassword" name="confirmPassword" required>
                 </div>
+                
+                <div class="form-group checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="privacyAgreement" name="privacyAgreement" required>
+                        <label for="privacyAgreement">
+                            <a href="/privacy-policy.html" target="_blank">개인정보 처리방침</a>에 동의합니다. <span style="color: red;">*</span>
+                        </label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="termsAgreement" name="termsAgreement" required>
+                        <label for="termsAgreement">
+                            <a href="/terms-of-service.html" target="_blank">이용약관</a>에 동의합니다. <span style="color: red;">*</span>
+                        </label>
+                    </div>
+                </div>
+                
                 <button type="submit" class="form-btn">회원가입</button>
             </form>
             
@@ -107,6 +151,16 @@
                 return;
             }
             
+            // 개인정보 처리방침 및 이용약관 동의 확인
+            const privacyAgreement = document.getElementById('privacyAgreement').checked;
+            const termsAgreement = document.getElementById('termsAgreement').checked;
+            
+            if (!privacyAgreement || !termsAgreement) {
+                errorMessage.textContent = '개인정보 처리방침과 이용약관에 모두 동의해주세요.';
+                errorMessage.style.display = 'block';
+                return;
+            }
+            
             try {
                 const response = await fetch('/api/email-verification/request-verification', {
                     method: 'POST',
@@ -142,5 +196,23 @@
             window.location.href = '/auth/google';
         }
     </script>
+    
+    <footer style="background: #282A35; color: white; padding: 2rem 0; margin-top: 4rem;">
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h3 style="color: #00d4aa; margin-bottom: 0.5rem;">SSEN CODING</h3>
+                    <p style="font-size: 0.9rem; opacity: 0.8;">4지 선다형 문제로 익히는 코딩 학습 플랫폼</p>
+                </div>
+                <div style="text-align: right;">
+                    <div style="margin-bottom: 1rem;">
+                        <a href="/privacy-policy.html" style="color: white; text-decoration: none; margin-left: 1rem; font-size: 0.9rem;">개인정보 처리방침</a>
+                        <a href="/terms-of-service.html" style="color: white; text-decoration: none; margin-left: 1rem; font-size: 0.9rem;">이용약관</a>
+                    </div>
+                    <p style="font-size: 0.8rem; opacity: 0.7; margin: 0;">© 2025 SSEN CODING. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
 </body>
 </html> 
