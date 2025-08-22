@@ -148,6 +148,7 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
             const codeBlocks = [];
             let blockIndex = 0;
             
+            // 멀티라인 코드 블럭 처리 (```로 감싸진 부분)
             let processedContent = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
                 const lang = language || 'text';
                 const escapedCode = code
@@ -159,6 +160,22 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
                 
                 const marker = `__CODE_BLOCK_${blockIndex}__`;
                 codeBlocks[blockIndex] = `<pre><code class="language-${lang}">${escapedCode}</code></pre>`;
+                blockIndex++;
+                
+                return marker;
+            });
+            
+            // 인라인 코드 블럭 처리 (`로 감싸진 부분)
+            processedContent = processedContent.replace(/`([^`]+)`/g, (match, code) => {
+                const escapedCode = code
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+                
+                const marker = `__CODE_BLOCK_${blockIndex}__`;
+                codeBlocks[blockIndex] = `<code>${escapedCode}</code>`;
                 blockIndex++;
                 
                 return marker;
