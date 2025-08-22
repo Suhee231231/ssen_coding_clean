@@ -482,7 +482,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/auth', googleAuthLimiter, googleAuthRoutes); // Google 인증에도 rate limiting 적용
 app.use('/api/email-verification', authLimiter, emailVerificationRoutes); // 이메일 인증에도 rate limiting 적용
 app.use('/rss', rssRoutes);
-app.use('/sitemap.xml', sitemapRoutes);
+app.use('/sitemap', sitemapRoutes);
 
 // 메인 페이지 라우트
 app.get('/', (req, res) => {
