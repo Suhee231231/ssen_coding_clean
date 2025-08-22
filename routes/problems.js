@@ -132,27 +132,37 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
     {
         "@context": "https://schema.org",
         "@type": "Article",
-        "headline": "${escapeHtml(problem.content.substring(0, 100))}...",
-        "description": "${escapeHtml(problem.content.replace(/<[^>]*>/g, '').substring(0, 200))}...",
+        "headline": ${JSON.stringify(problem.content.substring(0, 100) + '...')},
+        "description": ${JSON.stringify(problem.content.replace(/<[^>]*>/g, '').substring(0, 200) + '...')},
+        "image": "https://ssencoding.com/android-chrome-512x512.png",
         "author": {
-            "@type": "Organization",
-            "name": "쎈코딩"
-        },
-        "publisher": {
             "@type": "Organization",
             "name": "쎈코딩",
             "url": "https://ssencoding.com"
         },
-        "datePublished": "${problem.created_at}",
-        "dateModified": "${problem.updated_at || problem.created_at}",
+        "publisher": {
+            "@type": "Organization",
+            "name": "쎈코딩",
+            "url": "https://ssencoding.com",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://ssencoding.com/android-chrome-512x512.png",
+                "width": 512,
+                "height": 512
+            }
+        },
+        "datePublished": "${new Date(problem.created_at).toISOString()}",
+        "dateModified": "${new Date(problem.updated_at || problem.created_at).toISOString()}",
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https://ssencoding.com/problems/${escapeHtml(subject)}/problem/${id}"
         },
         "about": {
             "@type": "Thing",
-            "name": "${escapeHtml(subjectInfo.name)}"
-        }
+            "name": ${JSON.stringify(subjectInfo.name)}
+        },
+        "articleSection": ${JSON.stringify(subjectInfo.name)},
+        "keywords": ${JSON.stringify([subjectInfo.name, '코딩문제', '프로그래밍', subjectInfo.category || '코딩'].join(', '))}
     }
     </script>
     

@@ -39,10 +39,28 @@
         "name": "쎈코딩",
         "description": "4지 선다형 문제로 익히는 코딩 학습 플랫폼",
         "url": "https://ssencoding.com",
+        "logo": "https://ssencoding.com/android-chrome-512x512.png",
+        "sameAs": [
+            "https://ssencoding.com"
+        ],
         "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://ssencoding.com/problems.html?subject={search_term_string}",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://ssencoding.com/problems.html?subject={search_term_string}"
+            },
             "query-input": "required name=search_term_string"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "쎈코딩",
+            "url": "https://ssencoding.com",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://ssencoding.com/android-chrome-512x512.png",
+                "width": 512,
+                "height": 512
+            }
         }
     }
     </script>
