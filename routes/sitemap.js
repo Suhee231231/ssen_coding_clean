@@ -70,12 +70,7 @@ router.get('/new', async (req, res) => {
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
-    <url>
-        <loc>${baseUrl}/admin.html</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.5</priority>
-    </url>
+
     <url>
         <loc>${baseUrl}/verify-email.html</loc>
         <lastmod>${currentDate}</lastmod>
@@ -88,6 +83,35 @@ router.get('/new', async (req, res) => {
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
     </url>`;
+
+        // 과목별 페이지 추가
+        try {
+            console.log('🔍 NEW SITEMAP: 과목 데이터 조회 시작...');
+            
+            const [subjects] = await pool.execute(`
+                SELECT name, updated_at, created_at
+                FROM subjects
+                WHERE is_public = TRUE
+                ORDER BY name
+            `);
+            
+            console.log(`✅ NEW SITEMAP: ${subjects.length}개의 과목 발견`);
+            
+            subjects.forEach(subject => {
+                const lastmod = new Date(subject.updated_at || subject.created_at).toISOString();
+                const encodedSubjectName = encodeURIComponent(subject.name);
+                sitemap += `
+    <url>
+        <loc>${baseUrl}/problems.html?subject=${encodedSubjectName}</loc>
+        <lastmod>${lastmod}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>`;
+            });
+            
+        } catch (dbError) {
+            console.error('❌ NEW SITEMAP: 과목 데이터베이스 오류:', dbError);
+        }
 
         // 개별 문제 페이지들 추가
         try {
@@ -116,7 +140,7 @@ router.get('/new', async (req, res) => {
             });
             
         } catch (dbError) {
-            console.error('❌ NEW SITEMAP: 데이터베이스 오류:', dbError);
+            console.error('❌ NEW SITEMAP: 문제 데이터베이스 오류:', dbError);
             // 데이터베이스 오류가 있어도 기본 사이트맵은 반환
         }
 

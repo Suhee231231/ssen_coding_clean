@@ -69,7 +69,27 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
         );
         
         if (subjectResults.length === 0) {
-            return res.status(404).send('과목을 찾을 수 없습니다.');
+            return res.status(404).send(`<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>과목을 찾을 수 없습니다 | 쎈코딩</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="https://ssencoding.com/problems.html">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        .error { color: #e74c3c; font-size: 24px; margin-bottom: 20px; }
+        .message { color: #666; margin-bottom: 30px; }
+        .link { color: #00d4aa; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="error">404 - 과목을 찾을 수 없습니다</div>
+    <div class="message">요청하신 과목이 존재하지 않거나 비공개 상태입니다.</div>
+    <a href="/problems.html" class="link">→ 문제 목록으로 돌아가기</a>
+</body>
+</html>`);
         }
         
         const subjectInfo = subjectResults[0];
@@ -83,7 +103,27 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
         `, [subject, id]);
         
         if (problemResults.length === 0) {
-            return res.status(404).send('문제를 찾을 수 없습니다.');
+            return res.status(404).send(`<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문제를 찾을 수 없습니다 | 쎈코딩</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="https://ssencoding.com/problems/${encodeURIComponent(subject)}.html">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        .error { color: #e74c3c; font-size: 24px; margin-bottom: 20px; }
+        .message { color: #666; margin-bottom: 30px; }
+        .link { color: #00d4aa; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="error">404 - 문제를 찾을 수 없습니다</div>
+    <div class="message">요청하신 문제가 존재하지 않거나 비공개 상태입니다.</div>
+    <a href="/problems.html?subject=${encodeURIComponent(subject)}" class="link">→ ${subject} 문제 목록으로 돌아가기</a>
+</body>
+</html>`);
         }
         
         const problem = problemResults[0];
@@ -113,13 +153,13 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
     <meta name="keywords" content="${escapeHtml(subjectInfo.name)}, 코딩문제, 프로그래밍, ${escapeHtml(subjectInfo.category || '코딩')}">
     <meta name="author" content="쎈코딩">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://ssencoding.com/problems/${escapeHtml(subject)}/problem/${id}">
+    <link rel="canonical" href="https://ssencoding.com/problems/${encodeURIComponent(subjectInfo.name)}/problem/${id}">
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="${escapeHtml(problem.content.substring(0, 50))}... | ${escapeHtml(subjectInfo.name)}">
     <meta property="og:description" content="${escapeHtml(problem.content.replace(/<[^>]*>/g, '').substring(0, 160))}...">
     <meta property="og:type" content="article">
-    <meta property="og:url" content="https://ssencoding.com/problems/${escapeHtml(subject)}/problem/${id}">
+    <meta property="og:url" content="https://ssencoding.com/problems/${encodeURIComponent(subjectInfo.name)}/problem/${id}">
     <meta property="og:site_name" content="쎈코딩">
     
     <!-- Twitter Card Meta Tags -->
@@ -155,7 +195,7 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
         "dateModified": "${new Date(problem.updated_at || problem.created_at).toISOString()}",
         "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": "https://ssencoding.com/problems/${escapeHtml(subject)}/problem/${id}"
+            "@id": "https://ssencoding.com/problems/${encodeURIComponent(subjectInfo.name)}/problem/${id}"
         },
         "about": {
             "@type": "Thing",

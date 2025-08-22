@@ -7,18 +7,31 @@ Disallow: /auth/
 Disallow: /admin.html
 Disallow: /config/
 Disallow: /database/
+Disallow: /admin/
+Disallow: /private/
 
-# 문제 페이지 경로 허용
+# 문제 페이지 경로 명시적 허용
 Allow: /problems/
+Allow: /problems/*/problem/*
+Allow: /problems.html
+Allow: /profile.html
+Allow: /wrong-problems.html
 
-# 검색엔진 최적화
-Sitemap: https://ssencoding.com/sitemap.xml/new
-
-# CSS, JS, 이미지 파일 허용
+# 정적 파일 허용
 Allow: /css/
 Allow: /js/
 Allow: /images/
 Allow: /favicon.ico
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.jpeg
+Allow: /*.gif
+Allow: /*.svg
+Allow: /*.ico
+Allow: /*.webp
+
+# 검색엔진 최적화
+Sitemap: https://ssencoding.com/sitemap.xml/new
 
 # 크롤링 지연 (선택사항)
 Crawl-delay: 1
