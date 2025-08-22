@@ -144,7 +144,10 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
         const processContent = (content) => {
             if (!content) return '';
             
-            // 코드 블럭 패턴 찾기 (```로 감싸진 부분)
+            // 코드 블럭을 임시 마커로 교체
+            const codeBlocks = [];
+            let blockIndex = 0;
+            
             let processedContent = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
                 const lang = language || 'text';
                 const escapedCode = code
@@ -154,11 +157,22 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#39;');
                 
-                return `<pre><code class="language-${lang}">${escapedCode}</code></pre>`;
+                const marker = `__CODE_BLOCK_${blockIndex}__`;
+                codeBlocks[blockIndex] = `<pre><code class="language-${lang}">${escapedCode}</code></pre>`;
+                blockIndex++;
+                
+                return marker;
             });
             
-            // 코드 블럭 외의 일반 텍스트는 이스케이프 처리
-            return escapeHtml(processedContent);
+            // 나머지 텍스트 이스케이프 처리
+            processedContent = escapeHtml(processedContent);
+            
+            // 코드 블럭 마커를 실제 HTML로 복원
+            codeBlocks.forEach((block, index) => {
+                processedContent = processedContent.replace(`__CODE_BLOCK_${index}__`, block);
+            });
+            
+            return processedContent;
         };
         
         // HTML 페이지 생성 (프리뷰 형태)
