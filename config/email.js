@@ -108,8 +108,27 @@ const sendVerificationEmail = async (email, token) => {
     }
 };
 
+// 일반 이메일 전송 함수
+const sendEmail = async (to, subject, htmlContent) => {
+    const mailOptions = {
+        from: 'ssencoding@gmail.com',
+        to: to,
+        subject: subject,
+        html: htmlContent
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        return true;
+    } catch (error) {
+        console.error('이메일 전송 오류:', error);
+        return false;
+    }
+};
+
 module.exports = {
     transporter,
     generateVerificationToken,
-    sendVerificationEmail
+    sendVerificationEmail,
+    sendEmail
 }; 
