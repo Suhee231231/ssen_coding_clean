@@ -272,16 +272,9 @@ router.get('/check', async (req, res) => {
 });
 
 // 비밀번호 변경
-router.post('/change-password', async (req, res) => {
+router.post('/change-password', requireAuth, async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
-        
-        if (!req.isAuthenticated()) {
-            return res.status(401).json({ 
-                success: false, 
-                message: '로그인이 필요합니다.' 
-            });
-        }
         
         if (!currentPassword || !newPassword) {
             return res.status(400).json({ 
@@ -336,15 +329,8 @@ router.post('/change-password', async (req, res) => {
 });
 
 // 회원탈퇴
-router.delete('/delete-account', async (req, res) => {
+router.delete('/delete-account', requireAuth, async (req, res) => {
     try {
-        if (!req.isAuthenticated()) {
-            return res.status(401).json({ 
-                success: false, 
-                message: '로그인이 필요합니다.' 
-            });
-        }
-
         const userId = req.user.id;
 
         // 사용자의 모든 데이터 삭제 (트랜잭션 사용)
@@ -366,12 +352,8 @@ router.delete('/delete-account', async (req, res) => {
 
             await connection.commit();
 
-            // 세션 삭제
-            req.logout((err) => {
-                if (err) {
-                    console.error('로그아웃 오류:', err);
-                }
-            });
+            // JWT 쿠키 삭제
+            res.clearCookie('auth_token');
 
             res.json({ 
                 success: true, 
