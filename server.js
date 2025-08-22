@@ -217,7 +217,11 @@ app.use(session({
         name: 'ssen-coding-session' // 쿠키 이름을 cookie 객체 내부에 설정
     },
     name: 'ssen-coding-session', // 세션 쿠키 이름 명시
-    unset: 'destroy' // 세션 삭제 시 완전히 제거
+    unset: 'destroy', // 세션 삭제 시 완전히 제거
+    // 프로덕션 환경에서 MemoryStore 경고 숨기기
+    store: process.env.NODE_ENV === 'production' ? 
+        new (require('express-session')).MemoryStore() : 
+        undefined
 }));
 
 // Passport 초기화
@@ -230,48 +234,35 @@ const { pool } = require('./config/database');
 // 데이터베이스 테이블 자동 업데이트 함수
 async function updateDatabaseTables() {
     try {
-        console.log('🔧 데이터베이스 테이블 업데이트 중...');
-        
         // 먼저 테이블 구조 확인
         const [columns] = await pool.execute('DESCRIBE subjects');
         const existingColumns = columns.map(col => col.Field);
-        
-        console.log('현재 subjects 테이블 컬럼:', existingColumns);
         
         // category 컬럼 추가 (없는 경우에만)
         if (!existingColumns.includes('category')) {
             try {
                 await pool.execute('ALTER TABLE subjects ADD COLUMN category VARCHAR(50) DEFAULT "프로그래밍" AFTER description');
-                console.log('✅ category 컬럼 추가 완료');
             } catch (error) {
                 console.error('❌ category 컬럼 추가 오류:', error.message);
             }
-        } else {
-            console.log('ℹ️  category 컬럼이 이미 존재합니다');
         }
         
         // is_public 컬럼 추가 (없는 경우에만)
         if (!existingColumns.includes('is_public')) {
             try {
                 await pool.execute('ALTER TABLE subjects ADD COLUMN is_public BOOLEAN DEFAULT true AFTER category');
-                console.log('✅ is_public 컬럼 추가 완료');
             } catch (error) {
                 console.error('❌ is_public 컬럼 추가 오류:', error.message);
             }
-        } else {
-            console.log('ℹ️  is_public 컬럼이 이미 존재합니다');
         }
         
         // sort_order 컬럼 추가 (없는 경우에만)
         if (!existingColumns.includes('sort_order')) {
             try {
                 await pool.execute('ALTER TABLE subjects ADD COLUMN sort_order INT DEFAULT 0 AFTER is_public');
-                console.log('✅ sort_order 컬럼 추가 완료');
             } catch (error) {
                 console.error('❌ sort_order 컬럼 추가 오류:', error.message);
             }
-        } else {
-            console.log('ℹ️  sort_order 컬럼이 이미 존재합니다');
         }
         
         // 컬럼 추가 후 다시 확인
@@ -300,10 +291,7 @@ async function updateDatabaseTables() {
                     console.error(`❌ ${subjectName} 카테고리 업데이트 오류:`, error.message);
                 }
             }
-            console.log('✅ 기본 카테고리 설정 완료');
         }
-        
-        console.log('✅ 데이터베이스 테이블 업데이트 완료!');
     } catch (error) {
         console.error('❌ 데이터베이스 업데이트 중 오류:', error);
     }
@@ -312,109 +300,74 @@ async function updateDatabaseTables() {
 // 데이터베이스 인덱스 자동 생성 함수
 async function createDatabaseIndexes() {
     try {
-        console.log('🚀 데이터베이스 인덱스 생성 중...');
-        
         // 1. problems 테이블 인덱스
-        console.log('📊 problems 테이블 인덱스 생성 중...');
         
         try {
             await pool.execute('CREATE INDEX idx_problems_subject_id ON problems(subject_id)');
-            console.log('✅ problems.subject_id 인덱스 생성 완료');
         } catch (error) {
-            if (error.code === 'ER_DUP_KEYNAME') {
-                console.log('ℹ️  problems.subject_id 인덱스가 이미 존재합니다');
-            } else {
+            if (error.code !== 'ER_DUP_KEYNAME') {
                 console.error('❌ problems.subject_id 인덱스 생성 실패:', error.message);
             }
         }
         
         try {
             await pool.execute('CREATE INDEX idx_problems_difficulty ON problems(difficulty)');
-            console.log('✅ problems.difficulty 인덱스 생성 완료');
         } catch (error) {
-            if (error.code === 'ER_DUP_KEYNAME') {
-                console.log('ℹ️  problems.difficulty 인덱스가 이미 존재합니다');
-            } else {
+            if (error.code !== 'ER_DUP_KEYNAME') {
                 console.error('❌ problems.difficulty 인덱스 생성 실패:', error.message);
             }
         }
         
         try {
             await pool.execute('CREATE INDEX idx_problems_created_at ON problems(created_at)');
-            console.log('✅ problems.created_at 인덱스 생성 완료');
         } catch (error) {
-            if (error.code === 'ER_DUP_KEYNAME') {
-                console.log('ℹ️  problems.created_at 인덱스가 이미 존재합니다');
-            } else {
+            if (error.code !== 'ER_DUP_KEYNAME') {
                 console.error('❌ problems.created_at 인덱스 생성 실패:', error.message);
             }
         }
         
         // 2. user_progress 테이블 인덱스
-        console.log('📊 user_progress 테이블 인덱스 생성 중...');
-        
         try {
             await pool.execute('CREATE INDEX idx_user_progress_user_problem ON user_progress(user_id, problem_id)');
-            console.log('✅ user_progress 복합 인덱스 생성 완료');
         } catch (error) {
-            if (error.code === 'ER_DUP_KEYNAME') {
-                console.log('ℹ️  user_progress 복합 인덱스가 이미 존재합니다');
-            } else {
+            if (error.code !== 'ER_DUP_KEYNAME') {
                 console.error('❌ user_progress 복합 인덱스 생성 실패:', error.message);
             }
         }
         
         try {
             await pool.execute('CREATE INDEX idx_user_progress_is_correct ON user_progress(is_correct)');
-            console.log('✅ user_progress.is_correct 인덱스 생성 완료');
         } catch (error) {
-            if (error.code === 'ER_DUP_KEYNAME') {
-                console.log('ℹ️  user_progress.is_correct 인덱스가 이미 존재합니다');
-            } else {
+            if (error.code !== 'ER_DUP_KEYNAME') {
                 console.error('❌ user_progress.is_correct 인덱스 생성 실패:', error.message);
             }
         }
         
         // 3. user_subject_progress 테이블 인덱스
-        console.log('📊 user_subject_progress 테이블 인덱스 생성 중...');
-        
         try {
             await pool.execute('CREATE INDEX idx_user_subject_progress_user_subject ON user_subject_progress(user_id, subject_id)');
-            console.log('✅ user_subject_progress 복합 인덱스 생성 완료');
         } catch (error) {
-            if (error.code === 'ER_DUP_KEYNAME') {
-                console.log('ℹ️  user_subject_progress 복합 인덱스가 이미 존재합니다');
-            } else {
+            if (error.code !== 'ER_DUP_KEYNAME') {
                 console.error('❌ user_subject_progress 복합 인덱스 생성 실패:', error.message);
             }
         }
         
         // 4. subjects 테이블 인덱스
-        console.log('📊 subjects 테이블 인덱스 생성 중...');
-        
         try {
             await pool.execute('CREATE INDEX idx_subjects_is_public ON subjects(is_public)');
-            console.log('✅ subjects.is_public 인덱스 생성 완료');
         } catch (error) {
-            if (error.code === 'ER_DUP_KEYNAME') {
-                console.log('ℹ️  subjects.is_public 인덱스가 이미 존재합니다');
-            } else {
+            if (error.code !== 'ER_DUP_KEYNAME') {
                 console.error('❌ subjects.is_public 인덱스 생성 실패:', error.message);
             }
         }
         
         try {
             await pool.execute('CREATE INDEX idx_subjects_sort_order ON subjects(sort_order)');
-            console.log('✅ subjects.sort_order 인덱스 생성 완료');
         } catch (error) {
-            if (error.code === 'ER_DUP_KEYNAME') {
-                console.log('ℹ️  subjects.sort_order 인덱스가 이미 존재합니다');
-            } else {
+            if (error.code !== 'ER_DUP_KEYNAME') {
                 console.error('❌ subjects.sort_order 인덱스 생성 실패:', error.message);
             }
         }
-        
-        console.log('🎉 데이터베이스 인덱스 생성 완료!');
     } catch (error) {
         console.error('❌ 데이터베이스 인덱스 생성 중 오류:', error);
     }
@@ -423,10 +376,7 @@ async function createDatabaseIndexes() {
 // 통계 테이블 자동 생성 함수
 async function createStatsTables() {
     try {
-        console.log('🚀 데이터베이스 통계 테이블 생성 중...');
-        
         // 1. 과목별 사용자 통계 테이블 생성
-        console.log('📊 user_subject_stats 테이블 생성 중...');
         
         await pool.execute(`
             CREATE TABLE IF NOT EXISTS user_subject_stats (
@@ -442,10 +392,8 @@ async function createStatsTables() {
                 FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
-        console.log('✅ user_subject_stats 테이블 생성 완료');
         
         // 2. 틀린 문제만 저장하는 테이블 생성
-        console.log('📊 user_wrong_problems 테이블 생성 중...');
         
         await pool.execute(`
             CREATE TABLE IF NOT EXISTS user_wrong_problems (
@@ -459,10 +407,8 @@ async function createStatsTables() {
                 FOREIGN KEY (problem_id) REFERENCES problems(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
-        console.log('✅ user_wrong_problems 테이블 생성 완료');
         
         // 3. 기존 user_progress 데이터를 통계 테이블로 마이그레이션 (기존 데이터가 있는 경우에만)
-        console.log('📊 기존 데이터 마이그레이션 중...');
         
         // user_progress 테이블이 존재하는지 확인
         const [tables] = await pool.execute("SHOW TABLES LIKE 'user_progress'");
@@ -485,7 +431,6 @@ async function createStatsTables() {
                     total_correct = VALUES(total_correct),
                     accuracy = VALUES(accuracy)
             `);
-            console.log('✅ 과목별 통계 마이그레이션 완료');
             
             // 틀린 문제만 별도 테이블로 이동
             await pool.execute(`
@@ -497,33 +442,25 @@ async function createStatsTables() {
                     selected_answer = VALUES(selected_answer),
                     answered_at = VALUES(answered_at)
             `);
-            console.log('✅ 틀린 문제 마이그레이션 완료');
-        } else {
-            console.log('ℹ️  user_progress 테이블이 없어서 마이그레이션을 건너뜁니다');
         }
         
         // 4. 인덱스 생성
-        console.log('📊 통계 테이블 인덱스 생성 중...');
         
         try {
             await pool.execute('CREATE INDEX idx_user_subject_stats_user ON user_subject_stats(user_id)');
-            console.log('✅ user_subject_stats.user_id 인덱스 생성 완료');
         } catch (error) {
-            if (error.code === 'ER_DUP_KEYNAME') {
-                console.log('ℹ️  user_subject_stats.user_id 인덱스가 이미 존재합니다');
+            if (error.code !== 'ER_DUP_KEYNAME') {
+                console.error('❌ user_subject_stats.user_id 인덱스 생성 실패:', error.message);
             }
         }
         
         try {
             await pool.execute('CREATE INDEX idx_user_wrong_problems_user ON user_wrong_problems(user_id)');
-            console.log('✅ user_wrong_problems.user_id 인덱스 생성 완료');
         } catch (error) {
-            if (error.code === 'ER_DUP_KEYNAME') {
-                console.log('ℹ️  user_wrong_problems.user_id 인덱스가 이미 존재합니다');
+            if (error.code !== 'ER_DUP_KEYNAME') {
+                console.error('❌ user_wrong_problems.user_id 인덱스 생성 실패:', error.message);
             }
         }
-        
-        console.log('🎉 데이터베이스 통계 테이블 생성 완료!');
         
     } catch (error) {
         console.error('❌ 통계 테이블 생성 중 오류:', error);
