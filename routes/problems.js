@@ -128,7 +128,7 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
         
         const problem = problemResults[0];
         
-        // HTML 이스케이프 함수
+        // HTML 이스케이프 함수 (코드 블럭 보존)
         const escapeHtml = (text) => {
             if (!text) return '';
             return text
@@ -138,6 +138,27 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;')
                 .replace(/\n/g, '<br>');
+        };
+
+        // 코드 블럭을 포함한 HTML 처리 함수
+        const processContent = (content) => {
+            if (!content) return '';
+            
+            // 코드 블럭 패턴 찾기 (```로 감싸진 부분)
+            let processedContent = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
+                const lang = language || 'text';
+                const escapedCode = code
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+                
+                return `<pre><code class="language-${lang}">${escapedCode}</code></pre>`;
+            });
+            
+            // 코드 블럭 외의 일반 텍스트는 이스케이프 처리
+            return escapeHtml(processedContent);
         };
         
         // HTML 페이지 생성 (프리뷰 형태)
@@ -251,7 +272,7 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
             </div>
             
             <div class="problem-question">
-                ${escapeHtml(problem.content)}
+                ${processContent(problem.content)}
             </div>
             
             <div class="options-container">
@@ -272,7 +293,7 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
             <div class="explanation">
                 <h3>정답: ${escapeHtml(problem.correct_answer)}</h3>
                 <div class="explanation-content">
-                    ${escapeHtml(problem.explanation || '설명이 없습니다.')}
+                    ${processContent(problem.explanation || '설명이 없습니다.')}
                 </div>
             </div>
             
