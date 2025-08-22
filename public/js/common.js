@@ -177,7 +177,6 @@ async function checkAuthStatus() {
 
 // 네비게이션 업데이트 함수
 function updateNavigation(data) {
-    console.log('네비게이션 업데이트:', data);
     const navLinks = document.getElementById('navLinks');
     if (navLinks) {
         if (data && data.isLoggedIn) {
@@ -187,7 +186,6 @@ function updateNavigation(data) {
             }
             navHTML += `<a href="#" onclick="logout()">로그아웃</a>`;
             navLinks.innerHTML = navHTML;
-            console.log('로그인 상태 네비게이션 설정 완료');
         } else {
             navLinks.innerHTML = `
                 <a href="/">홈</a>
@@ -195,7 +193,6 @@ function updateNavigation(data) {
                 <a href="/login.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">로그인</a>
                 <a href="/register.html" title="학습 진행상황을 저장하고 틀린 문제들만 다시 풀어볼 수 있습니다.">회원가입</a>
             `;
-            console.log('로그아웃 상태 네비게이션 설정 완료');
         }
     } else {
         console.warn('navLinks 요소를 찾을 수 없습니다. 현재 페이지:', window.location.pathname);
@@ -205,7 +202,7 @@ function updateNavigation(data) {
 // 로그아웃 (캐시 초기화 포함)
 async function logout() {
     try {
-        console.log('🔍 로그아웃 시작...');
+
         
         // 1. 먼저 모든 캐시 초기화
         authStatus = null;
@@ -237,10 +234,10 @@ async function logout() {
         });
         const data = await response.json();
         
-        console.log('로그아웃 응답:', data);
+
         
         if (data.success) {
-            console.log('✅ 로그아웃 완료, 홈페이지로 이동');
+
             
             // 5. 현재 탭에서만 로그아웃 후 새로고침 플래그 설정
             sessionStorage.setItem('logoutRefresh', Date.now().toString());
@@ -248,13 +245,13 @@ async function logout() {
             // 6. 강제로 페이지 새로고침하여 모든 상태 초기화
             window.location.replace('/');
         } else {
-            console.error('❌ 로그아웃 실패:', data.message);
+
             // 실패해도 홈페이지로 이동
             sessionStorage.setItem('logoutRefresh', Date.now().toString());
             window.location.replace('/');
         }
     } catch (error) {
-        console.error('❌ 로그아웃 오류:', error);
+
         // 오류가 발생해도 홈페이지로 이동
         window.location.replace('/');
     }
