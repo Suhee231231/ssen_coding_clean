@@ -22,15 +22,15 @@ async function checkAuthStatus() {
     const loginStatus = urlParams.get('login');
     const authType = urlParams.get('auth');
     
-    // 로그아웃 후 페이지 새로고침 감지 (현재 탭에서만)
+    // 로그아웃/회원탈퇴 후 페이지 새로고침 감지 (현재 탭에서만)
     const logoutRefreshTime = sessionStorage.getItem('logoutRefresh');
     if (logoutRefreshTime) {
         const logoutTime = parseInt(logoutRefreshTime);
         const now = Date.now();
         
-        // 5분 이내의 로그아웃 새로고침만 처리 (안전장치)
+        // 5분 이내의 로그아웃/회원탈퇴 새로고침만 처리 (안전장치)
         if (now - logoutTime < 5 * 60 * 1000) {
-            console.log('🔍 로그아웃 후 새로고침 감지 - 인증 캐시 초기화');
+            console.log('🔍 로그아웃/회원탈퇴 후 새로고침 감지 - 인증 캐시 초기화');
             sessionStorage.removeItem('logoutRefresh');
             sessionStorage.removeItem('authStatus');
             sessionStorage.removeItem('authCheckTime');
@@ -38,6 +38,9 @@ async function checkAuthStatus() {
             localStorage.removeItem('authCheckTime');
             authStatus = null;
             lastAuthCheck = 0;
+            
+            // 즉시 로그아웃 상태로 네비게이션 업데이트
+            updateNavigation({ isLoggedIn: false, isAdmin: false, user: null });
         } else {
             // 오래된 플래그는 제거
             sessionStorage.removeItem('logoutRefresh');

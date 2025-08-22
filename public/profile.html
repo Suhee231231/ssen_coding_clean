@@ -308,8 +308,22 @@
                 const data = await response.json();
                 
                 if (data.success) {
+                    // 회원탈퇴 성공 시 인증 캐시 초기화
+                    console.log('회원탈퇴 성공 - 인증 캐시 초기화');
+                    
+                    // 모든 인증 관련 캐시 삭제
+                    sessionStorage.removeItem('authStatus');
+                    sessionStorage.removeItem('authCheckTime');
+                    localStorage.removeItem('authStatus');
+                    localStorage.removeItem('authCheckTime');
+                    
+                    // 로그아웃 후 새로고침 플래그 설정
+                    sessionStorage.setItem('logoutRefresh', Date.now().toString());
+                    
                     alert('회원탈퇴가 완료되었습니다.');
-                    window.location.href = '/';
+                    
+                    // 홈페이지로 리다이렉트 (replace로 히스토리 정리)
+                    window.location.replace('/');
                 } else {
                     alert(data.message || '회원탈퇴 중 오류가 발생했습니다.');
                 }
