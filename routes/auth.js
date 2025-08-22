@@ -338,10 +338,28 @@ router.delete('/delete-account', requireAuth, async (req, res) => {
         await connection.beginTransaction();
 
         try {
+            // 사용자 정보 조회 (이메일 확인용)
+            const [users] = await connection.execute(
+                'SELECT email FROM users WHERE id = ?',
+                [userId]
+            );
+            
+            if (users.length === 0) {
+                throw new Error('사용자를 찾을 수 없습니다.');
+            }
+            
+            const userEmail = users[0].email;
+            
             // 사용자의 학습 진행상황 삭제
             await connection.execute(
                 'DELETE FROM user_progress WHERE user_id = ?',
                 [userId]
+            );
+
+            // 이메일 인증 관련 데이터 삭제
+            await connection.execute(
+                'DELETE FROM email_verifications WHERE email = ?',
+                [userEmail]
             );
 
             // 사용자 삭제
