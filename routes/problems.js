@@ -697,6 +697,16 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
+    <script>
+        // C# 언어 지원 명시적 등록
+        if (window.Prism && window.Prism.languages) {
+            window.Prism.languages.csharp = window.Prism.languages.extend('clike', {
+                'keyword': /\b(?:abstract|as|async|await|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|do|double|else|enum|event|explicit|extern|false|finally|fixed|float|for|foreach|goto|if|implicit|in|int|interface|internal|is|lock|long|namespace|new|null|object|operator|out|override|params|private|protected|public|readonly|ref|return|sbyte|sealed|short|sizeof|stackalloc|static|string|struct|switch|this|throw|true|try|typeof|uint|ulong|unchecked|unsafe|ushort|using|virtual|void|volatile|while|yield)\b/,
+                'string': /@?("|')(\1\1|\\\1|\\?(?!\1)[\s\S])*\1/,
+                'number': /\b0x[\da-f]+\b|(?:\b\d+\.?\d*|\B\.\d+)(?:e[+-]?\d+)?f?/i
+            });
+        }
+    </script>
 </head>
 <body>
     <header>
