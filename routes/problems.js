@@ -141,9 +141,9 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
         };
         
         // SEO 최적화를 위한 변수 미리 계산 (중복 방지)
-        // 문제 제목: 코드블럭 제거 후 텍스트만 사용
+        // 문제 제목: 코드블럭 제거 후 텍스트만 사용 (SEO 최적화를 위해 50자로 확장)
         const cleanContent = problem.content.replace(/```[\s\S]*?```/g, '').replace(/`[^`]*`/g, '');
-        const problemTitle = escapeHtml(cleanContent.substring(0, 30).trim());
+        const problemTitle = escapeHtml(cleanContent.substring(0, 50).trim());
         const problemDescription = escapeHtml(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim());
         const subjectName = escapeHtml(subjectInfo.name);
         const subjectCategory = escapeHtml(subjectInfo.category || '프로그래밍');
