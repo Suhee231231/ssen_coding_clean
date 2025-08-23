@@ -128,12 +128,6 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
         
         const problem = problemResults[0];
         
-        // SEO 최적화를 위한 변수 미리 계산 (중복 방지)
-        const problemTitle = escapeHtml(problem.content.substring(0, 30).trim());
-        const problemDescription = escapeHtml(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim());
-        const subjectName = escapeHtml(subjectInfo.name);
-        const subjectCategory = escapeHtml(subjectInfo.category || '프로그래밍');
-        
         // HTML 이스케이프 함수 (코드 블럭 보존)
         const escapeHtml = (text) => {
             if (!text) return '';
@@ -145,6 +139,12 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
                 .replace(/'/g, '&#39;')
                 .replace(/\n/g, '<br>');
         };
+        
+        // SEO 최적화를 위한 변수 미리 계산 (중복 방지)
+        const problemTitle = escapeHtml(problem.content.substring(0, 30).trim());
+        const problemDescription = escapeHtml(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim());
+        const subjectName = escapeHtml(subjectInfo.name);
+        const subjectCategory = escapeHtml(subjectInfo.category || '프로그래밍');
 
         // 코드 블럭을 포함한 HTML 처리 함수
         const processContent = (content) => {
