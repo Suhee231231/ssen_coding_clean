@@ -128,6 +128,12 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
         
         const problem = problemResults[0];
         
+        // SEO 최적화를 위한 변수 미리 계산 (중복 방지)
+        const problemTitle = escapeHtml(problem.content.substring(0, 30).trim());
+        const problemDescription = escapeHtml(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim());
+        const subjectName = escapeHtml(subjectInfo.name);
+        const subjectCategory = escapeHtml(subjectInfo.category || '프로그래밍');
+        
         // HTML 이스케이프 함수 (코드 블럭 보존)
         const escapeHtml = (text) => {
             if (!text) return '';
@@ -198,34 +204,34 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${escapeHtml(problem.content.substring(0, 30).trim())} | ${escapeHtml(subjectInfo.name)} 문제 | 쎈코딩</title>
+    <title>${problemTitle} | ${subjectName} 문제 | 쎈코딩</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="${escapeHtml(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim())} - ${escapeHtml(subjectInfo.name)} 코딩 문제 풀이">
-    <meta name="keywords" content="${escapeHtml(subjectInfo.name)}, ${escapeHtml(subjectInfo.category || '프로그래밍')}, 코딩문제, 알고리즘, 프로그래밍연습">
+    <meta name="description" content="${problemDescription} - ${subjectName} 코딩 문제 풀이">
+    <meta name="keywords" content="${subjectName}, ${subjectCategory}, 코딩문제, 알고리즘, 프로그래밍연습">
     <meta name="author" content="쎈코딩">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://ssencoding.com/problems/${encodeURIComponent(subjectInfo.name)}/problem/${id}">
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="${escapeHtml(problem.content.substring(0, 30).trim())} | ${escapeHtml(subjectInfo.name)} 문제">
-    <meta property="og:description" content="${escapeHtml(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim())} - ${escapeHtml(subjectInfo.name)} 코딩 문제 풀이">
+    <meta property="og:title" content="${problemTitle} | ${subjectName} 문제">
+    <meta property="og:description" content="${problemDescription} - ${subjectName} 코딩 문제 풀이">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://ssencoding.com/problems/${encodeURIComponent(subjectInfo.name)}/problem/${id}">
     <meta property="og:site_name" content="쎈코딩">
     
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="${escapeHtml(problem.content.substring(0, 30).trim())} | ${escapeHtml(subjectInfo.name)} 문제">
-    <meta name="twitter:description" content="${escapeHtml(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim())} - ${escapeHtml(subjectInfo.name)} 코딩 문제 풀이">
+    <meta name="twitter:title" content="${problemTitle} | ${subjectName} 문제">
+    <meta name="twitter:description" content="${problemDescription} - ${subjectName} 코딩 문제 풀이">
     
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "Article",
-        "headline": ${JSON.stringify(problem.content.substring(0, 50).trim() + ' | ' + subjectInfo.name + ' 문제')},
-        "description": ${JSON.stringify(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim() + ' - ' + subjectInfo.name + ' 코딩 문제 풀이')},
+        "headline": ${JSON.stringify(problemTitle + ' | ' + subjectName + ' 문제')},
+        "description": ${JSON.stringify(problemDescription + ' - ' + subjectName + ' 코딩 문제 풀이')},
         "image": "https://ssencoding.com/android-chrome-512x512.png",
         "author": {
             "@type": "Organization",
@@ -251,10 +257,10 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
         },
         "about": {
             "@type": "Thing",
-            "name": ${JSON.stringify(subjectInfo.name)}
+            "name": ${JSON.stringify(subjectName)}
         },
-        "articleSection": ${JSON.stringify(subjectInfo.name)},
-        "keywords": ${JSON.stringify([subjectInfo.name, '코딩문제', '프로그래밍', subjectInfo.category || '코딩'].join(', '))}
+        "articleSection": ${JSON.stringify(subjectName)},
+        "keywords": ${JSON.stringify([subjectName, '코딩문제', '프로그래밍', subjectCategory].join(', '))}
     }
     </script>
     
@@ -299,16 +305,16 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
                 <li style="margin: 0 0.5rem;">›</li>
                 <li style="margin-right: 0.5rem;"><a href="/problems.html" style="color: #00d4aa; text-decoration: none;">문제 풀이</a></li>
                 <li style="margin: 0 0.5rem;">›</li>
-                <li style="margin-right: 0.5rem;"><a href="/problems.html?subject=${encodeURIComponent(subjectInfo.name)}" style="color: #00d4aa; text-decoration: none;">${escapeHtml(subjectInfo.name)}</a></li>
+                <li style="margin-right: 0.5rem;"><a href="/problems.html?subject=${encodeURIComponent(subjectInfo.name)}" style="color: #00d4aa; text-decoration: none;">${subjectName}</a></li>
                 <li style="margin: 0 0.5rem;">›</li>
                 <li style="color: #666;">문제 ${id}</li>
             </ol>
         </nav>
         <div class="problem-container">
             <div class="problem-header">
-                <h1>${escapeHtml(problem.content.substring(0, 50).trim())}</h1>
+                <h1>${problemTitle}</h1>
                 <div class="problem-meta">
-                    <p><strong>과목:</strong> ${escapeHtml(subjectInfo.name)}</p>
+                    <p><strong>과목:</strong> ${subjectName}</p>
                     <p><strong>문제 번호:</strong> ${id}</p>
                     <span class="difficulty-badge difficulty-${escapeHtml(problem.difficulty)}">${escapeHtml(problem.difficulty)}</span>
                 </div>
@@ -352,7 +358,7 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
             <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #00d4aa;">
                 <h4 style="margin: 0 0 0.5rem 0; color: #00d4aa;">💡 학습 팁</h4>
                 <p style="margin: 0; color: #666; font-size: 0.9rem;">
-                    이 문제를 포함한 ${escapeHtml(subjectInfo.name)} 과목의 모든 문제를 순차적으로 풀어보세요. 
+                    이 문제를 포함한 ${subjectName} 과목의 모든 문제를 순차적으로 풀어보세요. 
                     진행상황이 자동으로 저장되어 언제든지 이어서 학습할 수 있습니다.
                 </p>
             </div>
