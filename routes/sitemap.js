@@ -134,8 +134,8 @@ router.get('/new', async (req, res) => {
     <url>
         <loc>${baseUrl}/problems/${encodedSubjectName}/problem/${problem.id}</loc>
         <lastmod>${lastmod}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.6</priority>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
     </url>`;
             });
             

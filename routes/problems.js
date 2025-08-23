@@ -198,34 +198,34 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${escapeHtml(problem.content.substring(0, 50))}... | ${escapeHtml(subjectInfo.name)} | 쎈코딩</title>
+    <title>${escapeHtml(problem.content.substring(0, 30).trim())} | ${escapeHtml(subjectInfo.name)} 문제 | 쎈코딩</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="${escapeHtml(problem.content.replace(/<[^>]*>/g, '').substring(0, 160))}...">
-    <meta name="keywords" content="${escapeHtml(subjectInfo.name)}, 코딩문제, 프로그래밍, ${escapeHtml(subjectInfo.category || '코딩')}">
+    <meta name="description" content="${escapeHtml(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim())} - ${escapeHtml(subjectInfo.name)} 코딩 문제 풀이">
+    <meta name="keywords" content="${escapeHtml(subjectInfo.name)}, ${escapeHtml(subjectInfo.category || '프로그래밍')}, 코딩문제, 알고리즘, 프로그래밍연습">
     <meta name="author" content="쎈코딩">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://ssencoding.com/problems/${encodeURIComponent(subjectInfo.name)}/problem/${id}">
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="${escapeHtml(problem.content.substring(0, 50))}... | ${escapeHtml(subjectInfo.name)}">
-    <meta property="og:description" content="${escapeHtml(problem.content.replace(/<[^>]*>/g, '').substring(0, 160))}...">
+    <meta property="og:title" content="${escapeHtml(problem.content.substring(0, 30).trim())} | ${escapeHtml(subjectInfo.name)} 문제">
+    <meta property="og:description" content="${escapeHtml(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim())} - ${escapeHtml(subjectInfo.name)} 코딩 문제 풀이">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://ssencoding.com/problems/${encodeURIComponent(subjectInfo.name)}/problem/${id}">
     <meta property="og:site_name" content="쎈코딩">
     
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="${escapeHtml(problem.content.substring(0, 50))}... | ${escapeHtml(subjectInfo.name)}">
-    <meta name="twitter:description" content="${escapeHtml(problem.content.replace(/<[^>]*>/g, '').substring(0, 160))}...">
+    <meta name="twitter:title" content="${escapeHtml(problem.content.substring(0, 30).trim())} | ${escapeHtml(subjectInfo.name)} 문제">
+    <meta name="twitter:description" content="${escapeHtml(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim())} - ${escapeHtml(subjectInfo.name)} 코딩 문제 풀이">
     
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "Article",
-        "headline": ${JSON.stringify(problem.content.substring(0, 100) + '...')},
-        "description": ${JSON.stringify(problem.content.replace(/<[^>]*>/g, '').substring(0, 200) + '...')},
+        "headline": ${JSON.stringify(problem.content.substring(0, 50).trim() + ' | ' + subjectInfo.name + ' 문제')},
+        "description": ${JSON.stringify(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim() + ' - ' + subjectInfo.name + ' 코딩 문제 풀이')},
         "image": "https://ssencoding.com/android-chrome-512x512.png",
         "author": {
             "@type": "Organization",
@@ -293,11 +293,23 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
     </header>
     
     <main>
+        <nav aria-label="breadcrumb" style="margin-bottom: 1rem; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <ol style="list-style: none; padding: 0; margin: 0; display: flex; align-items: center;">
+                <li style="margin-right: 0.5rem;"><a href="/" style="color: #00d4aa; text-decoration: none;">홈</a></li>
+                <li style="margin: 0 0.5rem;">›</li>
+                <li style="margin-right: 0.5rem;"><a href="/problems.html" style="color: #00d4aa; text-decoration: none;">문제 풀이</a></li>
+                <li style="margin: 0 0.5rem;">›</li>
+                <li style="margin-right: 0.5rem;"><a href="/problems.html?subject=${encodeURIComponent(subjectInfo.name)}" style="color: #00d4aa; text-decoration: none;">${escapeHtml(subjectInfo.name)}</a></li>
+                <li style="margin: 0 0.5rem;">›</li>
+                <li style="color: #666;">문제 ${id}</li>
+            </ol>
+        </nav>
         <div class="problem-container">
             <div class="problem-header">
-                <h2>${escapeHtml(subjectInfo.name)} - 문제 미리보기</h2>
-                <div class="problem-info-row">
-                    <p>문제 ${id}</p>
+                <h1>${escapeHtml(problem.content.substring(0, 50).trim())}</h1>
+                <div class="problem-meta">
+                    <p><strong>과목:</strong> ${escapeHtml(subjectInfo.name)}</p>
+                    <p><strong>문제 번호:</strong> ${id}</p>
                     <span class="difficulty-badge difficulty-${escapeHtml(problem.difficulty)}">${escapeHtml(problem.difficulty)}</span>
                 </div>
             </div>
