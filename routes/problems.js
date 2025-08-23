@@ -141,7 +141,9 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
         };
         
         // SEO 최적화를 위한 변수 미리 계산 (중복 방지)
-        const problemTitle = escapeHtml(problem.content.substring(0, 30).trim());
+        // 문제 제목: 코드블럭 제거 후 텍스트만 사용
+        const cleanContent = problem.content.replace(/```[\s\S]*?```/g, '').replace(/`[^`]*`/g, '');
+        const problemTitle = escapeHtml(cleanContent.substring(0, 30).trim());
         const problemDescription = escapeHtml(problem.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 150).trim());
         const subjectName = escapeHtml(subjectInfo.name);
         const subjectCategory = escapeHtml(subjectInfo.category || '프로그래밍');
@@ -326,16 +328,16 @@ router.get('/:subject/problem/:id', optionalAuth, async (req, res) => {
             
             <div class="options-container">
                 <div class="option">
-                    <strong>A.</strong> ${escapeHtml(problem.option_a)}
+                    <strong>A.</strong> ${processContent(problem.option_a)}
                 </div>
                 <div class="option">
-                    <strong>B.</strong> ${escapeHtml(problem.option_b)}
+                    <strong>B.</strong> ${processContent(problem.option_b)}
                 </div>
                 <div class="option">
-                    <strong>C.</strong> ${escapeHtml(problem.option_c)}
+                    <strong>C.</strong> ${processContent(problem.option_c)}
                 </div>
                 <div class="option">
-                    <strong>D.</strong> ${escapeHtml(problem.option_d)}
+                    <strong>D.</strong> ${processContent(problem.option_d)}
                 </div>
             </div>
             
