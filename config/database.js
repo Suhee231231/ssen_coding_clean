@@ -23,13 +23,8 @@ const pool = mysql.createPool({
     bigNumberStrings: true, // 큰 숫자를 문자열로 처리
     // 연결별 설정
     connectTimeout: 60000, // 연결 타임아웃 60초
-    acquireTimeout: 60000, // 연결 획득 타임아웃 60초
-    timeout: 60000, // 쿼리 타임아웃 60초
-    // 연결 초기화
-    initSql: [
-        'SET SESSION sql_mode = "NO_ENGINE_SUBSTITUTION"',
-        'SET SESSION time_zone = "+09:00"'
-    ]
+    // 연결 초기화 (MySQL2에서 지원하는 방식으로 변경)
+    initSql: 'SET SESSION sql_mode = "NO_ENGINE_SUBSTITUTION", SET SESSION time_zone = "+09:00"'
 });
 
 // 연결 풀 상태 모니터링 (프로덕션에서는 비활성화)
