@@ -504,6 +504,11 @@ app.get('/dashboard.html', (req, res) => {
     res.redirect('/profile.html');
 });
 
+// 404 페이지 처리 (모든 라우트 이후에 배치)
+app.use('*', (req, res) => {
+    res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+});
+
 // 서버 시작
 app.listen(PORT, async () => {
     console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`);
