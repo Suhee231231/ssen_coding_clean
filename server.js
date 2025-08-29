@@ -484,6 +484,32 @@ app.use('/api/email-verification', authLimiter, emailVerificationRoutes); // 이
 app.use('/rss', rssRoutes);
 app.use('/sitemap', sitemapRoutes);
 
+// sitemap.xml 직접 라우팅 (표준 경로)
+app.get('/sitemap.xml', async (req, res) => {
+    console.log('🚀 /sitemap.xml 직접 요청 받음!', new Date().toISOString());
+    
+    // 강력한 캐시 방지 헤더 설정
+    res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Last-Modified': new Date().toUTCString(),
+        'ETag': `"${Date.now()}"`
+    });
+    
+    try {
+        console.log('📝 /sitemap.xml 직접 생성 시작...');
+        const sitemap = await require('./routes/sitemap').generateSitemap();
+        console.log('✅ /sitemap.xml 직접 생성 완료!');
+        res.header('Content-Type', 'application/xml');
+        res.send(sitemap);
+        
+    } catch (error) {
+        console.error('❌ /sitemap.xml 직접 생성 오류:', error);
+        res.status(500).send('사이트맵 생성 중 오류가 발생했습니다.');
+    }
+});
+
 // 메인 페이지 라우트
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

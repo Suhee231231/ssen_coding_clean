@@ -18,13 +18,19 @@ async function generateSitemap() {
     
     // 정적 페이지들
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<!-- 🚀 SITEMAP VERSION - ${currentDate} - SEO OPTIMIZED -->
+<!-- 🚀 SITEMAP VERSION - ${currentDate} - SEO OPTIMIZED FOR NAVER -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
         <loc>${baseUrl}/</loc>
         <lastmod>${currentDate}</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>${baseUrl}/problems.html</loc>
+        <lastmod>${currentDate}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
     </url>
     <url>
         <loc>${baseUrl}/login.html</loc>
@@ -37,12 +43,6 @@ async function generateSitemap() {
         <lastmod>${currentDate}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>${baseUrl}/problems.html</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.9</priority>
     </url>
     <url>
         <loc>${baseUrl}/profile.html</loc>
@@ -94,6 +94,8 @@ async function generateSitemap() {
     </url>`;
         });
         
+        console.log(`✅ SITEMAP: ${subjects.length}개의 과목 페이지 추가됨`);
+        
     } catch (dbError) {
         console.error('❌ SITEMAP: 과목 데이터베이스 오류:', dbError);
     }
@@ -124,6 +126,8 @@ async function generateSitemap() {
     </url>`;
         });
         
+        console.log(`✅ SITEMAP: ${problems.length}개의 개별 문제 페이지 추가됨`);
+        
     } catch (dbError) {
         console.error('❌ SITEMAP: 문제 데이터베이스 오류:', dbError);
     }
@@ -131,8 +135,12 @@ async function generateSitemap() {
     sitemap += `
 </urlset>`;
 
+    console.log(`🎉 SITEMAP 생성 완료! 총 URL 수: ${sitemap.split('<url>').length - 1}`);
     return sitemap;
 }
+
+// generateSitemap 함수를 export하여 다른 파일에서 사용할 수 있도록 함
+module.exports.generateSitemap = generateSitemap;
 
 // sitemap.xml 경로 지원 (구글 서치 콘솔 호환성)
 router.get('/xml', async (req, res) => {
@@ -160,9 +168,9 @@ router.get('/xml', async (req, res) => {
     }
 });
 
-// sitemap.xml/new 경로 지원 (구글 서치 콘솔 실제 참조 경로)
+// sitemap.xml/new 경로 지원 (네이버 서치어드바이저 호환성)
 router.get('/xml/new', async (req, res) => {
-    console.log('🚀 sitemap.xml 요청 받음!', new Date().toISOString());
+    console.log('🚀 sitemap.xml/new 요청 받음! (네이버 호환)', new Date().toISOString());
     
     // 강력한 캐시 방지 헤더 설정
     res.set({
@@ -174,14 +182,14 @@ router.get('/xml/new', async (req, res) => {
     });
     
     try {
-        console.log('📝 sitemap.xml 생성 시작...');
+        console.log('📝 sitemap.xml/new 생성 시작...');
         const sitemap = await generateSitemap();
-        console.log('✅ sitemap.xml 생성 완료!');
+        console.log('✅ sitemap.xml/new 생성 완료!');
         res.header('Content-Type', 'application/xml');
         res.send(sitemap);
         
     } catch (error) {
-        console.error('❌ sitemap.xml 생성 오류:', error);
+        console.error('❌ sitemap.xml/new 생성 오류:', error);
         res.status(500).send('사이트맵 생성 중 오류가 발생했습니다.');
     }
 });
