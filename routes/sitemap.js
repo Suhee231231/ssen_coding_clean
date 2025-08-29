@@ -246,4 +246,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-module.exports = router;
+// generateSitemap 함수를 export하여 다른 파일에서 사용할 수 있도록 함
+module.exports = {
+    router,
+    generateSitemap
+};

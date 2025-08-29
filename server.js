@@ -17,7 +17,7 @@ const adminRoutes = require('./routes/admin');
 const googleAuthRoutes = require('./routes/google-auth');
 const emailVerificationRoutes = require('./routes/email-verification');
 const rssRoutes = require('./routes/rss');
-const sitemapRoutes = require('./routes/sitemap');
+const { router: sitemapRoutes, generateSitemap } = require('./routes/sitemap');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -499,7 +499,7 @@ app.get('/sitemap.xml', async (req, res) => {
     
     try {
         console.log('📝 /sitemap.xml 직접 생성 시작...');
-        const sitemap = await require('./routes/sitemap').generateSitemap();
+        const sitemap = await generateSitemap();
         console.log('✅ /sitemap.xml 직접 생성 완료!');
         res.header('Content-Type', 'application/xml');
         res.send(sitemap);
